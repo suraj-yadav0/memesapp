@@ -2,7 +2,7 @@
     "name": "memesapp.surajyadav",
     "description": "A fun memes app for Ubuntu Touch.",
     "architecture": "@CLICK_ARCH@",
-    "title": "Memes",
+    "title": "MemeStream",
     "hooks": {
         "memesapp": {
             "apparmor": "memesapp.apparmor",

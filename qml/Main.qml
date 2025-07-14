@@ -230,7 +230,7 @@ MainView {
             isLoading = true
             var subreddit = selectedSubreddit
             var xhr = new XMLHttpRequest()
-            xhr.open("GET", "https://www.reddit.com/r/" + subreddit + "/hot.json?limit=25", true)
+            xhr.open("GET", "https://www.reddit.com/r/" + subreddit + "/hot.json?limit=50", true)
             xhr.setRequestHeader("User-Agent", "UbuntuTouchMemeApp/1.0")
 
             xhr.onreadystatechange = function () {

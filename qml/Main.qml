@@ -17,7 +17,6 @@
 import Lomiri.Components 1.3
 import QtQuick 2.12
 import Ubuntu.Components 1.3
-import QtQuick.LocalStorage 2.0
 import QtQuick.Layouts 1.3
 import Qt.labs.settings 1.0
 
@@ -174,23 +173,43 @@ MainView {
 
                         Row {
                             spacing: units.gu(2)
+                            width: parent.width
+                            height: units.gu(4)
 
                             Label {
                                 text: "👍 " + (model.upvotes || 0)
                                 color: root.darkMode ? "#CCCCCC" : "#666666"
                                 fontSize: "small"
+                                anchors.verticalCenter: parent.verticalCenter
                             }
 
                             Label {
                                 text: "💬 " + (model.comments || 0)
                                 color: root.darkMode ? "#CCCCCC" : "#666666"
                                 fontSize: "small"
+                                anchors.verticalCenter: parent.verticalCenter
                             }
 
                             Label {
                                 text: "r/" + model.subreddit
                                 color: root.darkMode ? "#CCCCCC" : "#666666"
                                 fontSize: "small"
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+
+                            Item {
+                                width: parent.width - units.gu(24) // Space for download button
+                                height: 1
+                            }
+
+                            Button {
+                                text: "Download"
+                                width: units.gu(12)
+                                anchors.verticalCenter: parent.verticalCenter
+                                onClicked: {
+                                    console.log("Downloading meme:", model.title);
+                                    downloadManager.downloadMeme(model.image, model.title);
+                                }
                             }
                         }
                     }
@@ -250,7 +269,6 @@ MainView {
                             console.log("Received", posts.length, "posts from Reddit");
 
                             memeModel.clear();
-                            var cacheArray = [];
 
                             for (var i = 0; i < posts.length; i++) {
                                 var post = posts[i].data;
@@ -265,52 +283,38 @@ MainView {
                                         subreddit: post.subreddit
                                     };
                                     memeModel.append(memeItem);
-                                    cacheArray.push(memeItem);
                                 }
                             }
 
-                            console.log("Added", cacheArray.length, "image posts to model");
-                            // Cache the results
-                            LocalStorage.setValue("cachedMemes_" + subreddit, JSON.stringify(cacheArray));
-                            LocalStorage.setValue("lastFetch_" + subreddit, Date.now().toString());
+                            console.log("Added", memeModel.count, "image posts to model");
                         } catch (e) {
                             console.log("Error parsing JSON:", e);
-                            memeFetcher.loadFromCache();
                         }
                     } else {
                         console.log("Network error:", xhr.status);
-                        memeFetcher.loadFromCache();
                     }
                 }
             };
 
             xhr.send();
         }
+    }
 
-        function loadFromCache() {
-            var cached = LocalStorage.value("cachedMemes_" + root.selectedSubreddit, "");
-            console.log("Attempting to load cache for subreddit:", root.selectedSubreddit);
-            if (cached !== "") {
-                try {
-                    var memes = JSON.parse(cached);
-                    console.log("Found", memes.length, "cached memes");
-                    memeModel.clear();
-                    for (var i = 0; i < memes.length; i++) {
-                        memeModel.append(memes[i]);
-                    }
-                } catch (e) {
-                    console.log("Error loading cache:", e);
-                }
-            } else {
-                console.log("No cached data found for subreddit:", root.selectedSubreddit);
+    QtObject {
+        id: downloadManager
+
+        function downloadMeme(imageUrl, title) {
+            console.log("Starting download for:", imageUrl);
+
+            // For Ubuntu Touch, we'll use a simpler approach
+            // Save the image URL to clipboard or try to open with external app
+            try {
+                // Try to copy the image URL to clipboard as a fallback
+                Qt.openUrlExternally(imageUrl);
+                console.log("Opened image URL externally:", imageUrl);
+            } catch (e) {
+                console.log("Failed to open URL externally:", e);
             }
-        }
-
-        function isCacheValid() {
-            var lastFetch = LocalStorage.value("lastFetch_" + root.selectedSubreddit, "0");
-            var now = Date.now();
-            var cacheAge = now - parseInt(lastFetch);
-            return cacheAge < 300000; // 5 minutes
         }
     }
 
@@ -338,17 +342,6 @@ MainView {
             console.log("Set OptionSelector to index:", initialIndex);
         }
 
-        // Load cached data first for instant display
-        memeFetcher.loadFromCache();
-
-        // Use a timer to check if we need to fetch after cache loading
-        Qt.callLater(function () {
-            if (!memeFetcher.isCacheValid() || memeModel.count === 0) {
-                console.log("No valid cache found, fetching fresh memes...");
-                memeFetcher.fetchMemes();
-            } else {
-                console.log("Loaded", memeModel.count, "memes from cache");
-            }
-        });
+        memeFetcher.fetchMemes();
     }
 }

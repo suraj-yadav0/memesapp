@@ -197,17 +197,49 @@ MainView {
                                 anchors.verticalCenter: parent.verticalCenter
                             }
 
-                       
-
-                            Button {
-                                text: "Download"
-                                width: units.gu(12)
+                            Icon{
+                                name: "share"
+                                width: units.gu(2)
+                                height: units.gu(2)
                                 anchors.verticalCenter: parent.verticalCenter
-                                onClicked: {
-                                    console.log("Downloading meme:", model.title);
-                                    downloadManager.downloadMeme(model.image, model.title);
+                                color: root.darkMode ? "#CCCCCC" : "#666666"
+                                
+                                MouseArea {
+                                    anchors.fill: parent
+                                    onClicked: {
+                                        console.log("Sharing meme:", model.title);
+                                        Qt.openUrlExternally(model.image);
+                                    }
                                 }
                             }
+
+                            Icon {
+                                name: "save"
+                                width: units.gu(2)
+                                height: units.gu(2)
+                                anchors.verticalCenter: parent.verticalCenter
+                                color: root.darkMode ? "#CCCCCC" : "#666666"
+                                
+                                MouseArea {
+                                    anchors.fill: parent
+                                    onClicked: {
+                                        console.log("Downloading meme:", model.title);
+                                        downloadManager.downloadMeme(model.image, model.title);
+                                    }
+                                }
+                            }
+
+                       
+
+                            // Button {
+                            //     text: "Download"
+                            //     width: units.gu(12)
+                            //     anchors.verticalCenter: parent.verticalCenter
+                            //     onClicked: {
+                            //         console.log("Downloading meme:", model.title);
+                            //         downloadManager.downloadMeme(model.image, model.title);
+                            //     }
+                            // }
                         }
                     }
                 }

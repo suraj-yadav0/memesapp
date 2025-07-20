@@ -197,10 +197,7 @@ MainView {
                                 anchors.verticalCenter: parent.verticalCenter
                             }
 
-                            Item {
-                                width: parent.width - units.gu(24) // Space for download button
-                                height: 1
-                            }
+                       
 
                             Button {
                                 text: "Download"

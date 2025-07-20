@@ -26,7 +26,7 @@ MainView {
     applicationName: 'memesapp.surajyadav'
     automaticOrientation: true
 
-    width: units.gu(40)
+    width: units.gu(60)
     height: units.gu(70)
 
     property bool darkMode: false

@@ -74,55 +74,51 @@ MainView {
     Page {
         title: "MemeStream"
 
-        header: PageHeader {
-            id: pageHeader
-            title: "MemeStream"
+        // header: PageHeader {
+        //     id: pageHeader
+        //     title: "MemeStream"
 
-            trailingActionBar {
-                actions: [
-                    Action {
-                        iconName: "reload"
-                        text: "Refresh"
-                        onTriggered: memeFetcher.fetchMemes()
-                    },
-                    Action {
-                        iconName: root.darkMode ? "weather-clear" : "weather-clear-night"
-                        text: root.darkMode ? "Light Mode" : "Dark Mode"
-                        onTriggered: root.darkMode = !root.darkMode
-                    }
-                ]
-            }
-        }
+        //     trailingActionBar {
+        //         actions: [
+        //             Action {
+        //                 iconName: "reload"
+        //                 text: "Refresh"
+        //                 onTriggered: memeFetcher.fetchMemes()
+        //             },
+        //             Action {
+        //                 iconName: root.darkMode ? "weather-clear" : "weather-clear-night"
+        //                 text: root.darkMode ? "Light Mode" : "Dark Mode"
+        //                 onTriggered: root.darkMode = !root.darkMode
+        //             }
+        //         ]
+        //     }
+        // }
 
         Column {
+            anchors.top: pageHeader.bottom
             anchors.fill: parent
             anchors.margins: units.gu(1)
 
             // Subreddit selection
             Row {
                 width: parent.width
-                height: units.gu(5)
+                height: units.gu(15)
                 spacing: units.gu(1)
-                z: 9
+
                 Label {
                     text: "Category:"
                     anchors.verticalCenter: parent.verticalCenter
                     font.bold: true
                 }
 
-                OptionSelector {
-                    id: subredditSelector
-                    model: root.categoryNames
-                    selectedIndex: 0
+                Button {
+                    id: categoryButton
+                    text: "General Memes" // Default category
                     width: units.gu(30)
                     anchors.verticalCenter: parent.verticalCenter
 
-                    onSelectedIndexChanged: {
-                        var categoryName = root.categoryNames[selectedIndex];
-                        var subredditName = root.categoryMap[categoryName];
-                        console.log("Category changed to:", categoryName, "-> subreddit:", subredditName);
-                        root.selectedSubreddit = subredditName;
-                        memeFetcher.fetchMemes();
+                    onClicked: {
+                        categoryOverlay.visible = true;
                     }
                 }
 
@@ -156,7 +152,9 @@ MainView {
 
             // Meme list
             ListView {
+                
                 id: memeList
+                anchors.top: pageHeader.bottom + units.gu(20)
                 width: parent.width
                 height: parent.height - units.gu(6)
                 model: memeModel
@@ -387,6 +385,90 @@ MainView {
         id: memeModel
     }
 
+    // Category selection popup
+    Rectangle {
+        id: categoryOverlay
+        anchors.fill: parent
+        color: "black"
+        opacity: 0.8
+        visible: false
+        z: 100
+
+        MouseArea {
+            anchors.fill: parent
+            onClicked: categoryOverlay.visible = false
+        }
+
+        Rectangle {
+            anchors.centerIn: parent
+            width: units.gu(40)
+            height: units.gu(50)
+            color: root.darkMode ? "#2D2D2D" : "#FFFFFF"
+            border.color: root.darkMode ? "#555555" : "#CCCCCC"
+            border.width: 1
+            radius: units.gu(1)
+
+            Column {
+                anchors.fill: parent
+                anchors.margins: units.gu(1)
+                spacing: units.gu(1)
+
+                Label {
+                    text: "Select Meme Category"
+                    font.bold: true
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    color: root.darkMode ? "#FFFFFF" : "#000000"
+                }
+
+                ListView {
+                    width: parent.width
+                    height: parent.height - units.gu(8)
+                    model: root.categoryNames
+                    clip: true
+
+                    delegate: Rectangle {
+                        width: parent.width
+                        height: units.gu(4)
+                        color: mouseArea.pressed ? (root.darkMode ? "#444444" : "#E0E0E0") : "transparent"
+
+                        Label {
+                            text: modelData
+                            anchors.left: parent.left
+                            anchors.leftMargin: units.gu(1)
+                            anchors.verticalCenter: parent.verticalCenter
+                            color: root.darkMode ? "#FFFFFF" : "#000000"
+                        }
+
+                        MouseArea {
+                            id: mouseArea
+                            anchors.fill: parent
+                            onClicked: {
+                                categoryButton.text = modelData;
+                                var subredditName = root.categoryMap[modelData];
+                                console.log("Category selected:", modelData, "-> subreddit:", subredditName);
+                                root.selectedSubreddit = subredditName;
+                                categoryOverlay.visible = false;
+                                memeFetcher.fetchMemes();
+                            }
+                        }
+                    }
+                }
+
+                Button {
+                    text: "Cancel"
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    onClicked: categoryOverlay.visible = false
+                }
+            }
+
+            // Prevent clicks on the dialog from closing it
+            MouseArea {
+                anchors.fill: parent
+                onClicked: {} // Do nothing
+            }
+        }
+    }
+
     // Settings persistence
     Settings {
         id: settings
@@ -397,10 +479,8 @@ MainView {
     Component.onCompleted: {
         console.log("App starting up with selectedSubreddit:", root.selectedSubreddit);
 
-        // Sync subreddit selector with loaded settings
-        var currentCategoryName = "";
-
-        // Find the category name that matches the current subreddit
+        // Find the category name that matches the current subreddit and set button text
+        var currentCategoryName = "General Memes"; // Default
         for (var i = 0; i < root.categoryNames.length; i++) {
             if (root.categoryMap[root.categoryNames[i]] === root.selectedSubreddit) {
                 currentCategoryName = root.categoryNames[i];
@@ -408,13 +488,8 @@ MainView {
             }
         }
 
-        var initialIndex = root.categoryNames.indexOf(currentCategoryName);
-        console.log("Found initial category:", currentCategoryName, "at index:", initialIndex);
-
-        if (initialIndex !== -1) {
-            subredditSelector.selectedIndex = initialIndex;
-            console.log("Set OptionSelector to index:", initialIndex);
-        }
+        categoryButton.text = currentCategoryName;
+        console.log("Set category button to:", currentCategoryName);
 
         memeFetcher.fetchMemes();
     }

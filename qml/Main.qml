@@ -33,6 +33,41 @@ MainView {
     property string selectedSubreddit: "memes"
     property bool isLoading: false
 
+    // Category mapping for better user experience
+    property var categoryMap: ({
+            "General Memes": "memes",
+            "Dank Memes": "dankmemes",
+            "Wholesome Memes": "wholesomememes",
+            "Funny": "funny",
+            "Programming Humor": "ProgrammerHumor",
+            "Me IRL": "meirl",
+            "Star Wars Memes": "PrequelMemes",
+            "History Memes": "HistoryMemes",
+            "Gaming Memes": "gaming",
+            "Anime Memes": "AnimeMemes",
+            "Meme Economy": "memeeconomy",
+            "Surreal Memes": "surrealmemes",
+            "Deep Fried": "DeepFriedMemes",
+            "OK Buddy Retard": "okbuddyretard",
+            "Teenagers": "teenagers",
+            "Me_IRL": "me_irl",
+            "Comedy Cemetery": "ComedyCemetery",
+            "Comedy Heaven": "comedyheaven",
+            "Bone Hurting Juice": "bonehurtingjuice",
+            "Anti Meme": "antimeme",
+            "Crappy Design": "CrappyDesign",
+            "Software Gore": "softwaregore",
+            "Tech Support Gore": "techsupportgore",
+            "Mad Lads": "madlads",
+            "Cursed Images": "cursedimages",
+            "Blursed Images": "blursedimages",
+            "Hmmm": "hmmm",
+            "Cats Standing Up": "CatsStandingUp"
+        })
+
+    // Array of category names for the OptionSelector
+    property var categoryNames: ["General Memes", "Dank Memes", "Wholesome Memes", "Funny", "Programming Humor", "Me IRL", "Star Wars Memes", "History Memes", "Gaming Memes", "Anime Memes", "Meme Economy", "Surreal Memes", "Deep Fried", "OK Buddy Retard", "Teenagers", "Me_IRL", "Comedy Cemetery", "Comedy Heaven", "Bone Hurting Juice", "Anti Meme", "Crappy Design", "Software Gore", "Tech Support Gore", "Mad Lads", "Cursed Images", "Blursed Images", "Hmmm", "Cats Standing Up"]
+
     // Theme management
     theme.name: root.darkMode ? "Ubuntu.Components.Themes.SuruDark" : "Ubuntu.Components.Themes.Ambiance"
 
@@ -68,7 +103,7 @@ MainView {
                 width: parent.width
                 height: units.gu(5)
                 spacing: units.gu(1)
-
+                z: 9
                 Label {
                     text: "Category:"
                     anchors.verticalCenter: parent.verticalCenter
@@ -77,14 +112,16 @@ MainView {
 
                 OptionSelector {
                     id: subredditSelector
-                    model: ["memes", "dankmemes", "wholesomememes", "funny", "ProgrammerHumor", "meirl", "PrequelMemes", "HistoryMemes", "gaming", "AnimeMemes", "memeeconomy", "surrealmemes", "DeepFriedMemes", "okbuddyretard", "teenagers", "me_irl", "ComedyCemetery", "comedyheaven", "bonehurtingjuice", "antimeme", "CrappyDesign", "softwaregore", "techsupportgore", "madlads", "cursedimages", "blursedimages", "hmmm", "CatsStandingUp"]
+                    model: root.categoryNames
                     selectedIndex: 0
-                    width: units.gu(25)
+                    width: units.gu(30)
                     anchors.verticalCenter: parent.verticalCenter
 
                     onSelectedIndexChanged: {
-                        console.log("OptionSelector changed to index:", selectedIndex, "subreddit:", model[selectedIndex]);
-                        root.selectedSubreddit = model[selectedIndex];
+                        var categoryName = root.categoryNames[selectedIndex];
+                        var subredditName = root.categoryMap[categoryName];
+                        console.log("Category changed to:", categoryName, "-> subreddit:", subredditName);
+                        root.selectedSubreddit = subredditName;
                         memeFetcher.fetchMemes();
                     }
                 }
@@ -361,9 +398,18 @@ MainView {
         console.log("App starting up with selectedSubreddit:", root.selectedSubreddit);
 
         // Sync subreddit selector with loaded settings
-        var subreddits = ["memes", "dankmemes", "wholesomememes", "funny", "ProgrammerHumor", "meirl", "PrequelMemes", "HistoryMemes", "gaming", "AnimeMemes", "memeeconomy", "surrealmemes", "DeepFriedMemes", "okbuddyretard", "teenagers", "me_irl", "ComedyCemetery", "comedyheaven", "bonehurtingjuice", "antimeme", "CrappyDesign", "softwaregore", "techsupportgore", "madlads", "cursedimages", "blursedimages", "hmmm", "CatsStandingUp"];
-        var initialIndex = subreddits.indexOf(root.selectedSubreddit);
-        console.log("Found initial index:", initialIndex, "for subreddit:", root.selectedSubreddit);
+        var currentCategoryName = "";
+
+        // Find the category name that matches the current subreddit
+        for (var i = 0; i < root.categoryNames.length; i++) {
+            if (root.categoryMap[root.categoryNames[i]] === root.selectedSubreddit) {
+                currentCategoryName = root.categoryNames[i];
+                break;
+            }
+        }
+
+        var initialIndex = root.categoryNames.indexOf(currentCategoryName);
+        console.log("Found initial category:", currentCategoryName, "at index:", initialIndex);
 
         if (initialIndex !== -1) {
             subredditSelector.selectedIndex = initialIndex;

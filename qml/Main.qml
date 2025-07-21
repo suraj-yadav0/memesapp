@@ -70,15 +70,16 @@ MainView {
                 spacing: units.gu(1)
 
                 Label {
-                    text: "Subreddit:"
+                    text: "Category:"
                     anchors.verticalCenter: parent.verticalCenter
+                    font.bold: true
                 }
 
                 OptionSelector {
                     id: subredditSelector
-                    model: ["memes", "dankmemes", "wholesomememes", "funny", "ProgrammerHumor", "meirl"]
+                    model: ["memes", "dankmemes", "wholesomememes", "funny", "ProgrammerHumor", "meirl", "PrequelMemes", "HistoryMemes", "gaming", "AnimeMemes", "memeeconomy", "surrealmemes", "DeepFriedMemes", "okbuddyretard", "teenagers", "me_irl", "ComedyCemetery", "comedyheaven", "bonehurtingjuice", "antimeme", "CrappyDesign", "softwaregore", "techsupportgore", "madlads", "cursedimages", "blursedimages", "hmmm", "CatsStandingUp"]
                     selectedIndex: 0
-                    width: units.gu(20)
+                    width: units.gu(25)
                     anchors.verticalCenter: parent.verticalCenter
 
                     onSelectedIndexChanged: {
@@ -197,13 +198,13 @@ MainView {
                                 anchors.verticalCenter: parent.verticalCenter
                             }
 
-                            Icon{
+                            Icon {
                                 name: "share"
                                 width: units.gu(2)
                                 height: units.gu(2)
                                 anchors.verticalCenter: parent.verticalCenter
                                 color: root.darkMode ? "#CCCCCC" : "#666666"
-                                
+
                                 MouseArea {
                                     anchors.fill: parent
                                     onClicked: {
@@ -219,7 +220,7 @@ MainView {
                                 height: units.gu(2)
                                 anchors.verticalCenter: parent.verticalCenter
                                 color: root.darkMode ? "#CCCCCC" : "#666666"
-                                
+
                                 MouseArea {
                                     anchors.fill: parent
                                     onClicked: {
@@ -228,8 +229,6 @@ MainView {
                                     }
                                 }
                             }
-
-                       
 
                             // Button {
                             //     text: "Download"
@@ -362,7 +361,7 @@ MainView {
         console.log("App starting up with selectedSubreddit:", root.selectedSubreddit);
 
         // Sync subreddit selector with loaded settings
-        var subreddits = ["memes", "dankmemes", "wholesomememes", "funny", "ProgrammerHumor", "meirl"];
+        var subreddits = ["memes", "dankmemes", "wholesomememes", "funny", "ProgrammerHumor", "meirl", "PrequelMemes", "HistoryMemes", "gaming", "AnimeMemes", "memeeconomy", "surrealmemes", "DeepFriedMemes", "okbuddyretard", "teenagers", "me_irl", "ComedyCemetery", "comedyheaven", "bonehurtingjuice", "antimeme", "CrappyDesign", "softwaregore", "techsupportgore", "madlads", "cursedimages", "blursedimages", "hmmm", "CatsStandingUp"];
         var initialIndex = subreddits.indexOf(root.selectedSubreddit);
         console.log("Found initial index:", initialIndex, "for subreddit:", root.selectedSubreddit);
 

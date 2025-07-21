@@ -1,7 +1,7 @@
 [Desktop Entry]
-_Name=Memes
+_Name=Meme Stream
 Exec=qmlscene %U qml/Main.qml
-Icon=assets/logo.svg
+Icon=qml/images/meme.png
 Terminal=false
 Type=Application
 X-Lomiri-Touch=true

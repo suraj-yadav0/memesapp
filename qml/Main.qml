@@ -77,76 +77,78 @@ MainView {
         header: PageHeader {
             id: pageHeader
             title: "MemeStream"
+            subtitle: "Your daily dose of memes"
+           // backgroundColor: root.darkMode ? "#1A1A1A" : "#F5F5F5"
+           // color: root.darkMode ? "#FFFFFF" : "#000000"
 
-            trailingActionBar {
-                actions: [
-                    Action {
-                        iconName: "reload"
-                        text: "Refresh"
-                        onTriggered: memeFetcher.fetchMemes()
-                    },
-                    Action {
-                        iconName: root.darkMode ? "weather-clear" : "weather-clear-night"
-                        text: root.darkMode ? "Light Mode" : "Dark Mode"
-                        onTriggered: root.darkMode = !root.darkMode
-                    }
-                ]
-            }
+            // Header actions
+           
         }
 
+       
         Column {
             id: mainColumn
             anchors.fill: parent
             anchors.margins: units.gu(1)
-            // Ensure this is above other elements
-            // Subreddit selection
-            Row {
-                z: 1000 // Ensure this is above other elements
-                width: parent.width
-                height: units.gu(5)
-                spacing: units.gu(1)
+            anchors.topMargin: units.gu(2)
 
-                Label {
-                    text: "Category:"
-                    anchors.verticalCenter: parent.verticalCenter
-                    font.bold: true
-                }
+              Row {
+            id: memeSelector
+            anchors.top: pageHeader.bottom
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.margins: units.gu(1)
+            anchors.topMargin: units.gu(1)
+            anchors.bottomMargin: units.gu(1)
+            width: parent.width
+            height: units.gu(15)
+            spacing: units.gu(1)
 
-                OptionSelector {
-                    id: subredditSelector
-                    model: root.categoryNames
-                    selectedIndex: 0
-                    width: units.gu(30)
-                    anchors.verticalCenter: parent.verticalCenter
+            Label {
+                text: "Category:"
+                anchors.verticalCenter: parent.verticalCenter
+                font.bold: true
+            }
 
-                    onSelectedIndexChanged: {
-                        var categoryName = root.categoryNames[selectedIndex];
-                        var subredditName = root.categoryMap[categoryName];
-                        console.log("Category changed to:", categoryName, "-> subreddit:", subredditName);
-                        root.selectedSubreddit = subredditName;
-                        memeFetcher.fetchMemes();
-                    }
-                }
+            OptionSelector {
+                id: subredditSelector
+                model: root.categoryNames
+                selectedIndex: 0
+                width: units.gu(30)
+                anchors.verticalCenter: parent.verticalCenter
 
-                Item {
-                    width: units.gu(2)
-                    height: 1
-                }
-
-                Switch {
-                    id: darkSwitch
-                    checked: root.darkMode
-                    anchors.verticalCenter: parent.verticalCenter
-                    onCheckedChanged: {
-                        root.darkMode = checked;
-                    }
-                }
-
-                Label {
-                    text: "Dark"
-                    anchors.verticalCenter: parent.verticalCenter
+                onSelectedIndexChanged: {
+                    var categoryName = root.categoryNames[selectedIndex];
+                    var subredditName = root.categoryMap[categoryName];
+                    console.log("Category changed to:", categoryName, "-> subreddit:", subredditName);
+                    root.selectedSubreddit = subredditName;
+                    memeFetcher.fetchMemes();
                 }
             }
+
+            Item {
+                width: units.gu(2)
+                height: 1
+            }
+
+            Switch {
+                id: darkSwitch
+                checked: root.darkMode
+                anchors.verticalCenter: parent.verticalCenter
+                onCheckedChanged: {
+                    root.darkMode = checked;
+                }
+            }
+
+            Label {
+                text: "Dark"
+                anchors.verticalCenter: parent.verticalCenter
+            }
+        }
+
+            // anchors.top : pageHeader.bottom // Ensure this is below the header
+            // Ensure this is above other elements
+            // Subreddit selection
 
             // Loading indicator
             ActivityIndicator {
@@ -159,6 +161,7 @@ MainView {
             // Meme list
             ListView {
                 id: memeList
+                anchors.top: memeSelector.bottom
                 width: parent.width
                 height: parent.height - units.gu(6)
                 model: memeModel

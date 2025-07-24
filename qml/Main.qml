@@ -33,9 +33,9 @@ MainView {
     applicationName: 'memesapp.surajyadav'
     automaticOrientation: true
 
-    width: units.gu(50)
+ 
     height: units.gu(70)
-
+  width: units.gu(60)
     property bool darkMode: false
     property string selectedSubreddit: "memes"
     property bool isLoading: false
@@ -108,25 +108,25 @@ MainView {
                 categoryNames: root.categoryNames
                 categoryMap: root.categoryMap
                 selectedSubreddit: root.selectedSubreddit
-                darkMode: root.darkMode
+          //      darkMode: root.darkMode
                 memeFetcher: memeFetcher
 
                 onSelectedSubredditChanged: {
                     root.selectedSubreddit = selectedSubreddit;
                 }
 
-                onDarkModeChanged: {
-                    root.darkMode = darkMode;
-                }
+                // onDarkModeChanged: {
+                //     root.darkMode = darkMode;
+                // }
             }
 
             // Loading indicator
-            // ActivityIndicator {
-            //     id: loadingIndicator
-            //     anchors.horizontalCenter: parent.horizontalCenter
-            //     running: root.isLoading
-            //     visible: root.isLoading
-            // }
+            ActivityIndicator {
+                id: loadingIndicator
+                anchors.horizontalCenter: parent.horizontalCenter
+                running: root.isLoading
+                visible: root.isLoading
+            }
 
             // Meme list
             ListView {
@@ -255,10 +255,10 @@ MainView {
                 }
 
                 // Pull to refresh
-                PullToRefresh {
-                    refreshing: root.isLoading
-                    onRefresh: memeFetcher.fetchMemes()
-                }
+                // PullToRefresh {
+                //     refreshing: root.isLoading
+                //     onRefresh: memeFetcher.fetchMemes()
+                // }
             }
 
             // Empty state

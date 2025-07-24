@@ -8,11 +8,12 @@ Row {
     property var categoryNames: []
     property var categoryMap: ({})
     property string selectedSubreddit: "memes"
-    property bool darkMode: false
+   // property bool darkMode: false
     property var memeFetcher: null
+    property bool isExpanded: false
 
-    spacing: units.gu(1)
-    height: units.gu(5)
+    spacing: units.gu(2)
+    height: isExpanded ? units.gu(12) : units.gu(5)
 
     Label {
         text: "Category:"
@@ -25,7 +26,15 @@ Row {
         model: root.categoryNames
         selectedIndex: 0
         width: units.gu(30)
+        height: root.isExpanded ? units.gu(12) : units.gu(5)
+
         anchors.verticalCenter: parent.verticalCenter
+
+        onDelegateClicked: {
+            console.log("OptionSelector clicked, current isExpanded:", root.isExpanded);
+            root.isExpanded = !root.isExpanded;
+            console.log("OptionSelector new isExpanded:", root.isExpanded);
+        }
 
         onSelectedIndexChanged: {
             if (root.categoryNames.length > 0 && selectedIndex >= 0) {
@@ -36,28 +45,27 @@ Row {
                 if (root.memeFetcher) {
                     root.memeFetcher.fetchMemes();
                 }
+                // Collapse after selection
+                root.isExpanded = false;
             }
         }
     }
 
-    Item {
-        width: units.gu(2)
-        height: 1
-    }
+  
 
-    Switch {
-        id: darkSwitch
-        checked: root.darkMode
-        anchors.verticalCenter: parent.verticalCenter
-        onCheckedChanged: {
-            root.darkMode = checked;
-        }
-    }
+    // Switch {
+    //     id: darkSwitch
+    //     checked: root.darkMode
+    //     anchors.verticalCenter: parent.verticalCenter
+    //     onCheckedChanged: {
+    //         root.darkMode = checked;
+    //     }
+    // }
 
-    Label {
-        text: "Dark"
-        anchors.verticalCenter: parent.verticalCenter
-    }
+    // Label {
+    //     text: "Dark"
+    //     anchors.verticalCenter: parent.verticalCenter
+    // }
 
     // Function to set initial selection
     function setInitialSelection(subreddit) {

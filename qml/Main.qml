@@ -2,7 +2,13 @@
  * Copyright (C) 2025  Suraj Yadav
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it unde            // Meme list
+            ListView {
+                id: memeListView
+                Layout.fillHeight: true
+                Layout.fillWidth: true
+                model: memeModel
+                visible: !root.isLoadingerms of the GNU General Public License as published by
  * the Free Software Foundation; version 3.
  *
  * memesapp is distributed in the hope that it will be useful,
@@ -19,6 +25,7 @@ import QtQuick 2.12
 import Ubuntu.Components 1.3
 import QtQuick.Layouts 1.3
 import Qt.labs.settings 1.0
+import "components"
 
 MainView {
     id: root
@@ -26,7 +33,7 @@ MainView {
     applicationName: 'memesapp.surajyadav'
     automaticOrientation: true
 
-    width: units.gu(60)
+    width: units.gu(50)
     height: units.gu(70)
 
     property bool darkMode: false
@@ -78,92 +85,54 @@ MainView {
             id: pageHeader
             title: "MemeStream"
             subtitle: "Your daily dose of memes"
-           // backgroundColor: root.darkMode ? "#1A1A1A" : "#F5F5F5"
-           // color: root.darkMode ? "#FFFFFF" : "#000000"
+            // backgroundColor: root.darkMode ? "#1A1A1A" : "#F5F5F5"
+            // color: root.darkMode ? "#FFFFFF" : "#000000"
 
             // Header actions
-           
+
         }
 
-       
-        Column {
+        ColumnLayout {
             id: mainColumn
-            anchors.fill: parent
-            anchors.margins: units.gu(1)
-            anchors.topMargin: units.gu(2)
-
-              Row {
-            id: memeSelector
             anchors.top: pageHeader.bottom
             anchors.left: parent.left
             anchors.right: parent.right
+            anchors.bottom: parent.bottom
             anchors.margins: units.gu(1)
-            anchors.topMargin: units.gu(1)
-            anchors.bottomMargin: units.gu(1)
-            width: parent.width
-            height: units.gu(15)
             spacing: units.gu(1)
 
-            Label {
-                text: "Category:"
-                anchors.verticalCenter: parent.verticalCenter
-                font.bold: true
-            }
-
+            // Category selection using custom component
             OptionSelector {
-                id: subredditSelector
-                model: root.categoryNames
-                selectedIndex: 0
-                width: units.gu(30)
-                anchors.verticalCenter: parent.verticalCenter
+                id: categorySelector
+                width: parent.width
+                categoryNames: root.categoryNames
+                categoryMap: root.categoryMap
+                selectedSubreddit: root.selectedSubreddit
+                darkMode: root.darkMode
+                memeFetcher: memeFetcher
 
-                onSelectedIndexChanged: {
-                    var categoryName = root.categoryNames[selectedIndex];
-                    var subredditName = root.categoryMap[categoryName];
-                    console.log("Category changed to:", categoryName, "-> subreddit:", subredditName);
-                    root.selectedSubreddit = subredditName;
-                    memeFetcher.fetchMemes();
+                onSelectedSubredditChanged: {
+                    root.selectedSubreddit = selectedSubreddit;
+                }
+
+                onDarkModeChanged: {
+                    root.darkMode = darkMode;
                 }
             }
-
-            Item {
-                width: units.gu(2)
-                height: 1
-            }
-
-            Switch {
-                id: darkSwitch
-                checked: root.darkMode
-                anchors.verticalCenter: parent.verticalCenter
-                onCheckedChanged: {
-                    root.darkMode = checked;
-                }
-            }
-
-            Label {
-                text: "Dark"
-                anchors.verticalCenter: parent.verticalCenter
-            }
-        }
-
-            // anchors.top : pageHeader.bottom // Ensure this is below the header
-            // Ensure this is above other elements
-            // Subreddit selection
 
             // Loading indicator
-            ActivityIndicator {
-                id: loadingIndicator
-                anchors.horizontalCenter: parent.horizontalCenter
-                running: root.isLoading
-                visible: root.isLoading
-            }
+            // ActivityIndicator {
+            //     id: loadingIndicator
+            //     anchors.horizontalCenter: parent.horizontalCenter
+            //     running: root.isLoading
+            //     visible: root.isLoading
+            // }
 
             // Meme list
             ListView {
                 id: memeList
-                anchors.top: memeSelector.bottom
                 width: parent.width
-                height: parent.height - units.gu(6)
+                height: parent.height - units.gu(6) // Account for selector row and margins
                 model: memeModel
                 visible: !root.isLoading
 
@@ -402,22 +371,8 @@ MainView {
     Component.onCompleted: {
         console.log("App starting up with selectedSubreddit:", root.selectedSubreddit);
 
-        // Find the category name that matches the current subreddit and set selector index
-        var currentCategoryName = "General Memes"; // Default
-        for (var i = 0; i < root.categoryNames.length; i++) {
-            if (root.categoryMap[root.categoryNames[i]] === root.selectedSubreddit) {
-                currentCategoryName = root.categoryNames[i];
-                break;
-            }
-        }
-
-        var initialIndex = root.categoryNames.indexOf(currentCategoryName);
-        console.log("Found initial category:", currentCategoryName, "at index:", initialIndex);
-
-        if (initialIndex !== -1) {
-            subredditSelector.selectedIndex = initialIndex;
-            console.log("Set OptionSelector to index:", initialIndex);
-        }
+        // Set initial selection in the custom OptionSelector
+        categorySelector.setInitialSelection(root.selectedSubreddit);
 
         memeFetcher.fetchMemes();
     }

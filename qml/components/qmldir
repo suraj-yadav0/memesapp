@@ -1,0 +1,4 @@
+module components
+CategorySelector 1.0 CategorySelector.qml
+OptionSelector 1.0 OptionSelector.qml
+MemeDelegate 1.0 MemeDelegate.qml

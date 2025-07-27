@@ -1,0 +1,15 @@
+/home/suraj/memesapp/build_test/CMakeFiles/memesapp.desktop.dir
+/home/suraj/memesapp/build_test/CMakeFiles/memesapp_FILES.dir
+/home/suraj/memesapp/build_test/CMakeFiles/edit_cache.dir
+/home/suraj/memesapp/build_test/CMakeFiles/rebuild_cache.dir
+/home/suraj/memesapp/build_test/CMakeFiles/list_install_components.dir
+/home/suraj/memesapp/build_test/CMakeFiles/install.dir
+/home/suraj/memesapp/build_test/CMakeFiles/install/local.dir
+/home/suraj/memesapp/build_test/CMakeFiles/install/strip.dir
+/home/suraj/memesapp/build_test/po/CMakeFiles/memesapp.surajyadav.pot.dir
+/home/suraj/memesapp/build_test/po/CMakeFiles/edit_cache.dir
+/home/suraj/memesapp/build_test/po/CMakeFiles/rebuild_cache.dir
+/home/suraj/memesapp/build_test/po/CMakeFiles/list_install_components.dir
+/home/suraj/memesapp/build_test/po/CMakeFiles/install.dir
+/home/suraj/memesapp/build_test/po/CMakeFiles/install/local.dir
+/home/suraj/memesapp/build_test/po/CMakeFiles/install/strip.dir

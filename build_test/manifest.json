@@ -1,0 +1,15 @@
+{
+    "name": "memesapp.surajyadav",
+    "description": "A fun memes app for Ubuntu Touch.",
+    "architecture": "amd64",
+    "title": "MemeStream",
+    "hooks": {
+        "memesapp": {
+            "apparmor": "memesapp.apparmor",
+            "desktop":  "memesapp.desktop"
+        }
+    },
+    "version": "1.0.0",
+    "maintainer": "Suraj Yadav <surajyadav200701@gmail.com>",
+    "framework" : "ubuntu-sdk-20.04"
+}

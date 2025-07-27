@@ -78,7 +78,11 @@ MainView {
     // Theme management
     theme.name: root.darkMode ? "Ubuntu.Components.Themes.SuruDark" : "Ubuntu.Components.Themes.Ambiance"
 
-    Page {
+    PageStack {
+        id: pageStack
+        
+        Page {
+            id: mainPage
         title: "MemeStream"
 
         header: PageHeader {
@@ -88,7 +92,31 @@ MainView {
             // backgroundColor: root.darkMode ? "#1A1A1A" : "#F5F5F5"
             // color: root.darkMode ? "#FFFFFF" : "#000000"
 
-            // Header actions
+            trailingActionBar {
+                actions: [
+                    Action {
+                        iconName: "settings"
+                        text: "Settings"
+                        onTriggered: {
+                            var settingsPage = Qt.createComponent("SettingsPage.qml");
+                            if (settingsPage.status === Component.Ready) {
+                                var page = settingsPage.createObject(root, {
+                                    darkMode: root.darkMode,
+                                    selectedSubreddit: root.selectedSubreddit,
+                                    categoryNames: root.categoryNames,
+                                    categoryMap: root.categoryMap,
+                                    memeFetcher: memeFetcher
+                                });
+                                if (page) {
+                                    page.darkModeChanged.connect(handleDarkModeChanged);
+                                    page.selectedSubredditChanged.connect(handleSelectedSubredditChanged);
+                                    pageStack.push(page);
+                                }
+                            }
+                        }
+                    }
+                ]
+            }
 
             
 
@@ -102,25 +130,6 @@ MainView {
             anchors.bottom: parent.bottom
             anchors.margins: units.gu(1)
             spacing: units.gu(1)
-
-            // Category selection using custom component
-            OptionSelector {
-                id: categorySelector
-                width: parent.width
-                categoryNames: root.categoryNames
-                categoryMap: root.categoryMap
-                selectedSubreddit: root.selectedSubreddit
-          //      darkMode: root.darkMode
-                memeFetcher: memeFetcher
-
-                onSelectedSubredditChanged: {
-                    root.selectedSubreddit = selectedSubreddit;
-                }
-
-                // onDarkModeChanged: {
-                //     root.darkMode = darkMode;
-                // }
-            }
 
             // Loading indicator
             ActivityIndicator {
@@ -363,6 +372,7 @@ MainView {
         id: memeModel
     }
 
+    }
     // Settings persistence
     Settings {
         id: settings
@@ -370,11 +380,20 @@ MainView {
         property alias selectedSubreddit: root.selectedSubreddit
     }
 
+    // Handle settings page signals
+    function handleDarkModeChanged(darkMode) {
+        root.darkMode = darkMode;
+    }
+    
+    function handleSelectedSubredditChanged(subreddit) {
+        root.selectedSubreddit = subreddit;
+        memeFetcher.fetchMemes();
+    }
+
     Component.onCompleted: {
         console.log("App starting up with selectedSubreddit:", root.selectedSubreddit);
 
         // Set initial selection in the custom OptionSelector
-        categorySelector.setInitialSelection(root.selectedSubreddit);
 
         memeFetcher.fetchMemes();
     }

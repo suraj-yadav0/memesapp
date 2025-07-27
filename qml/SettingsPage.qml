@@ -49,142 +49,98 @@ Page {
         }
     }
 
-    Flickable {
+    // Simple test content first
+    Column {
         anchors {
             top: pageHeader.bottom
             left: parent.left
             right: parent.right
             bottom: parent.bottom
-            margins: units.gu(1)
+            margins: units.gu(2)
         }
-        contentHeight: contentColumn.height
+        spacing: units.gu(2)
 
-        Column {
-            id: contentColumn
+        Label {
+            text: "Settings Page"
+            font.bold: true
+            fontSize: "x-large"
+            color: settingsPage.darkMode ? "#FFFFFF" : "#000000"
+        }
+
+        Label {
+            text: "Dark Mode: " + settingsPage.darkMode
+            color: settingsPage.darkMode ? "#FFFFFF" : "#000000"
+        }
+
+        Label {
+            text: "Selected Subreddit: " + settingsPage.selectedSubreddit
+            color: settingsPage.darkMode ? "#FFFFFF" : "#000000"
+        }
+
+        Label {
+            text: "Category Names Count: " + settingsPage.categoryNames.length
+            color: settingsPage.darkMode ? "#FFFFFF" : "#000000"
+        }
+
+        // Theme Settings Section
+        UbuntuShape {
             width: parent.width
-            spacing: units.gu(2)
+            height: units.gu(8)
+            backgroundColor: settingsPage.darkMode ? "#2D2D2D" : "#F0F0F0"
 
-            // Theme Settings Section
-            UbuntuShape {
-                width: parent.width
-                height: themeColumn.height + units.gu(2)
-                backgroundColor: settingsPage.darkMode ? "#2D2D2D" : "#FFFFFF"
+            Row {
+                anchors.centerIn: parent
+                spacing: units.gu(2)
 
-                Column {
-                    id: themeColumn
-                    anchors {
-                        left: parent.left
-                        right: parent.right
-                        top: parent.top
-                        margins: units.gu(1)
-                    }
-                    spacing: units.gu(1)
+                Label {
+                    text: "Dark Mode"
+                    anchors.verticalCenter: parent.verticalCenter
+                    color: settingsPage.darkMode ? "#FFFFFF" : "#000000"
+                }
 
-                    Label {
-                        text: "Theme"
-                        font.bold: true
-                        fontSize: "large"
-                        color: settingsPage.darkMode ? "#FFFFFF" : "#000000"
-                    }
-
-                    Row {
-                        spacing: units.gu(2)
-
-                        Label {
-                            text: "Dark Mode"
-                            anchors.verticalCenter: parent.verticalCenter
-                            color: settingsPage.darkMode ? "#FFFFFF" : "#000000"
-                        }
-
-                        Switch {
-                            id: darkModeSwitch
-                            checked: settingsPage.darkMode
-                            onCheckedChanged: {
-                                settingsPage.darkMode = checked;
-                                settingsPage.darkModeChanged(checked);
-                            }
-                        }
+                Switch {
+                    id: darkModeSwitch
+                    checked: settingsPage.darkMode
+                    onCheckedChanged: {
+                        console.log("Dark mode changed to:", checked);
+                        settingsPage.darkMode = checked;
+                        settingsPage.darkModeChanged(checked);
                     }
                 }
             }
+        }
 
-            // Category Settings Section
-            UbuntuShape {
-                width: parent.width
-                height: categoryColumn.height + units.gu(2)
-                backgroundColor: settingsPage.darkMode ? "#2D2D2D" : "#FFFFFF"
+        // Category Settings Section
+        UbuntuShape {
+            width: parent.width
+            height: units.gu(12)
+            backgroundColor: settingsPage.darkMode ? "#2D2D2D" : "#F0F0F0"
 
-                Column {
-                    id: categoryColumn
-                    anchors {
-                        left: parent.left
-                        right: parent.right
-                        top: parent.top
-                        margins: units.gu(1)
-                    }
-                    spacing: units.gu(1)
-
-                    Label {
-                        text: "Default Category"
-                        font.bold: true
-                        fontSize: "large"
-                        color: settingsPage.darkMode ? "#FFFFFF" : "#000000"
-                    }
-
-                    OptionSelector {
-                        id: categorySelector
-                        width: parent.width
-                        categoryNames: settingsPage.categoryNames
-                        categoryMap: settingsPage.categoryMap
-                        selectedSubreddit: settingsPage.selectedSubreddit
-                        memeFetcher: settingsPage.memeFetcher
-
-                        onSelectedSubredditChanged: {
-                            settingsPage.selectedSubreddit = selectedSubreddit;
-                            settingsPage.selectedSubredditChanged(selectedSubreddit);
-                        }
-                    }
+            Column {
+                anchors {
+                    fill: parent
+                    margins: units.gu(1)
                 }
-            }
+                spacing: units.gu(1)
 
-            // About Section
-            UbuntuShape {
-                width: parent.width
-                height: aboutColumn.height + units.gu(2)
-                backgroundColor: settingsPage.darkMode ? "#2D2D2D" : "#FFFFFF"
+                Label {
+                    text: "Default Category"
+                    font.bold: true
+                    color: settingsPage.darkMode ? "#FFFFFF" : "#000000"
+                }
 
-                Column {
-                    id: aboutColumn
-                    anchors {
-                        left: parent.left
-                        right: parent.right
-                        top: parent.top
-                        margins: units.gu(1)
-                    }
-                    spacing: units.gu(1)
+                OptionSelector {
+                    id: categorySelector
+                    width: parent.width
+                    categoryNames: settingsPage.categoryNames
+                    categoryMap: settingsPage.categoryMap
+                    selectedSubreddit: settingsPage.selectedSubreddit
+                    memeFetcher: settingsPage.memeFetcher
 
-                    Label {
-                        text: "About"
-                        font.bold: true
-                        fontSize: "large"
-                        color: settingsPage.darkMode ? "#FFFFFF" : "#000000"
-                    }
-
-                    Label {
-                        text: "MemeStream v1.0.0"
-                        color: settingsPage.darkMode ? "#CCCCCC" : "#666666"
-                    }
-
-                    Label {
-                        text: "Your daily dose of memes from Reddit"
-                        wrapMode: Text.WordWrap
-                        width: parent.width
-                        color: settingsPage.darkMode ? "#CCCCCC" : "#666666"
-                    }
-
-                    Label {
-                        text: "© 2025 Suraj Yadav"
-                        color: settingsPage.darkMode ? "#CCCCCC" : "#666666"
+                    onSelectedSubredditChanged: {
+                        console.log("Selected subreddit changed to:", selectedSubreddit);
+                        settingsPage.selectedSubreddit = selectedSubreddit;
+                        settingsPage.selectedSubredditChanged(selectedSubreddit);
                     }
                 }
             }
@@ -192,7 +148,9 @@ Page {
     }
 
     Component.onCompleted: {
-        console.log("SettingsPage loaded with darkMode:", settingsPage.darkMode);
+        console.log("SettingsPage Component.onCompleted called");
+        console.log("SettingsPage darkMode:", settingsPage.darkMode);
+        console.log("SettingsPage selectedSubreddit:", settingsPage.selectedSubreddit);
         console.log("SettingsPage categoryNames length:", settingsPage.categoryNames.length);
         
         // Set initial selection in the OptionSelector

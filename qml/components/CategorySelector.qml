@@ -8,7 +8,7 @@ Row {
     property var categoryNames: []
     property var categoryMap: ({})
     property string selectedSubreddit: "memes"
-    // property bool darkMode: false
+   // property bool darkMode: false
     property var memeFetcher: null
     property bool isExpanded: false
 
@@ -53,6 +53,8 @@ Row {
             }
         }
     }
+
+  
 
     // Switch {
     //     id: darkSwitch

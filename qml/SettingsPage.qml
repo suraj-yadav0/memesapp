@@ -30,8 +30,7 @@ Page {
     property var categoryMap: ({})
     property var memeFetcher: null
 
-    signal darkModeChanged(bool darkMode)
-    signal selectedSubredditChanged(string subreddit)
+    // Note: darkModeChanged and selectedSubredditChanged signals are automatically generated for the properties
 
     header: PageHeader {
         id: pageHeader
@@ -104,7 +103,7 @@ Page {
                     onCheckedChanged: {
                         console.log("Dark mode changed to:", checked);
                         settingsPage.darkMode = checked;
-                        settingsPage.darkModeChanged(checked);
+                        // darkModeChanged signal is automatically emitted when property changes
                     }
                 }
             }
@@ -129,7 +128,7 @@ Page {
                     color: settingsPage.darkMode ? "#FFFFFF" : "#000000"
                 }
 
-                OptionSelector {
+                CategorySelector {
                     id: categorySelector
                     width: parent.width
                     categoryNames: settingsPage.categoryNames
@@ -140,7 +139,7 @@ Page {
                     onSelectedSubredditChanged: {
                         console.log("Selected subreddit changed to:", selectedSubreddit);
                         settingsPage.selectedSubreddit = selectedSubreddit;
-                        settingsPage.selectedSubredditChanged(selectedSubreddit);
+                        // selectedSubredditChanged signal is automatically emitted when property changes
                     }
                 }
             }
@@ -152,8 +151,8 @@ Page {
         console.log("SettingsPage darkMode:", settingsPage.darkMode);
         console.log("SettingsPage selectedSubreddit:", settingsPage.selectedSubreddit);
         console.log("SettingsPage categoryNames length:", settingsPage.categoryNames.length);
-        
-        // Set initial selection in the OptionSelector
+
+        // Set initial selection in the CategorySelector
         if (categorySelector && settingsPage.categoryNames.length > 0) {
             categorySelector.setInitialSelection(settingsPage.selectedSubreddit);
         }

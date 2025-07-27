@@ -1,3 +1,0 @@
-# Hashes of file build rules.
-aa003198ab1a626a1784b570bd24de24 CMakeFiles/memesapp.desktop
-4c74f0645e029ed2f6948703e624e8f9 po/CMakeFiles/memesapp.surajyadav.pot

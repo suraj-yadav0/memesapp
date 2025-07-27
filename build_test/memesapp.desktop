@@ -1,7 +1,0 @@
-[Desktop Entry]
-Name=Meme Stream
-Exec=qmlscene %U qml/Main.qml
-Icon=qml/images/meme.png
-Terminal=false
-Type=Application
-X-Lomiri-Touch=true

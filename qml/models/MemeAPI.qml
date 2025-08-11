@@ -28,7 +28,7 @@ QtObject {
     // Properties
     property bool isLoading: false
     property string userAgent: "UbuntuTouchMemeApp/1.0"
-    property int defaultLimit: 10
+    property int defaultLimit: 50
 
     // Private properties
     property var currentXhr: null

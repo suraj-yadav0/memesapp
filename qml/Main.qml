@@ -131,7 +131,7 @@ ApplicationWindow {
             title: "MemeStream"
 
             header: PageHeader {
-                title: i18n.tr("Time Management")
+                title: i18n.tr("M E M E S T R E A M")
                 StyleHints {
                     backgroundColor: theme.name === "Ubuntu.Components.Themes.SuruDark" ? "black" : "#1c355e"
                     foregroundColor: theme.name === "Ubuntu.Components.Themes.SuruDark" ? "#fac34d" : "white"
@@ -216,7 +216,7 @@ ApplicationWindow {
                     ComboBox {
                         id: categoryCombo
                         model: root.categoryNames
-                        Layout.preferredWidth: 200
+                        Layout.preferredWidth: units.gu(25)
 
                         Component.onCompleted: {
                             // Set initial selection based on current subreddit
@@ -249,7 +249,7 @@ ApplicationWindow {
                     visible: !memeService.isLoading
                     spacing: units.gu(1.5)
                     delegate: Rectangle {
-                        width: ListView.view ? ListView.view.width : 300
+                        width: ListView.view ? ListView.view.width : units.gu(37.5)
                         height: delegateColumn.height + 20
                         // color: root.darkMode ? "#2D2D2D" : "#FFFFFF"
                         //  border.color: root.darkMode ? "#444444" : "#CCCCCC"
@@ -302,29 +302,28 @@ ApplicationWindow {
                             }
 
                             Row {
-                                spacing: 20
+                                spacing: units.gu(2.5)
 
                                 Text {
                                     text: "👍 " + (model.upvotes || 0)
-                                    font.pixelSize: 12
+                                    
                                     //
                                 }
 
                                 Text {
                                     text: "💬 " + (model.comments || 0)
-                                    font.pixelSize: 12
+                                   
                                     //
                                 }
 
                                 Text {
                                     text: "r/" + (model.subreddit || "")
-                                    font.pixelSize: 12
-                                    //
+                                  //
                                 }
 
                                 Text {
                                     text: "📤"
-                                    font.pixelSize: 12
+                                    font.pixelSize: units.gu(1.5)
                                     //
 
                                     MouseArea {
@@ -337,7 +336,7 @@ ApplicationWindow {
 
                                 Text {
                                     text: "💾"
-                                    font.pixelSize: 12
+                                    font.pixelSize: units.gu(1.5)
                                     //
 
                                     MouseArea {
@@ -359,14 +358,14 @@ ApplicationWindow {
                     spacing: units.gu(1.5)
                     Text {
                         text: "No memes found"
-                        font.pixelSize: 16
+                        font.pixelSize: units.gu(2)
                         anchors.horizontalCenter: parent.horizontalCenter
                         //  //
                     }
 
                     Text {
                         text: "Try selecting a different category or refresh"
-                        font.pixelSize: 12
+                     //   spacing : units.gu(1.5)
                         anchors.horizontalCenter: parent.horizontalCenter
                         //    //
                     }
@@ -385,18 +384,18 @@ ApplicationWindow {
                     spacing: units.gu(1.5)
                     Text {
                         text: "Error loading memes"
-                        font.pixelSize: 16
+                        font.pixelSize: units.gu(2)
                         anchors.horizontalCenter: parent.horizontalCenter
                         //  color: "red"
                     }
 
                     Text {
                         text: memeService.lastError
-                        font.pixelSize: 12
+                        font.pixelSize: units.gu(1.5)
                         anchors.horizontalCenter: parent.horizontalCenter
                         //    //
                         wrapMode: Text.WordWrap
-                        width: 300
+                        width: units.gu(40)
                         horizontalAlignment: Text.AlignHCenter
                     }
 
@@ -479,18 +478,10 @@ ApplicationWindow {
     }
 
     // Private functions
-    function openSettingsPage() {
-        console.log("Main: Opening settings page");
-        // For now, just toggle dark mode as a simple settings action
-        root.darkMode = !root.darkMode;
-        console.log("Main: Dark mode toggled to:", root.darkMode);
-    }
+
 
     // Signal handlers
-    function handleDarkModeChanged(darkMode) {
-        console.log("Main: Dark mode changed to:", darkMode);
-        root.darkMode = darkMode;
-    }
+
 
     function handleSelectedSubredditChanged(subreddit) {
         console.log("Main: Selected subreddit changed to:", subreddit);

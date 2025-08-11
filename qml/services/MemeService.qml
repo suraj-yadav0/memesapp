@@ -79,7 +79,7 @@ QtObject {
 
     function fetchMemes(subreddit, limit) {
         subreddit = subreddit || currentSubreddit;
-        limit = limit || 10;
+        limit = limit || 50;
 
         if (subreddit !== currentSubreddit) {
             currentSubreddit = subreddit;

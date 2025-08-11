@@ -33,6 +33,8 @@ ApplicationWindow {
     // Application properties
     property bool darkMode: false
     property string selectedSubreddit: "memes"
+    // Fullscreen image viewer source
+    property string dialogImageSource: ""
 
     // Category mapping for better user experience
     property var categoryMap: ({
@@ -50,7 +52,6 @@ ApplicationWindow {
 
     // Array of category names for the OptionSelector
     property var categoryNames: ["General Memes", "Dank Memes", "Wholesome Memes", "Funny", "Programming Humor", "Me IRL", "Star Wars Memes", "History Memes", "Gaming Memes", "Anime Memes"]
-
 
     // Model
     MemeModel {
@@ -129,16 +130,14 @@ ApplicationWindow {
         Page {
             title: "MemeStream"
 
-             header: PageHeader {
-        title: i18n.tr("Time Management")
-        StyleHints {
-            backgroundColor:  theme.name === "Ubuntu.Components.Themes.SuruDark" ? "black" : "#1c355e"
-		foregroundColor: theme.name === "Ubuntu.Components.Themes.SuruDark" ? "#fac34d" : "white"
-	}
+            header: PageHeader {
+                title: i18n.tr("Time Management")
+                StyleHints {
+                    backgroundColor: theme.name === "Ubuntu.Components.Themes.SuruDark" ? "black" : "#1c355e"
+                    foregroundColor: theme.name === "Ubuntu.Components.Themes.SuruDark" ? "#fac34d" : "white"
+                }
 
-
-
-         trailingActionBar.actions: [
+                trailingActionBar.actions: [
                     Action {
                         iconName: theme.name === "Ubuntu.Components.Themes.SuruDark" ? "weather-clear-night-symbolic" : "weather-clear-symbolic"
                         text: theme.name === "Ubuntu.Components.Themes.SuruDark" ? i18n.tr("Light Mode") : i18n.tr("Dark Mode")
@@ -147,8 +146,8 @@ ApplicationWindow {
                         }
                     }
                 ]
-    }
-            
+            }
+
             // ToolBar {
             //     RowLayout {
             //         anchors.fill: parent
@@ -183,7 +182,7 @@ ApplicationWindow {
                 anchors.fill: parent
                 anchors.margins: units.gu(2)
                 anchors.topMargin: units.gu(4)
-                spacing: units.gu(1.5)    
+                spacing: units.gu(1.5)
 
                 // Loading indicator
                 BusyIndicator {
@@ -197,7 +196,7 @@ ApplicationWindow {
                     text: "r/" + root.selectedSubreddit
                     font.bold: true
                     horizontalAlignment: Text.AlignHCenter
-                  // //
+                    // //
                     visible: !memeService.isLoading && !memeService.isModelEmpty()
                     Layout.alignment: Qt.AlignHCenter
                 }
@@ -205,12 +204,12 @@ ApplicationWindow {
                 // Category Selector
                 RowLayout {
                     Layout.alignment: Qt.AlignHCenter
-                   spacing : units.gu(1.5)       
-                                visible: !memeService.isLoading
+                    spacing: units.gu(1.5)
+                    visible: !memeService.isLoading
 
                     Text {
                         text: "Category:"
-                      //  //
+                        //  //
                         font.bold: true
                     }
 
@@ -248,12 +247,12 @@ ApplicationWindow {
                     Layout.fillHeight: true
                     model: memeModel
                     visible: !memeService.isLoading
-                   spacing : units.gu(1.5)
+                    spacing: units.gu(1.5)
                     delegate: Rectangle {
                         width: ListView.view ? ListView.view.width : 300
                         height: delegateColumn.height + 20
-                       // color: root.darkMode ? "#2D2D2D" : "#FFFFFF"
-                      //  border.color: root.darkMode ? "#444444" : "#CCCCCC"
+                        // color: root.darkMode ? "#2D2D2D" : "#FFFFFF"
+                        //  border.color: root.darkMode ? "#444444" : "#CCCCCC"
                         border.width: 1
                         radius: 8
 
@@ -270,7 +269,7 @@ ApplicationWindow {
                                 font.bold: true
                                 wrapMode: Text.WordWrap
                                 width: parent.width
-                              //  //
+                                //  //
                             }
 
                             Image {
@@ -286,6 +285,19 @@ ApplicationWindow {
                                         console.log("Failed to load image:", model.image);
                                         visible = false;
                                     }
+                                }
+
+                                // Open fullscreen viewer when clicked
+                                MouseArea {
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    onClicked: {
+                                        if (model.image) {
+                                            root.dialogImageSource = model.image;
+                                            attachmentDialog.open();
+                                        }
+                                    }
+                                    cursorShape: Qt.PointingHandCursor
                                 }
                             }
 
@@ -344,19 +356,19 @@ ApplicationWindow {
                 Column {
                     Layout.alignment: Qt.AlignCenter
                     visible: memeService.isModelEmpty() && !memeService.isLoading
-                   spacing : units.gu(1.5)
+                    spacing: units.gu(1.5)
                     Text {
                         text: "No memes found"
                         font.pixelSize: 16
                         anchors.horizontalCenter: parent.horizontalCenter
-                      //  //
+                        //  //
                     }
 
                     Text {
                         text: "Try selecting a different category or refresh"
                         font.pixelSize: 12
                         anchors.horizontalCenter: parent.horizontalCenter
-                    //    //
+                        //    //
                     }
 
                     Button {
@@ -370,19 +382,19 @@ ApplicationWindow {
                 Column {
                     Layout.alignment: Qt.AlignCenter
                     visible: memeService.lastError !== "" && !memeService.isLoading
-                   spacing : units.gu(1.5)
+                    spacing: units.gu(1.5)
                     Text {
                         text: "Error loading memes"
                         font.pixelSize: 16
                         anchors.horizontalCenter: parent.horizontalCenter
-                      //  color: "red"
+                        //  color: "red"
                     }
 
                     Text {
                         text: memeService.lastError
                         font.pixelSize: 12
                         anchors.horizontalCenter: parent.horizontalCenter
-                    //    //
+                        //    //
                         wrapMode: Text.WordWrap
                         width: 300
                         horizontalAlignment: Text.AlignHCenter
@@ -403,6 +415,67 @@ ApplicationWindow {
         id: settings
         property alias darkMode: root.darkMode
         property alias selectedSubreddit: root.selectedSubreddit
+    }
+
+    // Fullscreen image viewer dialog
+    Dialog {
+        id: attachmentDialog
+        modal: true
+        focus: true
+        padding: 0
+        // Make it fullscreen
+        x: 0
+        y: 0
+        width: root.width
+        height: root.height
+        background: Rectangle {
+            color: "transparent"
+        }
+
+        Rectangle {
+            anchors.fill: parent
+            color: "#000000CC" // slightly darker overlay
+
+            Image {
+                id: fullImage
+                anchors.centerIn: parent
+                width: parent.width * 0.94
+                height: parent.height * 0.94
+                fillMode: Image.PreserveAspectFit
+                source: root.dialogImageSource
+                cache: true
+                smooth: true
+            }
+
+            // Consume clicks on the image so outer area can differentiate
+            MouseArea {
+                anchors.fill: fullImage
+                onClicked: /* no-op to prevent propagation so image click doesn't close */{}
+                acceptedButtons: Qt.AllButtons
+            }
+
+            // Close button
+            Button {
+                text: "\u2715" // X
+                anchors.top: parent.top
+                anchors.right: parent.right
+                anchors.margins: units.gu(1)
+                width: units.gu(4)
+                height: units.gu(4)
+                onClicked: attachmentDialog.close()
+            }
+
+            // Click outside image also closes
+            MouseArea {
+                anchors.fill: parent
+                onClicked: attachmentDialog.close()
+                hoverEnabled: true
+                propagateComposedEvents: true
+            }
+        }
+
+        Keys.onEscapePressed: attachmentDialog.close()
+        onClosed: root.dialogImageSource = ""
     }
 
     // Private functions

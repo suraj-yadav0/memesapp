@@ -51,11 +51,6 @@ ApplicationWindow {
     // Array of category names for the OptionSelector
     property var categoryNames: ["General Memes", "Dank Memes", "Wholesome Memes", "Funny", "Programming Humor", "Me IRL", "Star Wars Memes", "History Memes", "Gaming Memes", "Anime Memes"]
 
-    // Theme management (simplified)
-    // property color backgroundColor: root.darkMode ? "#1A1A1A" : "#FFFFFF"
-    // property color textColor: root.darkMode ? "#FFFFFF" : "#000000"
-
-   // color: backgroundColor
 
     // Model
     MemeModel {
@@ -210,8 +205,8 @@ ApplicationWindow {
                 // Category Selector
                 RowLayout {
                     Layout.alignment: Qt.AlignHCenter
-                    spacing: 10
-                    visible: !memeService.isLoading
+                   spacing : units.gu(1.5)       
+                                visible: !memeService.isLoading
 
                     Text {
                         text: "Category:"
@@ -253,8 +248,7 @@ ApplicationWindow {
                     Layout.fillHeight: true
                     model: memeModel
                     visible: !memeService.isLoading
-                    spacing: 10
-
+                   spacing : units.gu(1.5)
                     delegate: Rectangle {
                         width: ListView.view ? ListView.view.width : 300
                         height: delegateColumn.height + 20
@@ -350,8 +344,7 @@ ApplicationWindow {
                 Column {
                     Layout.alignment: Qt.AlignCenter
                     visible: memeService.isModelEmpty() && !memeService.isLoading
-                    spacing: 10
-
+                   spacing : units.gu(1.5)
                     Text {
                         text: "No memes found"
                         font.pixelSize: 16
@@ -377,8 +370,7 @@ ApplicationWindow {
                 Column {
                     Layout.alignment: Qt.AlignCenter
                     visible: memeService.lastError !== "" && !memeService.isLoading
-                    spacing: 10
-
+                   spacing : units.gu(1.5)
                     Text {
                         text: "Error loading memes"
                         font.pixelSize: 16

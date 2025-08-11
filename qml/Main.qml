@@ -17,6 +17,7 @@
 import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.3
+import Lomiri.Components 1.3
 import Qt.labs.settings 1.0
 import "components"
 import "models"
@@ -51,10 +52,10 @@ ApplicationWindow {
     property var categoryNames: ["General Memes", "Dank Memes", "Wholesome Memes", "Funny", "Programming Humor", "Me IRL", "Star Wars Memes", "History Memes", "Gaming Memes", "Anime Memes"]
 
     // Theme management (simplified)
-    property color backgroundColor: root.darkMode ? "#1A1A1A" : "#FFFFFF"
-    property color textColor: root.darkMode ? "#FFFFFF" : "#000000"
+    // property color backgroundColor: root.darkMode ? "#1A1A1A" : "#FFFFFF"
+    // property color textColor: root.darkMode ? "#FFFFFF" : "#000000"
 
-    color: backgroundColor
+   // color: backgroundColor
 
     // Model
     MemeModel {
@@ -133,40 +134,61 @@ ApplicationWindow {
         Page {
             title: "MemeStream"
 
-            header: ToolBar {
-                RowLayout {
-                    anchors.fill: parent
+             header: PageHeader {
+        title: i18n.tr("Time Management")
+        StyleHints {
+            backgroundColor:  theme.name === "Ubuntu.Components.Themes.SuruDark" ? "black" : "#1c355e"
+		foregroundColor: theme.name === "Ubuntu.Components.Themes.SuruDark" ? "#fac34d" : "white"
+	}
 
-                    Label {
-                        text: "MemeStream"
-                        font.bold: true
-                        font.pixelSize: 18
-                        color: root.textColor
-                        Layout.fillWidth: true
-                    }
 
-                    ToolButton {
-                        text: "⟳"
-                        onClicked: {
-                            console.log("Main: Refresh action triggered");
-                            memeService.refreshMemes();
+
+         trailingActionBar.actions: [
+                    Action {
+                        iconName: theme.name === "Ubuntu.Components.Themes.SuruDark" ? "weather-clear-night-symbolic" : "weather-clear-symbolic"
+                        text: theme.name === "Ubuntu.Components.Themes.SuruDark" ? i18n.tr("Light Mode") : i18n.tr("Dark Mode")
+                        onTriggered: {
+                            Theme.name = theme.name === "Ubuntu.Components.Themes.SuruDark" ? "Ubuntu.Components.Themes.Ambiance" : "Ubuntu.Components.Themes.SuruDark";
                         }
                     }
+                ]
+    }
+            
+            // ToolBar {
+            //     RowLayout {
+            //         anchors.fill: parent
 
-                    ToolButton {
-                        text: "⚙"
-                        onClicked: {
-                            console.log("Main: Settings action triggered");
-                            openSettingsPage();
-                        }
-                    }
-                }
-            }
+            //         Label {
+            //             text: "MemeStream"
+            //             font.bold: true
+            //             font.pixelSize: 18
+            //          //   //
+            //             Layout.fillWidth: true
+            //         }
+
+            //         ToolButton {
+            //             text: "⟳"
+            //             onClicked: {
+            //                 console.log("Main: Refresh action triggered");
+            //                 memeService.refreshMemes();
+            //             }
+            //         }
+
+            //         ToolButton {
+            //             text: "⚙"
+            //             onClicked: {
+            //                 console.log("Main: Settings action triggered");
+            //                 openSettingsPage();
+            //             }
+            //         }
+            //     }
+            // }
 
             ColumnLayout {
                 anchors.fill: parent
-                anchors.margins: 10
-                spacing: 10
+                anchors.margins: units.gu(2)
+                anchors.topMargin: units.gu(4)
+                spacing: units.gu(1.5)    
 
                 // Loading indicator
                 BusyIndicator {
@@ -180,7 +202,7 @@ ApplicationWindow {
                     text: "r/" + root.selectedSubreddit
                     font.bold: true
                     horizontalAlignment: Text.AlignHCenter
-                    color: root.textColor
+                  // //
                     visible: !memeService.isLoading && !memeService.isModelEmpty()
                     Layout.alignment: Qt.AlignHCenter
                 }
@@ -193,7 +215,7 @@ ApplicationWindow {
 
                     Text {
                         text: "Category:"
-                        color: root.textColor
+                      //  //
                         font.bold: true
                     }
 
@@ -236,8 +258,8 @@ ApplicationWindow {
                     delegate: Rectangle {
                         width: ListView.view ? ListView.view.width : 300
                         height: delegateColumn.height + 20
-                        color: root.darkMode ? "#2D2D2D" : "#FFFFFF"
-                        border.color: root.darkMode ? "#444444" : "#CCCCCC"
+                       // color: root.darkMode ? "#2D2D2D" : "#FFFFFF"
+                      //  border.color: root.darkMode ? "#444444" : "#CCCCCC"
                         border.width: 1
                         radius: 8
 
@@ -254,7 +276,7 @@ ApplicationWindow {
                                 font.bold: true
                                 wrapMode: Text.WordWrap
                                 width: parent.width
-                                color: root.textColor
+                              //  //
                             }
 
                             Image {
@@ -279,25 +301,25 @@ ApplicationWindow {
                                 Text {
                                     text: "👍 " + (model.upvotes || 0)
                                     font.pixelSize: 12
-                                    color: root.textColor
+                                    //
                                 }
 
                                 Text {
                                     text: "💬 " + (model.comments || 0)
                                     font.pixelSize: 12
-                                    color: root.textColor
+                                    //
                                 }
 
                                 Text {
                                     text: "r/" + (model.subreddit || "")
                                     font.pixelSize: 12
-                                    color: root.textColor
+                                    //
                                 }
 
                                 Text {
                                     text: "📤"
                                     font.pixelSize: 12
-                                    color: root.textColor
+                                    //
 
                                     MouseArea {
                                         anchors.fill: parent
@@ -310,7 +332,7 @@ ApplicationWindow {
                                 Text {
                                     text: "💾"
                                     font.pixelSize: 12
-                                    color: root.textColor
+                                    //
 
                                     MouseArea {
                                         anchors.fill: parent
@@ -334,14 +356,14 @@ ApplicationWindow {
                         text: "No memes found"
                         font.pixelSize: 16
                         anchors.horizontalCenter: parent.horizontalCenter
-                        color: root.textColor
+                      //  //
                     }
 
                     Text {
                         text: "Try selecting a different category or refresh"
                         font.pixelSize: 12
                         anchors.horizontalCenter: parent.horizontalCenter
-                        color: root.textColor
+                    //    //
                     }
 
                     Button {
@@ -361,14 +383,14 @@ ApplicationWindow {
                         text: "Error loading memes"
                         font.pixelSize: 16
                         anchors.horizontalCenter: parent.horizontalCenter
-                        color: "red"
+                      //  color: "red"
                     }
 
                     Text {
                         text: memeService.lastError
                         font.pixelSize: 12
                         anchors.horizontalCenter: parent.horizontalCenter
-                        color: root.textColor
+                    //    //
                         wrapMode: Text.WordWrap
                         width: 300
                         horizontalAlignment: Text.AlignHCenter

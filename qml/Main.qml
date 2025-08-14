@@ -33,6 +33,7 @@ ApplicationWindow {
     // Application properties
     property bool darkMode: false
     property string selectedSubreddit: "memes"
+    property bool useCustomSubreddit: false
     // Fullscreen image viewer source
     property string dialogImageSource: ""
 
@@ -148,36 +149,6 @@ ApplicationWindow {
                 ]
             }
 
-            // ToolBar {
-            //     RowLayout {
-            //         anchors.fill: parent
-
-            //         Label {
-            //             text: "MemeStream"
-            //             font.bold: true
-            //             font.pixelSize: 18
-            //          //   //
-            //             Layout.fillWidth: true
-            //         }
-
-            //         ToolButton {
-            //             text: "⟳"
-            //             onClicked: {
-            //                 console.log("Main: Refresh action triggered");
-            //                 memeService.refreshMemes();
-            //             }
-            //         }
-
-            //         ToolButton {
-            //             text: "⚙"
-            //             onClicked: {
-            //                 console.log("Main: Settings action triggered");
-            //                 openSettingsPage();
-            //             }
-            //         }
-            //     }
-            // }
-
             ColumnLayout {
                 anchors.fill: parent
                 anchors.margins: units.gu(2)
@@ -196,45 +167,144 @@ ApplicationWindow {
                     text: "r/" + root.selectedSubreddit
                     font.bold: true
                     horizontalAlignment: Text.AlignHCenter
-                    // //
                     visible: !memeService.isLoading && !memeService.isModelEmpty()
                     Layout.alignment: Qt.AlignHCenter
                 }
 
-                // Category Selector
-                RowLayout {
+                // Subreddit selection section
+                Column {
                     Layout.alignment: Qt.AlignHCenter
-                    spacing: units.gu(1.5)
+                    spacing: units.gu(1)
                     visible: !memeService.isLoading
 
-                    Text {
-                        text: "Category:"
-                        //  //
-                        font.bold: true
-                    }
+                    // Mode selector (Category vs Custom)
+                    Row {
+                        spacing: units.gu(2)
+                        anchors.horizontalCenter: parent.horizontalCenter
 
-                    ComboBox {
-                        id: categoryCombo
-                        model: root.categoryNames
-                        Layout.preferredWidth: units.gu(25)
-
-                        Component.onCompleted: {
-                            // Set initial selection based on current subreddit
-                            for (var i = 0; i < root.categoryNames.length; i++) {
-                                if (root.categoryMap[root.categoryNames[i]] === root.selectedSubreddit) {
-                                    currentIndex = i;
-                                    break;
+                        RadioButton {
+                            id: categoryModeRadio
+                            text: "Categories"
+                            checked: !root.useCustomSubreddit
+                            onCheckedChanged: {
+                                if (checked) {
+                                    root.useCustomSubreddit = false;
+                                    // Reset to current category if available
+                                    if (categoryCombo.currentIndex >= 0) {
+                                        var categoryName = root.categoryNames[categoryCombo.currentIndex];
+                                        var subreddit = root.categoryMap[categoryName];
+                                        if (subreddit !== root.selectedSubreddit) {
+                                            root.selectedSubreddit = subreddit;
+                                            memeService.fetchMemes(subreddit);
+                                        }
+                                    }
                                 }
                             }
                         }
 
-                        onCurrentTextChanged: {
-                            if (currentText && root.categoryMap[currentText]) {
-                                var newSubreddit = root.categoryMap[currentText];
-                                console.log("Main: Category changed to:", currentText, "-> subreddit:", newSubreddit);
-                                if (newSubreddit !== root.selectedSubreddit) {
-                                    root.selectedSubreddit = newSubreddit;
-                                    memeService.fetchMemes(newSubreddit);
+                        RadioButton {
+                            id: customModeRadio
+                            text: "Custom"
+                            checked: root.useCustomSubreddit
+                            onCheckedChanged: {
+                                if (checked) {
+                                    root.useCustomSubreddit = true;
+                                    customSubredditField.forceActiveFocus();
+                                }
+                            }
+                        }
+                    }
+
+                    // Category Selector (shown when category mode is selected)
+                    RowLayout {
+                        Layout.alignment: Qt.AlignHCenter
+                        spacing: units.gu(1.5)
+                        visible: !root.useCustomSubreddit
+
+                        Text {
+                            text: "Category:"
+                            font.bold: true
+                        }
+
+                        ComboBox {
+                            id: categoryCombo
+                            model: root.categoryNames
+                            Layout.preferredWidth: units.gu(25)
+
+                            Component.onCompleted: {
+                                // Set initial selection based on current subreddit
+                                for (var i = 0; i < root.categoryNames.length; i++) {
+                                    if (root.categoryMap[root.categoryNames[i]] === root.selectedSubreddit) {
+                                        currentIndex = i;
+                                        break;
+                                    }
+                                }
+                            }
+
+                            onCurrentTextChanged: {
+                                if (!root.useCustomSubreddit && currentText && root.categoryMap[currentText]) {
+                                    var newSubreddit = root.categoryMap[currentText];
+                                    console.log("Main: Category changed to:", currentText, "-> subreddit:", newSubreddit);
+                                    if (newSubreddit !== root.selectedSubreddit) {
+                                        root.selectedSubreddit = newSubreddit;
+                                        memeService.fetchMemes(newSubreddit);
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Custom subreddit input (shown when custom mode is selected)
+                    RowLayout {
+                        Layout.alignment: Qt.AlignHCenter
+                        spacing: units.gu(1.5)
+                        visible: root.useCustomSubreddit
+
+                        Text {
+                            text: "r/"
+                            font.bold: true
+                        }
+
+                        TextField {
+                            id: customSubredditField
+                            Layout.preferredWidth: units.gu(20)
+                            placeholderText: "Enter subreddit name"
+                            text: root.useCustomSubreddit ? root.selectedSubreddit : ""
+                            
+                            onTextChanged: {
+                                // Remove 'r/' prefix if user types it
+                                if (text.toLowerCase().startsWith("r/")) {
+                                    text = text.substring(2);
+                                }
+                                // Remove any invalid characters for subreddit names
+                                var cleanText = text.replace(/[^a-zA-Z0-9_]/g, '');
+                                if (cleanText !== text) {
+                                    text = cleanText;
+                                }
+                            }
+
+                            onAccepted: {
+                                if (text.trim() !== "" && root.useCustomSubreddit) {
+                                    var subreddit = text.trim().toLowerCase();
+                                    console.log("Main: Custom subreddit entered:", subreddit);
+                                    root.selectedSubreddit = subreddit;
+                                    memeService.fetchMemes(subreddit);
+                                }
+                            }
+
+                            Keys.onReturnPressed: accepted()
+                            Keys.onEnterPressed: accepted()
+                        }
+
+                        Button {
+                            text: "Go"
+                            enabled: customSubredditField.text.trim() !== ""
+                            onClicked: {
+                                if (customSubredditField.text.trim() !== "" && root.useCustomSubreddit) {
+                                    var subreddit = customSubredditField.text.trim().toLowerCase();
+                                    console.log("Main: Custom subreddit button clicked:", subreddit);
+                                    root.selectedSubreddit = subreddit;
+                                    memeService.fetchMemes(subreddit);
                                 }
                             }
                         }
@@ -251,8 +321,6 @@ ApplicationWindow {
                     delegate: Rectangle {
                         width: ListView.view ? ListView.view.width : units.gu(37.5)
                         height: delegateColumn.height + 20
-                        // color: root.darkMode ? "#2D2D2D" : "#FFFFFF"
-                        //  border.color: root.darkMode ? "#444444" : "#CCCCCC"
                         border.width: 1
                         radius: 8
 
@@ -269,7 +337,6 @@ ApplicationWindow {
                                 font.bold: true
                                 wrapMode: Text.WordWrap
                                 width: parent.width
-                                //  //
                             }
 
                             Image {
@@ -306,25 +373,19 @@ ApplicationWindow {
 
                                 Text {
                                     text: "👍 " + (model.upvotes || 0)
-                                    
-                                    //
                                 }
 
                                 Text {
                                     text: "💬 " + (model.comments || 0)
-                                   
-                                    //
                                 }
 
                                 Text {
                                     text: "r/" + (model.subreddit || "")
-                                  //
                                 }
 
                                 Text {
                                     text: "📤"
                                     font.pixelSize: units.gu(1.5)
-                                    //
 
                                     MouseArea {
                                         anchors.fill: parent
@@ -337,7 +398,6 @@ ApplicationWindow {
                                 Text {
                                     text: "💾"
                                     font.pixelSize: units.gu(1.5)
-                                    //
 
                                     MouseArea {
                                         anchors.fill: parent
@@ -360,14 +420,13 @@ ApplicationWindow {
                         text: "No memes found"
                         font.pixelSize: units.gu(2)
                         anchors.horizontalCenter: parent.horizontalCenter
-                        //  //
                     }
 
                     Text {
-                        text: "Try selecting a different category or refresh"
-                     //   spacing : units.gu(1.5)
+                        text: root.useCustomSubreddit ? 
+                              "Try a different subreddit or check the spelling" :
+                              "Try selecting a different category or refresh"
                         anchors.horizontalCenter: parent.horizontalCenter
-                        //    //
                     }
 
                     Button {
@@ -386,14 +445,12 @@ ApplicationWindow {
                         text: "Error loading memes"
                         font.pixelSize: units.gu(2)
                         anchors.horizontalCenter: parent.horizontalCenter
-                        //  color: "red"
                     }
 
                     Text {
                         text: memeService.lastError
                         font.pixelSize: units.gu(1.5)
                         anchors.horizontalCenter: parent.horizontalCenter
-                        //    //
                         wrapMode: Text.WordWrap
                         width: units.gu(40)
                         horizontalAlignment: Text.AlignHCenter
@@ -414,6 +471,7 @@ ApplicationWindow {
         id: settings
         property alias darkMode: root.darkMode
         property alias selectedSubreddit: root.selectedSubreddit
+        property alias useCustomSubreddit: root.useCustomSubreddit
     }
 
     // Fullscreen image viewer dialog
@@ -477,12 +535,6 @@ ApplicationWindow {
         onClosed: root.dialogImageSource = ""
     }
 
-    // Private functions
-
-
-    // Signal handlers
-
-
     function handleSelectedSubredditChanged(subreddit) {
         console.log("Main: Selected subreddit changed to:", subreddit);
         root.selectedSubreddit = subreddit;
@@ -494,6 +546,7 @@ ApplicationWindow {
         console.log("Main: App starting up");
         console.log("Main: Selected subreddit:", root.selectedSubreddit);
         console.log("Main: Dark mode:", root.darkMode);
+        console.log("Main: Use custom subreddit:", root.useCustomSubreddit);
 
         // Delay initial fetch to ensure service is ready
         Qt.callLater(function () {

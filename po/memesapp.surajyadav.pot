@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: memesapp.surajyadav\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-08-11 12:55+0000\n"
+"POT-Creation-Date: 2025-08-14 11:23+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,15 +17,15 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: ../qml/Main.qml:134
+#: ../qml/Main.qml:135
 msgid "M E M E S T R E A M"
 msgstr ""
 
-#: ../qml/Main.qml:143
+#: ../qml/Main.qml:144
 msgid "Dark Mode"
 msgstr ""
 
-#: ../qml/Main.qml:143
+#: ../qml/Main.qml:144
 msgid "Light Mode"
 msgstr ""
 

@@ -140,6 +140,13 @@ ApplicationWindow {
 
                 trailingActionBar.actions: [
                     Action {
+                        iconName: "settings"
+                        text: i18n.tr("Select Subreddit")
+                        onTriggered: {
+                            subredditSelectionDialog.open();
+                        }
+                    },
+                    Action {
                         iconName: theme.name === "Ubuntu.Components.Themes.SuruDark" ? "weather-clear-night-symbolic" : "weather-clear-symbolic"
                         text: theme.name === "Ubuntu.Components.Themes.SuruDark" ? i18n.tr("Light Mode") : i18n.tr("Dark Mode")
                         onTriggered: {
@@ -171,145 +178,7 @@ ApplicationWindow {
                     Layout.alignment: Qt.AlignHCenter
                 }
 
-                // Subreddit selection section
-                Column {
-                    Layout.alignment: Qt.AlignHCenter
-                    spacing: units.gu(1)
-                    visible: !memeService.isLoading
 
-                    // Mode selector (Category vs Custom)
-                    Row {
-                        spacing: units.gu(2)
-                        anchors.horizontalCenter: parent.horizontalCenter
-
-                        RadioButton {
-                            id: categoryModeRadio
-                            text: "Categories"
-                            checked: !root.useCustomSubreddit
-                            onCheckedChanged: {
-                                if (checked) {
-                                    root.useCustomSubreddit = false;
-                                    // Reset to current category if available
-                                    if (categoryCombo.currentIndex >= 0) {
-                                        var categoryName = root.categoryNames[categoryCombo.currentIndex];
-                                        var subreddit = root.categoryMap[categoryName];
-                                        if (subreddit !== root.selectedSubreddit) {
-                                            root.selectedSubreddit = subreddit;
-                                            memeService.fetchMemes(subreddit);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        RadioButton {
-                            id: customModeRadio
-                            text: "Custom"
-                            checked: root.useCustomSubreddit
-                            onCheckedChanged: {
-                                if (checked) {
-                                    root.useCustomSubreddit = true;
-                                    customSubredditField.forceActiveFocus();
-                                }
-                            }
-                        }
-                    }
-
-                    // Category Selector (shown when category mode is selected)
-                    RowLayout {
-                        Layout.alignment: Qt.AlignHCenter
-                        spacing: units.gu(1.5)
-                        visible: !root.useCustomSubreddit
-
-                        Text {
-                            text: "Category:"
-                            font.bold: true
-                        }
-
-                        ComboBox {
-                            id: categoryCombo
-                            model: root.categoryNames
-                            Layout.preferredWidth: units.gu(25)
-
-                            Component.onCompleted: {
-                                // Set initial selection based on current subreddit
-                                for (var i = 0; i < root.categoryNames.length; i++) {
-                                    if (root.categoryMap[root.categoryNames[i]] === root.selectedSubreddit) {
-                                        currentIndex = i;
-                                        break;
-                                    }
-                                }
-                            }
-
-                            onCurrentTextChanged: {
-                                if (!root.useCustomSubreddit && currentText && root.categoryMap[currentText]) {
-                                    var newSubreddit = root.categoryMap[currentText];
-                                    console.log("Main: Category changed to:", currentText, "-> subreddit:", newSubreddit);
-                                    if (newSubreddit !== root.selectedSubreddit) {
-                                        root.selectedSubreddit = newSubreddit;
-                                        memeService.fetchMemes(newSubreddit);
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    // Custom subreddit input (shown when custom mode is selected)
-                    RowLayout {
-                        Layout.alignment: Qt.AlignHCenter
-                        spacing: units.gu(1.5)
-                        visible: root.useCustomSubreddit
-
-                        Text {
-                            text: "r/"
-                            font.bold: true
-                        }
-
-                        TextField {
-                            id: customSubredditField
-                            Layout.preferredWidth: units.gu(20)
-                            placeholderText: "Enter subreddit name"
-                            text: root.useCustomSubreddit ? root.selectedSubreddit : ""
-                            
-                            onTextChanged: {
-                                // Remove 'r/' prefix if user types it
-                                if (text.toLowerCase().startsWith("r/")) {
-                                    text = text.substring(2);
-                                }
-                                // Remove any invalid characters for subreddit names
-                                var cleanText = text.replace(/[^a-zA-Z0-9_]/g, '');
-                                if (cleanText !== text) {
-                                    text = cleanText;
-                                }
-                            }
-
-                            onAccepted: {
-                                if (text.trim() !== "" && root.useCustomSubreddit) {
-                                    var subreddit = text.trim().toLowerCase();
-                                    console.log("Main: Custom subreddit entered:", subreddit);
-                                    root.selectedSubreddit = subreddit;
-                                    memeService.fetchMemes(subreddit);
-                                }
-                            }
-
-                            Keys.onReturnPressed: accepted()
-                            Keys.onEnterPressed: accepted()
-                        }
-
-                        Button {
-                            text: "Go"
-                            enabled: customSubredditField.text.trim() !== ""
-                            onClicked: {
-                                if (customSubredditField.text.trim() !== "" && root.useCustomSubreddit) {
-                                    var subreddit = customSubredditField.text.trim().toLowerCase();
-                                    console.log("Main: Custom subreddit button clicked:", subreddit);
-                                    root.selectedSubreddit = subreddit;
-                                    memeService.fetchMemes(subreddit);
-                                }
-                            }
-                        }
-                    }
-                }
 
                 // Meme list
                 ListView {
@@ -472,6 +341,187 @@ ApplicationWindow {
         property alias darkMode: root.darkMode
         property alias selectedSubreddit: root.selectedSubreddit
         property alias useCustomSubreddit: root.useCustomSubreddit
+    }
+
+    // Subreddit Selection Dialog
+    Dialog {
+        id: subredditSelectionDialog
+        title: "Select Subreddit"
+        modal: true
+        focus: true
+        standardButtons: Dialog.Ok | Dialog.Cancel
+        
+        width: Math.min(root.width * 0.9, units.gu(50))
+        x: (root.width - width) / 2
+        y: (root.height - height) / 2
+
+        ColumnLayout {
+            anchors.fill: parent
+            spacing: units.gu(2)
+
+            // Mode selector (Category vs Custom)
+            GroupBox {
+                title: "Selection Mode"
+                Layout.fillWidth: true
+                
+                Column {
+                    anchors.fill: parent
+                    spacing: units.gu(1)
+                    
+                    RadioButton {
+                        id: dialogCategoryModeRadio
+                        text: "Predefined Categories"
+                        checked: !root.useCustomSubreddit
+                    }
+
+                    RadioButton {
+                        id: dialogCustomModeRadio
+                        text: "Custom Subreddit"
+                        checked: root.useCustomSubreddit
+                    }
+                }
+            }
+
+            // Category Selector (shown when category mode is selected)
+            GroupBox {
+                title: "Choose Category"
+                Layout.fillWidth: true
+                visible: dialogCategoryModeRadio.checked
+
+                ColumnLayout {
+                    anchors.fill: parent
+                    spacing: units.gu(1)
+
+                    Text {
+                        text: "Select a meme category:"
+                        Layout.fillWidth: true
+                    }
+
+                    ComboBox {
+                        id: dialogCategoryCombo
+                        model: root.categoryNames
+                        Layout.fillWidth: true
+
+                        Component.onCompleted: {
+                            // Set initial selection based on current subreddit
+                            if (!root.useCustomSubreddit) {
+                                for (var i = 0; i < root.categoryNames.length; i++) {
+                                    if (root.categoryMap[root.categoryNames[i]] === root.selectedSubreddit) {
+                                        currentIndex = i;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Custom subreddit input (shown when custom mode is selected)
+            GroupBox {
+                title: "Enter Custom Subreddit"
+                Layout.fillWidth: true
+                visible: dialogCustomModeRadio.checked
+
+                ColumnLayout {
+                    anchors.fill: parent
+                    spacing: units.gu(1)
+
+                    Text {
+                        text: "Enter the name of any subreddit:"
+                        Layout.fillWidth: true
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: units.gu(1)
+
+                        Text {
+                            text: "r/"
+                            font.bold: true
+                        }
+
+                        TextField {
+                            id: dialogCustomSubredditField
+                            Layout.fillWidth: true
+                            placeholderText: "e.g., memes, funny, programming"
+                            text: root.useCustomSubreddit ? root.selectedSubreddit : ""
+                            
+                            onTextChanged: {
+                                // Remove 'r/' prefix if user types it
+                                if (text.toLowerCase().startsWith("r/")) {
+                                    text = text.substring(2);
+                                }
+                                // Remove any invalid characters for subreddit names
+                                var cleanText = text.replace(/[^a-zA-Z0-9_]/g, '');
+                                if (cleanText !== text) {
+                                    text = cleanText;
+                                }
+                            }
+
+                            Keys.onReturnPressed: subredditSelectionDialog.accept()
+                            Keys.onEnterPressed: subredditSelectionDialog.accept()
+                        }
+                    }
+
+                    Text {
+                        text: "Note: Make sure the subreddit exists and contains images"
+                        font.pixelSize: units.gu(1.2)
+                        color: theme.palette.normal.backgroundSecondaryText
+                        Layout.fillWidth: true
+                        wrapMode: Text.WordWrap
+                    }
+                }
+            }
+        }
+
+        onAccepted: {
+            var newSubreddit = "";
+            var newUseCustom = dialogCustomModeRadio.checked;
+
+            if (newUseCustom) {
+                // Custom subreddit mode
+                var customText = dialogCustomSubredditField.text.trim().toLowerCase();
+                if (customText !== "") {
+                    newSubreddit = customText;
+                } else {
+                    // Invalid input, don't close dialog
+                    return;
+                }
+            } else {
+                // Category mode
+                if (dialogCategoryCombo.currentIndex >= 0 && dialogCategoryCombo.currentText) {
+                    var categoryName = dialogCategoryCombo.currentText;
+                    newSubreddit = root.categoryMap[categoryName];
+                }
+            }
+
+            if (newSubreddit && (newSubreddit !== root.selectedSubreddit || newUseCustom !== root.useCustomSubreddit)) {
+                console.log("Dialog: Applying new subreddit:", newSubreddit, "Custom:", newUseCustom);
+                root.useCustomSubreddit = newUseCustom;
+                root.selectedSubreddit = newSubreddit;
+                memeService.fetchMemes(newSubreddit);
+            }
+        }
+
+        onOpened: {
+            // Reset dialog state when opened
+            dialogCategoryModeRadio.checked = !root.useCustomSubreddit;
+            dialogCustomModeRadio.checked = root.useCustomSubreddit;
+            
+            if (root.useCustomSubreddit) {
+                dialogCustomSubredditField.text = root.selectedSubreddit;
+                dialogCustomSubredditField.forceActiveFocus();
+            } else {
+                // Update category combo to match current subreddit
+                for (var i = 0; i < root.categoryNames.length; i++) {
+                    if (root.categoryMap[root.categoryNames[i]] === root.selectedSubreddit) {
+                        dialogCategoryCombo.currentIndex = i;
+                        break;
+                    }
+                }
+            }
+        }
     }
 
     // Fullscreen image viewer dialog

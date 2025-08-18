@@ -174,6 +174,7 @@ ApplicationWindow {
                     text: "r/" + root.selectedSubreddit
                     font.bold: true
                     horizontalAlignment: Text.AlignHCenter
+                    color: theme.palette.normal.backgroundText
                     visible: !memeService.isLoading && !memeService.isModelEmpty()
                     Layout.alignment: Qt.AlignHCenter
                 }
@@ -190,6 +191,8 @@ ApplicationWindow {
                     delegate: Rectangle {
                         width: ListView.view ? ListView.view.width : units.gu(37.5)
                         height: delegateColumn.height + 20
+                        color: theme.palette.normal.background
+                        border.color: theme.palette.normal.base
                         border.width: 1
                         radius: 8
 
@@ -206,6 +209,7 @@ ApplicationWindow {
                                 font.bold: true
                                 wrapMode: Text.WordWrap
                                 width: parent.width
+                                color: theme.palette.normal.backgroundText
                             }
 
                             Image {
@@ -242,37 +246,44 @@ ApplicationWindow {
 
                                 Text {
                                     text: "👍 " + (model.upvotes || 0)
+                                    color: theme.palette.normal.backgroundText
                                 }
 
                                 Text {
                                     text: "💬 " + (model.comments || 0)
+                                    color: theme.palette.normal.backgroundText
                                 }
 
                                 Text {
                                     text: "r/" + (model.subreddit || "")
+                                    color: theme.palette.normal.backgroundText
                                 }
 
                                 Text {
                                     text: "📤"
                                     font.pixelSize: units.gu(1.5)
+                                    color: theme.palette.normal.backgroundText
 
                                     MouseArea {
                                         anchors.fill: parent
                                         onClicked: {
                                             downloadManager.shareMeme(model.permalink || model.image, model.title);
                                         }
+                                        cursorShape: Qt.PointingHandCursor
                                     }
                                 }
 
                                 Text {
                                     text: "💾"
                                     font.pixelSize: units.gu(1.5)
+                                    color: theme.palette.normal.backgroundText
 
                                     MouseArea {
                                         anchors.fill: parent
                                         onClicked: {
                                             downloadManager.downloadMeme(model.image, model.title);
                                         }
+                                        cursorShape: Qt.PointingHandCursor
                                     }
                                 }
                             }
@@ -289,6 +300,7 @@ ApplicationWindow {
                         text: "No memes found"
                         font.pixelSize: units.gu(2)
                         anchors.horizontalCenter: parent.horizontalCenter
+                        color: theme.palette.normal.backgroundText
                     }
 
                     Text {
@@ -296,6 +308,7 @@ ApplicationWindow {
                               "Try a different subreddit or check the spelling" :
                               "Try selecting a different category or refresh"
                         anchors.horizontalCenter: parent.horizontalCenter
+                        color: theme.palette.normal.backgroundSecondaryText
                     }
 
                     Button {
@@ -314,12 +327,14 @@ ApplicationWindow {
                         text: "Error loading memes"
                         font.pixelSize: units.gu(2)
                         anchors.horizontalCenter: parent.horizontalCenter
+                        color: theme.palette.normal.negative
                     }
 
                     Text {
                         text: memeService.lastError
                         font.pixelSize: units.gu(1.5)
                         anchors.horizontalCenter: parent.horizontalCenter
+                        color: theme.palette.normal.backgroundSecondaryText
                         wrapMode: Text.WordWrap
                         width: units.gu(40)
                         horizontalAlignment: Text.AlignHCenter
@@ -355,6 +370,13 @@ ApplicationWindow {
         x: (root.width - width) / 2
         y: (root.height - height) / 2
 
+        background: Rectangle {
+            color: theme.palette.normal.background
+            border.color: theme.palette.normal.base
+            border.width: 1
+            radius: 8
+        }
+
         ColumnLayout {
             anchors.fill: parent
             spacing: units.gu(2)
@@ -364,6 +386,19 @@ ApplicationWindow {
                 title: "Selection Mode"
                 Layout.fillWidth: true
                 
+                background: Rectangle {
+                    color: theme.palette.normal.base
+                    border.color: theme.palette.normal.baseBorder
+                    border.width: 1
+                    radius: 4
+                }
+                
+                label: Text {
+                    text: "Selection Mode"
+                    color: theme.palette.normal.backgroundText
+                    font.bold: true
+                }
+                
                 Column {
                     anchors.fill: parent
                     spacing: units.gu(1)
@@ -372,12 +407,24 @@ ApplicationWindow {
                         id: dialogCategoryModeRadio
                         text: "Predefined Categories"
                         checked: !root.useCustomSubreddit
+                        
+                        contentItem: Text {
+                            text: dialogCategoryModeRadio.text
+                            color: theme.palette.normal.backgroundText
+                            leftPadding: dialogCategoryModeRadio.indicator.width + dialogCategoryModeRadio.spacing
+                        }
                     }
 
                     RadioButton {
                         id: dialogCustomModeRadio
                         text: "Custom Subreddit"
                         checked: root.useCustomSubreddit
+                        
+                        contentItem: Text {
+                            text: dialogCustomModeRadio.text
+                            color: theme.palette.normal.backgroundText
+                            leftPadding: dialogCustomModeRadio.indicator.width + dialogCustomModeRadio.spacing
+                        }
                     }
                 }
             }
@@ -388,6 +435,19 @@ ApplicationWindow {
                 Layout.fillWidth: true
                 visible: dialogCategoryModeRadio.checked
 
+                background: Rectangle {
+                    color: theme.palette.normal.base
+                    border.color: theme.palette.normal.baseBorder
+                    border.width: 1
+                    radius: 4
+                }
+                
+                label: Text {
+                    text: "Choose Category"
+                    color: theme.palette.normal.backgroundText
+                    font.bold: true
+                }
+
                 ColumnLayout {
                     anchors.fill: parent
                     spacing: units.gu(1)
@@ -395,12 +455,28 @@ ApplicationWindow {
                     Text {
                         text: "Select a meme category:"
                         Layout.fillWidth: true
+                        color: theme.palette.normal.backgroundText
                     }
 
                     ComboBox {
                         id: dialogCategoryCombo
                         model: root.categoryNames
                         Layout.fillWidth: true
+
+                        background: Rectangle {
+                            color: theme.palette.normal.field
+                            border.color: theme.palette.normal.base
+                            border.width: 1
+                            radius: 4
+                        }
+
+                        contentItem: Text {
+                            text: dialogCategoryCombo.displayText
+                            color: theme.palette.normal.fieldText
+                            leftPadding: units.gu(1)
+                            rightPadding: units.gu(3)
+                            verticalAlignment: Text.AlignVCenter
+                        }
 
                         Component.onCompleted: {
                             // Set initial selection based on current subreddit
@@ -423,6 +499,19 @@ ApplicationWindow {
                 Layout.fillWidth: true
                 visible: dialogCustomModeRadio.checked
 
+                background: Rectangle {
+                    color: theme.palette.normal.base
+                    border.color: theme.palette.normal.baseBorder
+                    border.width: 1
+                    radius: 4
+                }
+                
+                label: Text {
+                    text: "Enter Custom Subreddit"
+                    color: theme.palette.normal.backgroundText
+                    font.bold: true
+                }
+
                 ColumnLayout {
                     anchors.fill: parent
                     spacing: units.gu(1)
@@ -430,6 +519,7 @@ ApplicationWindow {
                     Text {
                         text: "Enter the name of any subreddit:"
                         Layout.fillWidth: true
+                        color: theme.palette.normal.backgroundText
                     }
 
                     RowLayout {
@@ -439,6 +529,7 @@ ApplicationWindow {
                         Text {
                             text: "r/"
                             font.bold: true
+                            color: theme.palette.normal.backgroundText
                         }
 
                         TextField {
@@ -446,6 +537,15 @@ ApplicationWindow {
                             Layout.fillWidth: true
                             placeholderText: "e.g., memes, funny, programming"
                             text: root.useCustomSubreddit ? root.selectedSubreddit : ""
+                            
+                        Rectangle {
+                                color: theme.palette.normal.field
+                                border.color: theme.palette.normal.base
+                                border.width: 1
+                                radius: 4
+                            }
+                            
+                            color: theme.palette.normal.fieldText
                             
                             onTextChanged: {
                                 // Remove 'r/' prefix if user types it

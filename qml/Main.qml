@@ -133,9 +133,10 @@ ApplicationWindow {
 
             header: PageHeader {
                 title: i18n.tr("M E M E S T R E A M")
+                 subtitle: i18n.tr("r/" + root.selectedSubreddit)
                 StyleHints {
-                    backgroundColor: theme.name === "Ubuntu.Components.Themes.SuruDark" ? "black" : "#1c355e"
-                    foregroundColor: theme.name === "Ubuntu.Components.Themes.SuruDark" ? "#fac34d" : "white"
+                    backgroundColor: theme.name === "Ubuntu.Components.Themes.SuruDark" ? "black" : "#081831"
+                    foregroundColor: theme.name === "Ubuntu.Components.Themes.SuruDark" ? "#9b4f22" : "white"
                 }
 
                 trailingActionBar.actions: [

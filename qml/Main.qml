@@ -158,6 +158,7 @@ ApplicationWindow {
             }
 
             ColumnLayout {
+             
                 anchors.fill: parent
                 anchors.margins: units.gu(2)
                 anchors.topMargin: units.gu(4)
@@ -188,6 +189,7 @@ ApplicationWindow {
                     Layout.fillHeight: true
                     model: memeModel
                     visible: !memeService.isLoading
+                    clip: true
                     spacing: units.gu(1.5)
                     delegate: Rectangle {
                         width: ListView.view ? ListView.view.width : units.gu(37.5)
@@ -375,7 +377,7 @@ ApplicationWindow {
             color: theme.palette.normal.background
             border.color: theme.palette.normal.base
             border.width: 1
-            radius: 8
+            radius: units.gu(1)
         }
 
         ColumnLayout {
@@ -386,17 +388,19 @@ ApplicationWindow {
             GroupBox {
                 title: "Selection Mode"
                 Layout.fillWidth: true
+                anchors.margins: units.gu(1)
                 
                 background: Rectangle {
                     color: theme.palette.normal.base
                     border.color: theme.palette.normal.baseBorder
-                    border.width: 1
-                    radius: 4
+                    border.width: units.gu(0.1)
+                    radius: units.gu(.5)
                 }
                 
                 label: Text {
                     text: "Selection Mode"
                     color: theme.palette.normal.backgroundText
+                    anchors.margins: units.gu(1)
                     font.bold: true
                 }
                 

@@ -362,129 +362,324 @@ ApplicationWindow {
     }
 
     // Subreddit Selection Dialog
-    Dialog {
-        id: subredditSelectionDialog
-        title: "Select Subreddit"
-        modal: true
-        focus: true
-        standardButtons: Dialog.Ok | Dialog.Cancel
-        
-        width: Math.min(root.width * 0.9, units.gu(50))
-        x: (root.width - width) / 2
-        y: (root.height - height) / 2
+  // Subreddit Selection Dialog - Improved Styling
+Dialog {
+    id: subredditSelectionDialog
+    title: "Select Subreddit"
+    modal: true
+    focus: true
+    standardButtons: Dialog.Ok | Dialog.Cancel
+    
+    width: Math.min(root.width * 0.9, units.gu(55))
+    height: Math.min(root.height * 0.8, units.gu(70))
+    x: (root.width - width) / 2
+    y: (root.height - height) / 2
 
-        background: Rectangle {
-            color: theme.palette.normal.background
-            border.color: theme.palette.normal.base
+    background: Rectangle {
+        color: theme.palette.normal.background
+        border.color: theme.palette.normal.base
+        border.width: 2
+        radius: units.gu(2)
+        
+        // Subtle shadow effect
+        Rectangle {
+            anchors.fill: parent
+            anchors.margins: -2
+            color: "transparent"
+            border.color: theme.name === "Ubuntu.Components.Themes.SuruDark" ? "#33ffffff" : "#33000000"
             border.width: 1
-            radius: units.gu(1)
+            radius: units.gu(2.2)
+            z: -1
+        }
+    }
+
+    // Custom header
+    header: Rectangle {
+        width: parent.width
+        height: units.gu(8)
+        color: theme.name === "Ubuntu.Components.Themes.SuruDark" ? "#2c2c2c" : "#f7f7f7"
+        radius: units.gu(2)
+        
+        Rectangle {
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            height: units.gu(2)
+            color: parent.color
         }
 
-        ColumnLayout {
+        RowLayout {
             anchors.fill: parent
-            spacing: units.gu(2)
-
-            // Mode selector (Category vs Custom)
-            GroupBox {
-                title: "Selection Mode"
+            anchors.margins: units.gu(2)
+            
+            Icon {
+                name: "settings"
+                width: units.gu(3)
+                height: units.gu(3)
+                color: theme.palette.normal.backgroundText
+            }
+            
+            Text {
+                text: "Select Subreddit"
+                font.pixelSize: units.gu(2.5)
+                font.bold: true
+                color: theme.palette.normal.backgroundText
                 Layout.fillWidth: true
-                anchors.margins: units.gu(1)
+            }
+            
+            Text {
+                text: "🎭"
+                font.pixelSize: units.gu(3)
+            }
+        }
+    }
+
+    ScrollView {
+        anchors.fill: parent
+        anchors.margins: units.gu(2)
+        clip: true
+        
+        ColumnLayout {
+            width: parent.width - units.gu(2)
+            spacing: units.gu(3)
+
+            // Mode selector with improved styling
+            Rectangle {
+                Layout.fillWidth: true
+                height: units.gu(12)
+                color: theme.name === "Ubuntu.Components.Themes.SuruDark" ? "#1e1e1e" : "#fafafa"
+                border.color: theme.palette.normal.base
+                border.width: 1
+                radius: units.gu(1.5)
                 
-                background: Rectangle {
-                    color: theme.palette.normal.base
-                    border.color: theme.palette.normal.baseBorder
-                    border.width: units.gu(0.1)
-                    radius: units.gu(.5)
-                }
-                
-                label: Text {
-                    text: "Selection Mode"
-                    color: theme.palette.normal.backgroundText
-                    anchors.margins: units.gu(1)
-                    font.bold: true
-                }
-                
-                Column {
+                ColumnLayout {
                     anchors.fill: parent
-                    spacing: units.gu(1)
+                    anchors.margins: units.gu(2)
+                    spacing: units.gu(1.5)
                     
-                    RadioButton {
-                        id: dialogCategoryModeRadio
-                        text: "Predefined Categories"
-                        checked: !root.useCustomSubreddit
+                    RowLayout {
+                        spacing: units.gu(1)
                         
-                        contentItem: Text {
-                            text: dialogCategoryModeRadio.text
+                        Text {
+                            text: "🎯"
+                            font.pixelSize: units.gu(2)
+                        }
+                        
+                        Text {
+                            text: "Selection Mode"
+                            font.pixelSize: units.gu(2)
+                            font.bold: true
                             color: theme.palette.normal.backgroundText
-                            leftPadding: dialogCategoryModeRadio.indicator.width + dialogCategoryModeRadio.spacing
                         }
                     }
-
-                    RadioButton {
-                        id: dialogCustomModeRadio
-                        text: "Custom Subreddit"
-                        checked: root.useCustomSubreddit
+                    
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: units.gu(3)
                         
-                        contentItem: Text {
-                            text: dialogCustomModeRadio.text
-                            color: theme.palette.normal.backgroundText
-                            leftPadding: dialogCustomModeRadio.indicator.width + dialogCustomModeRadio.spacing
+                        Rectangle {
+                            Layout.fillWidth: true
+                            height: units.gu(5)
+                            color: dialogCategoryModeRadio.checked ? 
+                                   (theme.name === "Ubuntu.Components.Themes.SuruDark" ? "#3d5a80" : "#e3f2fd") : "transparent"
+                            border.color: dialogCategoryModeRadio.checked ? 
+                                         (theme.name === "Ubuntu.Components.Themes.SuruDark" ? "#5a8bc4" : "#2196f3") : theme.palette.normal.base
+                            border.width: dialogCategoryModeRadio.checked ? 2 : 1
+                            radius: units.gu(1)
+                            
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.margins: units.gu(1)
+                                
+                                RadioButton {
+                                    id: dialogCategoryModeRadio
+                                    checked: !root.useCustomSubreddit
+                                    
+                                    indicator: Rectangle {
+                                        width: units.gu(2.5)
+                                        height: units.gu(2.5)
+                                        radius: width / 2
+                                        border.color: theme.palette.normal.backgroundText
+                                        border.width: 2
+                                        color: "transparent"
+                                        
+                                        Rectangle {
+                                            width: units.gu(1.5)
+                                            height: units.gu(1.5)
+                                            radius: width / 2
+                                            anchors.centerIn: parent
+                                            color: theme.palette.normal.backgroundText
+                                            visible: dialogCategoryModeRadio.checked
+                                        }
+                                    }
+                                }
+                                
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    spacing: units.gu(0.5)
+                                    
+                                    Text {
+                                        text: "Categories"
+                                        font.bold: true
+                                        color: theme.palette.normal.backgroundText
+                                    }
+                                    
+                                    Text {
+                                        text: "Predefined popular subreddits"
+                                        font.pixelSize: units.gu(1.2)
+                                        color: theme.palette.normal.backgroundSecondaryText
+                                    }
+                                }
+                            }
+                            
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: dialogCategoryModeRadio.checked = true
+                            }
+                        }
+
+                        Rectangle {
+                            Layout.fillWidth: true
+                            height: units.gu(5)
+                            color: dialogCustomModeRadio.checked ? 
+                                   (theme.name === "Ubuntu.Components.Themes.SuruDark" ? "#3d5a80" : "#e3f2fd") : "transparent"
+                            border.color: dialogCustomModeRadio.checked ? 
+                                         (theme.name === "Ubuntu.Components.Themes.SuruDark" ? "#5a8bc4" : "#2196f3") : theme.palette.normal.base
+                            border.width: dialogCustomModeRadio.checked ? 2 : 1
+                            radius: units.gu(1)
+                            
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.margins: units.gu(1)
+                                
+                                RadioButton {
+                                    id: dialogCustomModeRadio
+                                    checked: root.useCustomSubreddit
+                                    
+                                    indicator: Rectangle {
+                                        width: units.gu(2.5)
+                                        height: units.gu(2.5)
+                                        radius: width / 2
+                                        border.color: theme.palette.normal.backgroundText
+                                        border.width: 2
+                                        color: "transparent"
+                                        
+                                        Rectangle {
+                                            width: units.gu(1.5)
+                                            height: units.gu(1.5)
+                                            radius: width / 2
+                                            anchors.centerIn: parent
+                                            color: theme.palette.normal.backgroundText
+                                            visible: dialogCustomModeRadio.checked
+                                        }
+                                    }
+                                }
+                                
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    spacing: units.gu(0.5)
+                                    
+                                    Text {
+                                        text: "Custom"
+                                        font.bold: true
+                                        color: theme.palette.normal.backgroundText
+                                    }
+                                    
+                                    Text {
+                                        text: "Enter any subreddit name"
+                                        font.pixelSize: units.gu(1.2)
+                                        color: theme.palette.normal.backgroundSecondaryText
+                                    }
+                                }
+                            }
+                            
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: dialogCustomModeRadio.checked = true
+                            }
                         }
                     }
                 }
             }
 
-            // Category Selector (shown when category mode is selected)
-            GroupBox {
-                title: "Choose Category"
+            // Category Selector with enhanced styling
+            Rectangle {
                 Layout.fillWidth: true
+                height: units.gu(18)
                 visible: dialogCategoryModeRadio.checked
-
-                background: Rectangle {
-                    color: theme.palette.normal.base
-                    border.color: theme.palette.normal.baseBorder
-                    border.width: 1
-                    radius: 4
-                }
-                
-                label: Text {
-                    text: "Choose Category"
-                    color: theme.palette.normal.backgroundText
-                    font.bold: true
-                }
+                color: theme.name === "Ubuntu.Components.Themes.SuruDark" ? "#1a1a1a" : "#ffffff"
+                border.color: theme.name === "Ubuntu.Components.Themes.SuruDark" ? "#5a8bc4" : "#2196f3"
+                border.width: 2
+                radius: units.gu(1.5)
 
                 ColumnLayout {
                     anchors.fill: parent
-                    spacing: units.gu(1)
+                    anchors.margins: units.gu(2)
+                    spacing: units.gu(2)
+
+                    RowLayout {
+                        spacing: units.gu(1)
+                        
+                        Text {
+                            text: "📂"
+                            font.pixelSize: units.gu(2)
+                        }
+                        
+                        Text {
+                            text: "Choose Category"
+                            font.pixelSize: units.gu(2)
+                            font.bold: true
+                            color: theme.palette.normal.backgroundText
+                        }
+                    }
 
                     Text {
-                        text: "Select a meme category:"
+                        text: "Popular meme categories with curated content:"
                         Layout.fillWidth: true
-                        color: theme.palette.normal.backgroundText
+                        color: theme.palette.normal.backgroundSecondaryText
+                        font.pixelSize: units.gu(1.4)
                     }
 
                     ComboBox {
                         id: dialogCategoryCombo
                         model: root.categoryNames
                         Layout.fillWidth: true
+                        Layout.preferredHeight: units.gu(6)
 
                         background: Rectangle {
-                            color: theme.palette.normal.field
-                            border.color: theme.palette.normal.base
-                            border.width: 1
-                            radius: 4
+                            color: theme.name === "Ubuntu.Components.Themes.SuruDark" ? "#2c2c2c" : "#f8f9fa"
+                            border.color: theme.name === "Ubuntu.Components.Themes.SuruDark" ? "#5a8bc4" : "#2196f3"
+                            border.width: 2
+                            radius: units.gu(1)
+                            
+                            Rectangle {
+                                anchors.right: parent.right
+                                anchors.top: parent.top
+                                anchors.bottom: parent.bottom
+                                width: units.gu(6)
+                                color: theme.name === "Ubuntu.Components.Themes.SuruDark" ? "#3d5a80" : "#e3f2fd"
+                                radius: units.gu(1)
+                                
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: "▼"
+                                    color: theme.palette.normal.backgroundText
+                                    font.pixelSize: units.gu(1.5)
+                                }
+                            }
                         }
 
                         contentItem: Text {
                             text: dialogCategoryCombo.displayText
-                            color: theme.palette.normal.fieldText
-                            leftPadding: units.gu(1)
-                            rightPadding: units.gu(3)
+                            color: theme.palette.normal.backgroundText
+                            font.pixelSize: units.gu(1.8)
+                            font.bold: true
+                            leftPadding: units.gu(1.5)
+                            rightPadding: units.gu(7)
                             verticalAlignment: Text.AlignVCenter
                         }
 
                         Component.onCompleted: {
-                            // Set initial selection based on current subreddit
                             if (!root.useCustomSubreddit) {
                                 for (var i = 0; i < root.categoryNames.length; i++) {
                                     if (root.categoryMap[root.categoryNames[i]] === root.selectedSubreddit) {
@@ -495,139 +690,271 @@ ApplicationWindow {
                             }
                         }
                     }
+                    
+                    Text {
+                        text: "r/" + (dialogCategoryCombo.currentText ? root.categoryMap[dialogCategoryCombo.currentText] : "")
+                        font.pixelSize: units.gu(1.6)
+                        font.bold: true
+                        color: theme.name === "Ubuntu.Components.Themes.SuruDark" ? "#ff7043" : "#f57c00"
+                        Layout.alignment: Qt.AlignCenter
+                    }
                 }
             }
 
-            // Custom subreddit input (shown when custom mode is selected)
-            GroupBox {
-                title: "Enter Custom Subreddit"
+            // Custom subreddit input with enhanced styling
+            Rectangle {
                 Layout.fillWidth: true
+                height: units.gu(22)
                 visible: dialogCustomModeRadio.checked
-
-                background: Rectangle {
-                    color: theme.palette.normal.base
-                    border.color: theme.palette.normal.baseBorder
-                    border.width: 1
-                    radius: 4
-                }
-                
-                label: Text {
-                    text: "Enter Custom Subreddit"
-                    color: theme.palette.normal.backgroundText
-                    font.bold: true
-                }
+                color: theme.name === "Ubuntu.Components.Themes.SuruDark" ? "#1a1a1a" : "#ffffff"
+                border.color: theme.name === "Ubuntu.Components.Themes.SuruDark" ? "#ff7043" : "#ff9800"
+                border.width: 2
+                radius: units.gu(1.5)
 
                 ColumnLayout {
                     anchors.fill: parent
-                    spacing: units.gu(1)
-
-                    Text {
-                        text: "Enter the name of any subreddit:"
-                        Layout.fillWidth: true
-                        color: theme.palette.normal.backgroundText
-                    }
+                    anchors.margins: units.gu(2)
+                    spacing: units.gu(2)
 
                     RowLayout {
-                        Layout.fillWidth: true
                         spacing: units.gu(1)
-
+                        
                         Text {
-                            text: "r/"
+                            text: "✏️"
+                            font.pixelSize: units.gu(2)
+                        }
+                        
+                        Text {
+                            text: "Custom Subreddit"
+                            font.pixelSize: units.gu(2)
                             font.bold: true
                             color: theme.palette.normal.backgroundText
                         }
-
-                        TextField {
-                            id: dialogCustomSubredditField
-                            Layout.fillWidth: true
-                            placeholderText: "e.g., memes, funny, programming"
-                            text: root.useCustomSubreddit ? root.selectedSubreddit : ""
-                            
-                        Rectangle {
-                                color: theme.palette.normal.field
-                                border.color: theme.palette.normal.base
-                                border.width: 1
-                                radius: 4
-                            }
-                            
-                            color: theme.palette.normal.fieldText
-                            
-                            onTextChanged: {
-                                // Remove 'r/' prefix if user types it
-                                if (text.toLowerCase().startsWith("r/")) {
-                                    text = text.substring(2);
-                                }
-                                // Remove any invalid characters for subreddit names
-                                var cleanText = text.replace(/[^a-zA-Z0-9_]/g, '');
-                                if (cleanText !== text) {
-                                    text = cleanText;
-                                }
-                            }
-
-                            Keys.onReturnPressed: subredditSelectionDialog.accept()
-                            Keys.onEnterPressed: subredditSelectionDialog.accept()
-                        }
                     }
 
                     Text {
-                        text: "Note: Make sure the subreddit exists and contains images"
-                        font.pixelSize: units.gu(1.2)
-                        color: theme.palette.normal.backgroundSecondaryText
+                        text: "Explore any subreddit by entering its name below:"
                         Layout.fillWidth: true
-                        wrapMode: Text.WordWrap
+                        color: theme.palette.normal.backgroundSecondaryText
+                        font.pixelSize: units.gu(1.4)
                     }
-                }
-            }
-        }
 
-        onAccepted: {
-            var newSubreddit = "";
-            var newUseCustom = dialogCustomModeRadio.checked;
+                    Rectangle {
+                        Layout.fillWidth: true
+                        height: units.gu(6)
+                        color: theme.name === "Ubuntu.Components.Themes.SuruDark" ? "#2c2c2c" : "#f8f9fa"
+                        border.color: theme.name === "Ubuntu.Components.Themes.SuruDark" ? "#ff7043" : "#ff9800"
+                        border.width: 2
+                        radius: units.gu(1)
 
-            if (newUseCustom) {
-                // Custom subreddit mode
-                var customText = dialogCustomSubredditField.text.trim().toLowerCase();
-                if (customText !== "") {
-                    newSubreddit = customText;
-                } else {
-                    // Invalid input, don't close dialog
-                    return;
-                }
-            } else {
-                // Category mode
-                if (dialogCategoryCombo.currentIndex >= 0 && dialogCategoryCombo.currentText) {
-                    var categoryName = dialogCategoryCombo.currentText;
-                    newSubreddit = root.categoryMap[categoryName];
-                }
-            }
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.margins: units.gu(1)
+                            spacing: units.gu(1)
 
-            if (newSubreddit && (newSubreddit !== root.selectedSubreddit || newUseCustom !== root.useCustomSubreddit)) {
-                console.log("Dialog: Applying new subreddit:", newSubreddit, "Custom:", newUseCustom);
-                root.useCustomSubreddit = newUseCustom;
-                root.selectedSubreddit = newSubreddit;
-                memeService.fetchMemes(newSubreddit);
-            }
-        }
+                            Rectangle {
+                                width: units.gu(4)
+                                height: parent.height
+                                color: theme.name === "Ubuntu.Components.Themes.SuruDark" ? "#3d3d3d" : "#e0e0e0"
+                                radius: units.gu(0.5)
+                                
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: "r/"
+                                    font.bold: true
+                                    font.pixelSize: units.gu(1.8)
+                                    color: theme.palette.normal.backgroundText
+                                }
+                            }
 
-        onOpened: {
-            // Reset dialog state when opened
-            dialogCategoryModeRadio.checked = !root.useCustomSubreddit;
-            dialogCustomModeRadio.checked = root.useCustomSubreddit;
-            
-            if (root.useCustomSubreddit) {
-                dialogCustomSubredditField.text = root.selectedSubreddit;
-                dialogCustomSubredditField.forceActiveFocus();
-            } else {
-                // Update category combo to match current subreddit
-                for (var i = 0; i < root.categoryNames.length; i++) {
-                    if (root.categoryMap[root.categoryNames[i]] === root.selectedSubreddit) {
-                        dialogCategoryCombo.currentIndex = i;
-                        break;
+                            TextField {
+                                id: dialogCustomSubredditField
+                                Layout.fillWidth: true
+                                Layout.fillHeight: true
+                                placeholderText: "e.g., memes, funny, programming..."
+                                text: root.useCustomSubreddit ? root.selectedSubreddit : ""
+                                font.pixelSize: units.gu(1.8)
+                                
+                                 Rectangle {
+                                    color: "transparent"
+                                }
+                                
+                                color: theme.palette.normal.backgroundText
+                                
+                                onTextChanged: {
+                                    if (text.toLowerCase().startsWith("r/")) {
+                                        text = text.substring(2);
+                                    }
+                                    var cleanText = text.replace(/[^a-zA-Z0-9_]/g, '');
+                                    if (cleanText !== text) {
+                                        text = cleanText;
+                                    }
+                                }
+
+                                Keys.onReturnPressed: subredditSelectionDialog.accept()
+                                Keys.onEnterPressed: subredditSelectionDialog.accept()
+                            }
+                        }
+                    }
+                    
+                    Text {
+                        text: "r/" + dialogCustomSubredditField.text
+                        font.pixelSize: units.gu(1.6)
+                        font.bold: true
+                        color: theme.name === "Ubuntu.Components.Themes.SuruDark" ? "#ff7043" : "#f57c00"
+                        Layout.alignment: Qt.AlignCenter
+                        visible: dialogCustomSubredditField.text.length > 0
+                    }
+
+                    Rectangle {
+                        Layout.fillWidth: true
+                        height: units.gu(4)
+                        color: theme.name === "Ubuntu.Components.Themes.SuruDark" ? "#2a1810" : "#fff3e0"
+                        border.color: theme.name === "Ubuntu.Components.Themes.SuruDark" ? "#ff7043" : "#ffb74d"
+                        border.width: 1
+                        radius: units.gu(0.5)
+                        
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.margins: units.gu(1)
+                            
+                            Text {
+                                text: "💡"
+                                font.pixelSize: units.gu(1.5)
+                            }
+                            
+                            Text {
+                                text: "Tip: Make sure the subreddit exists and contains images"
+                                font.pixelSize: units.gu(1.2)
+                                color: theme.palette.normal.backgroundSecondaryText
+                                Layout.fillWidth: true
+                                wrapMode: Text.WordWrap
+                            }
+                        }
                     }
                 }
             }
         }
     }
+
+    // Enhanced footer with custom buttons
+    footer: Rectangle {
+        width: parent.width
+        height: units.gu(8)
+        color: theme.name === "Ubuntu.Components.Themes.SuruDark" ? "#2c2c2c" : "#f7f7f7"
+        radius: units.gu(2)
+        
+        Rectangle {
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
+            height: units.gu(2)
+            color: parent.color
+        }
+
+        RowLayout {
+            anchors.fill: parent
+            anchors.margins: units.gu(2)
+            spacing: units.gu(2)
+
+            Item {
+                Layout.fillWidth: true
+            }
+
+            Rectangle {
+                width: units.gu(12)
+                height: units.gu(4)
+                color: "transparent"
+                border.color: theme.palette.normal.base
+                border.width: 1
+                radius: units.gu(1)
+
+                Text {
+                    anchors.centerIn: parent
+                    text: "Cancel"
+                    color: theme.palette.normal.backgroundText
+                    font.pixelSize: units.gu(1.6)
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: subredditSelectionDialog.reject()
+                    hoverEnabled: true
+                    onEntered: parent.color = theme.name === "Ubuntu.Components.Themes.SuruDark" ? "#3d3d3d" : "#f0f0f0"
+                    onExited: parent.color = "transparent"
+                }
+            }
+
+            Rectangle {
+                width: units.gu(12)
+                height: units.gu(4)
+                color: theme.name === "Ubuntu.Components.Themes.SuruDark" ? "#5a8bc4" : "#2196f3"
+                border.color: theme.name === "Ubuntu.Components.Themes.SuruDark" ? "#7ba7d7" : "#1976d2"
+                border.width: 1
+                radius: units.gu(1)
+
+                Text {
+                    anchors.centerIn: parent
+                    text: "Apply"
+                    color: "white"
+                    font.pixelSize: units.gu(1.6)
+                    font.bold: true
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: subredditSelectionDialog.accept()
+                    hoverEnabled: true
+                    onEntered: parent.color = theme.name === "Ubuntu.Components.Themes.SuruDark" ? "#4a7bb4" : "#1976d2"
+                    onExited: parent.color = theme.name === "Ubuntu.Components.Themes.SuruDark" ? "#5a8bc4" : "#2196f3"
+                }
+            }
+        }
+    }
+
+    onAccepted: {
+        var newSubreddit = "";
+        var newUseCustom = dialogCustomModeRadio.checked;
+
+        if (newUseCustom) {
+            var customText = dialogCustomSubredditField.text.trim().toLowerCase();
+            if (customText !== "") {
+                newSubreddit = customText;
+            } else {
+                return;
+            }
+        } else {
+            if (dialogCategoryCombo.currentIndex >= 0 && dialogCategoryCombo.currentText) {
+                var categoryName = dialogCategoryCombo.currentText;
+                newSubreddit = root.categoryMap[categoryName];
+            }
+        }
+
+        if (newSubreddit && (newSubreddit !== root.selectedSubreddit || newUseCustom !== root.useCustomSubreddit)) {
+            console.log("Dialog: Applying new subreddit:", newSubreddit, "Custom:", newUseCustom);
+            root.useCustomSubreddit = newUseCustom;
+            root.selectedSubreddit = newSubreddit;
+            memeService.fetchMemes(newSubreddit);
+        }
+    }
+
+    onOpened: {
+        dialogCategoryModeRadio.checked = !root.useCustomSubreddit;
+        dialogCustomModeRadio.checked = root.useCustomSubreddit;
+        
+        if (root.useCustomSubreddit) {
+            dialogCustomSubredditField.text = root.selectedSubreddit;
+            dialogCustomSubredditField.forceActiveFocus();
+        } else {
+            for (var i = 0; i < root.categoryNames.length; i++) {
+                if (root.categoryMap[root.categoryNames[i]] === root.selectedSubreddit) {
+                    dialogCategoryCombo.currentIndex = i;
+                    break;
+                }
+            }
+        }
+    }
+}
 
     // Fullscreen image viewer dialog
     Dialog {

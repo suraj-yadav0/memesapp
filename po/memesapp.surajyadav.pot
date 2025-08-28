@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: memesapp.surajyadav\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-08-28 10:53+0000\n"
+"POT-Creation-Date: 2025-08-28 12:06+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,23 +17,23 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: ../qml/Main.qml:140
+#: ../qml/Main.qml:146
 msgid "M E M E S T R E A M"
 msgstr ""
 
-#: ../qml/Main.qml:141
+#: ../qml/Main.qml:147
 msgid "r/"
 msgstr ""
 
-#: ../qml/Main.qml:150
+#: ../qml/Main.qml:156
 msgid "Select Subreddit"
 msgstr ""
 
-#: ../qml/Main.qml:157
+#: ../qml/Main.qml:163
 msgid "Dark Mode"
 msgstr ""
 
-#: ../qml/Main.qml:157
+#: ../qml/Main.qml:163
 msgid "Light Mode"
 msgstr ""
 

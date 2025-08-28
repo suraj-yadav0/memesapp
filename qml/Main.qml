@@ -30,6 +30,12 @@ ApplicationWindow {
     width: 400
     height: 600
 
+    Rectangle {
+        anchors.fill: parent
+        color: theme.name === "Ubuntu.Components.Themes.SuruDark" ? "black" : theme.palette.normal.background
+        z: -1  // Ensure it stays behind other content
+    }
+
     // Application properties
     property bool darkMode: false
     property string selectedSubreddit: "memes"
@@ -365,7 +371,7 @@ ApplicationWindow {
     // Subreddit Selection Dialog
     Dialog {
         id: subredditSelectionDialog
-        title: "Select Subreddit"
+       // title: "Select Subreddit"
         modal: true
         focus: true
         standardButtons: Dialog.Ok | Dialog.Cancel
@@ -392,7 +398,7 @@ ApplicationWindow {
                 anchors.margins: units.gu(1)
 
                 background: Rectangle {
-                    color: theme.palette.normal.base
+                    color: theme.palette.normal.background
                     border.color: theme.palette.normal.baseBorder
                     border.width: units.gu(0.1)
                     radius: units.gu(.5)
@@ -442,7 +448,7 @@ ApplicationWindow {
                 visible: dialogCategoryModeRadio.checked
 
                 background: Rectangle {
-                    color: theme.palette.normal.base
+                    color: theme.palette.normal.background
                     border.color: theme.palette.normal.baseBorder
                     border.width: 1
                     radius: 4
@@ -470,7 +476,7 @@ ApplicationWindow {
                         Layout.fillWidth: true
 
                         background: Rectangle {
-                            color: theme.palette.normal.field
+                             color: theme.palette.normal.background
                             border.color: theme.palette.normal.base
                             border.width: 1
                             radius: 4
@@ -506,7 +512,7 @@ ApplicationWindow {
                 visible: dialogCustomModeRadio.checked
 
                 background: Rectangle {
-                    color: theme.palette.normal.base
+                    color: theme.palette.normal.background
                     border.color: theme.palette.normal.baseBorder
                     border.width: 1
                     radius: 4
@@ -545,7 +551,7 @@ ApplicationWindow {
                             text: root.useCustomSubreddit ? root.selectedSubreddit : ""
 
                             Rectangle {
-                                color: theme.palette.normal.field
+                                 color: theme.palette.normal.background
                                 border.color: theme.palette.normal.base
                                 border.width: 1
                                 radius: 4

@@ -130,10 +130,15 @@ ApplicationWindow {
 
         Page {
             title: "MemeStream"
+            Rectangle {
+                anchors.fill: parent
+                color: theme.name === "Ubuntu.Components.Themes.SuruDark" ? "black" : theme.palette.normal.background
+                z: -1  // Ensure it stays behind other content
+            }
 
             header: PageHeader {
                 title: i18n.tr("M E M E S T R E A M")
-                 subtitle: i18n.tr("r/" + root.selectedSubreddit)
+                subtitle: i18n.tr("r/" + root.selectedSubreddit)
                 StyleHints {
                     backgroundColor: theme.name === "Ubuntu.Components.Themes.SuruDark" ? "black" : "#081831"
                     foregroundColor: theme.name === "Ubuntu.Components.Themes.SuruDark" ? "#9b4f22" : "white"
@@ -158,7 +163,7 @@ ApplicationWindow {
             }
 
             ColumnLayout {
-             
+
                 anchors.fill: parent
                 anchors.margins: units.gu(2)
                 anchors.topMargin: units.gu(4)
@@ -180,8 +185,6 @@ ApplicationWindow {
                     visible: !memeService.isLoading && !memeService.isModelEmpty()
                     Layout.alignment: Qt.AlignHCenter
                 }
-
-
 
                 // Meme list
                 ListView {
@@ -307,9 +310,7 @@ ApplicationWindow {
                     }
 
                     Text {
-                        text: root.useCustomSubreddit ? 
-                              "Try a different subreddit or check the spelling" :
-                              "Try selecting a different category or refresh"
+                        text: root.useCustomSubreddit ? "Try a different subreddit or check the spelling" : "Try selecting a different category or refresh"
                         anchors.horizontalCenter: parent.horizontalCenter
                         color: theme.palette.normal.backgroundSecondaryText
                     }
@@ -368,7 +369,7 @@ ApplicationWindow {
         modal: true
         focus: true
         standardButtons: Dialog.Ok | Dialog.Cancel
-        
+
         width: Math.min(root.width * 0.9, units.gu(50))
         x: (root.width - width) / 2
         y: (root.height - height) / 2
@@ -389,30 +390,30 @@ ApplicationWindow {
                 title: "Selection Mode"
                 Layout.fillWidth: true
                 anchors.margins: units.gu(1)
-                
+
                 background: Rectangle {
                     color: theme.palette.normal.base
                     border.color: theme.palette.normal.baseBorder
                     border.width: units.gu(0.1)
                     radius: units.gu(.5)
                 }
-                
+
                 label: Text {
                     text: "Selection Mode"
                     color: theme.palette.normal.backgroundText
                     anchors.margins: units.gu(1)
                     font.bold: true
                 }
-                
+
                 Column {
                     anchors.fill: parent
                     spacing: units.gu(1)
-                    
+
                     RadioButton {
                         id: dialogCategoryModeRadio
                         text: "Predefined Categories"
                         checked: !root.useCustomSubreddit
-                        
+
                         contentItem: Text {
                             text: dialogCategoryModeRadio.text
                             color: theme.palette.normal.backgroundText
@@ -424,7 +425,7 @@ ApplicationWindow {
                         id: dialogCustomModeRadio
                         text: "Custom Subreddit"
                         checked: root.useCustomSubreddit
-                        
+
                         contentItem: Text {
                             text: dialogCustomModeRadio.text
                             color: theme.palette.normal.backgroundText
@@ -446,7 +447,7 @@ ApplicationWindow {
                     border.width: 1
                     radius: 4
                 }
-                
+
                 label: Text {
                     text: "Choose Category"
                     color: theme.palette.normal.backgroundText
@@ -510,7 +511,7 @@ ApplicationWindow {
                     border.width: 1
                     radius: 4
                 }
-                
+
                 label: Text {
                     text: "Enter Custom Subreddit"
                     color: theme.palette.normal.backgroundText
@@ -542,16 +543,16 @@ ApplicationWindow {
                             Layout.fillWidth: true
                             placeholderText: "e.g., memes, funny, programming"
                             text: root.useCustomSubreddit ? root.selectedSubreddit : ""
-                            
-                        Rectangle {
+
+                            Rectangle {
                                 color: theme.palette.normal.field
                                 border.color: theme.palette.normal.base
                                 border.width: 1
                                 radius: 4
                             }
-                            
+
                             color: theme.palette.normal.fieldText
-                            
+
                             onTextChanged: {
                                 // Remove 'r/' prefix if user types it
                                 if (text.toLowerCase().startsWith("r/")) {
@@ -613,7 +614,7 @@ ApplicationWindow {
             // Reset dialog state when opened
             dialogCategoryModeRadio.checked = !root.useCustomSubreddit;
             dialogCustomModeRadio.checked = root.useCustomSubreddit;
-            
+
             if (root.useCustomSubreddit) {
                 dialogCustomSubredditField.text = root.selectedSubreddit;
                 dialogCustomSubredditField.forceActiveFocus();
@@ -662,7 +663,7 @@ ApplicationWindow {
             // Consume clicks on the image so outer area can differentiate
             MouseArea {
                 anchors.fill: fullImage
-                onClicked: /* no-op to prevent propagation so image click doesn't close */{}
+                onClicked: /* no-op to prevent propagation so image click doesn't close */ {}
                 acceptedButtons: Qt.AllButtons
             }
 

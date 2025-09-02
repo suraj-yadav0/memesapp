@@ -382,8 +382,8 @@ ApplicationWindow {
 
         background: Rectangle {
             color: theme.palette.normal.background
-            border.color: theme.palette.normal.base
-            border.width: 1
+          //  border.color: theme.palette.normal.base
+          //  border.width: 1
             radius: units.gu(1)
         }
 
@@ -399,8 +399,8 @@ ApplicationWindow {
 
                 background: Rectangle {
                     color: theme.palette.normal.background
-                    border.color: theme.palette.normal.baseBorder
-                    border.width: units.gu(0.1)
+                    // border.color: theme.palette.normal.baseBorder
+                    // border.width: units.gu(0.1)
                     radius: units.gu(.5)
                 }
 
@@ -449,8 +449,8 @@ ApplicationWindow {
 
                 background: Rectangle {
                     color: theme.palette.normal.background
-                    border.color: theme.palette.normal.baseBorder
-                    border.width: 1
+                    // border.color: theme.palette.normal.baseBorder
+                    // border.width: 1
                     radius: 4
                 }
 
@@ -513,8 +513,8 @@ ApplicationWindow {
 
                 background: Rectangle {
                     color: theme.palette.normal.background
-                    border.color: theme.palette.normal.baseBorder
-                    border.width: 1
+                    // border.color: theme.palette.normal.baseBorder
+                    // border.width: 1
                     radius: 4
                 }
 

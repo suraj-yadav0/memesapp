@@ -30,9 +30,6 @@ A fun and intuitive memes app for Ubuntu Touch that brings the best of Reddit's 
 - Adaptive layout for different screen sizes
 - System theme integration
 
-## Screenshots 📸
-
-*Coming soon - Add your app screenshots here*
 
 ## Installation 🚀
 
@@ -44,7 +41,7 @@ A fun and intuitive memes app for Ubuntu Touch that brings the best of Reddit's 
 
 1. **Clone the repository:**
    ```bash
-   git clone <your-repo-url>
+   git clone <https://github.com/suraj-yadav0/memesapp.git>
    cd memesapp
    ```
 

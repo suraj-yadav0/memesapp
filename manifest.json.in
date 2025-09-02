@@ -1,5 +1,5 @@
 {
-    "name": "memesapp.surajyadav",
+    "name": "memesapp",
     "description": "A fun memes app for Ubuntu Touch.",
     "architecture": "@CLICK_ARCH@",
     "title": "MemeStream",

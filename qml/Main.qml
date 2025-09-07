@@ -54,11 +54,29 @@ ApplicationWindow {
             "Star Wars Memes": "PrequelMemes",
             "History Memes": "HistoryMemes",
             "Gaming Memes": "gaming",
-            "Anime Memes": "AnimeMemes"
+            "Anime Memes": "AnimeMemes",
+            "Cursed Comments" : "cursedcomments",
+            "Surreal Memes": "surrealmemes",
+            "Memes of the Dank": "memesofthedank",
+            "Meme Economy": "MemeEconomy",
+            "2meirl4meirl": "2meirl4meirl",
+            "teenagers": "teenagers",
+            "Advice Animals": "AdviceAnimals",
+            "Prequel Memes": "PrequelMemes",
+            "Sequel Memes": "SequelMemes",
+            "OT Memes": "OTMemes",
+            "High Quality Memes": "HighQualityGifs",
+            "Low Effort Memes": "loweffortmemes",
+            "Political Memes": "PoliticalHumor",
+            "Animal Memes": "AnimalsBeingDerps",
+            "Cat Memes": "catmemes",
+            "Dog Memes": "dogmemes",
+            "Wholesome Animemes": "wholesomeanimemes",
+            "Meme Art": "MemeArt"
         })
 
     // Array of category names for the OptionSelector
-    property var categoryNames: ["General Memes", "Dank Memes", "Wholesome Memes", "Funny", "Programming Humor", "Me IRL", "Star Wars Memes", "History Memes", "Gaming Memes", "Anime Memes"]
+    property var categoryNames: ["General Memes", "Dank Memes", "Wholesome Memes", "Funny", "Programming Humor", "Me IRL", "Star Wars Memes", "History Memes", "Gaming Memes", "Anime Memes", "Cursed Comments", "Surreal Memes", "Memes of the Dank", "Meme Economy", "2meirl4meirl", "teenagers", "Advice Animals", "Prequel Memes", "Sequel Memes", "OT Memes", "High Quality Memes", "Low Effort Memes", "Political Memes", "Animal Memes", "Cat Memes", "Dog Memes", "Wholesome Animemes", "Meme Art"]
 
     // Model
     MemeModel {

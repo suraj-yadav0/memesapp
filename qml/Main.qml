@@ -33,114 +33,84 @@ ApplicationWindow {
     Rectangle {
         anchors.fill: parent
         color: theme.name === "Ubuntu.Components.Themes.SuruDark" ? "black" : theme.palette.normal.background
-        z: -1  // Ensure it stays behind other content
+        z: -1
     }
 
     // Application properties
     property bool darkMode: false
     property string selectedSubreddit: "memes"
     property bool useCustomSubreddit: false
-    // Fullscreen image viewer source
     property string dialogImageSource: ""
-    property bool isDesktopMode: width > units.gu(80)  // Reactive to window size
+    property bool isDesktopMode: width > units.gu(80)
 
-    // Category mapping for better user experience
+    // Category mapping
     property var categoryMap: ({
-            "General Memes": "memes",
-            "Dank Memes": "dankmemes",
-            "Wholesome Memes": "wholesomememes",
-            "Funny": "funny",
-            "Programming Humor": "ProgrammerHumor",
-            "Me IRL": "meirl",
-            "Star Wars Memes": "PrequelMemes",
-            "History Memes": "HistoryMemes",
-            "Gaming Memes": "gaming",
-            "Anime Memes": "AnimeMemes",
-            "Cursed Comments" : "cursedcomments",
-            "Surreal Memes": "surrealmemes",
-            "Memes of the Dank": "memesofthedank",
-            "Meme Economy": "MemeEconomy",
-            "2meirl4meirl": "2meirl4meirl",
-            "teenagers": "teenagers",
-            "Advice Animals": "AdviceAnimals",
-            "Prequel Memes": "PrequelMemes",
-            "Sequel Memes": "SequelMemes",
-            "OT Memes": "OTMemes",
-            "High Quality Memes": "HighQualityGifs",
-            "Low Effort Memes": "loweffortmemes",
-            "Political Memes": "PoliticalHumor",
-            "Animal Memes": "AnimalsBeingDerps",
-            "Cat Memes": "catmemes",
-            "Dog Memes": "dogmemes",
-            "Wholesome Animemes": "wholesomeanimemes",
-            "Meme Art": "MemeArt"
-        })
+        "General Memes": "memes",
+        "Dank Memes": "dankmemes",
+        "Wholesome Memes": "wholesomememes",
+        "Funny": "funny",
+        "Programming Humor": "ProgrammerHumor",
+        "Me IRL": "meirl",
+        "Star Wars Memes": "PrequelMemes",
+        "History Memes": "HistoryMemes",
+        "Gaming Memes": "gaming",
+        "Anime Memes": "AnimeMemes",
+        "Cursed Comments": "cursedcomments",
+        "Surreal Memes": "surrealmemes",
+        "Memes of the Dank": "memesofthedank",
+        "Meme Economy": "MemeEconomy",
+        "2meirl4meirl": "2meirl4meirl",
+        "teenagers": "teenagers",
+        "Advice Animals": "AdviceAnimals",
+        "Prequel Memes": "PrequelMemes",
+        "Sequel Memes": "SequelMemes",
+        "OT Memes": "OTMemes",
+        "High Quality Memes": "HighQualityGifs",
+        "Low Effort Memes": "loweffortmemes",
+        "Political Memes": "PoliticalHumor",
+        "Animal Memes": "AnimalsBeingDerps",
+        "Cat Memes": "catmemes",
+        "Dog Memes": "dogmemes",
+        "Wholesome Animemes": "wholesomeanimemes",
+        "Meme Art": "MemeArt"
+    })
 
-    // Array of category names for the OptionSelector
-    property var categoryNames: ["General Memes", "Dank Memes", "Wholesome Memes", "Funny", "Programming Humor", "Me IRL", "Star Wars Memes", "History Memes", "Gaming Memes", "Anime Memes", "Cursed Comments", "Surreal Memes", "Memes of the Dank", "Meme Economy", "2meirl4meirl", "teenagers", "Advice Animals", "Prequel Memes", "Sequel Memes", "OT Memes", "High Quality Memes", "Low Effort Memes", "Political Memes", "Animal Memes", "Cat Memes", "Dog Memes", "Wholesome Animemes", "Meme Art"]
+    property var categoryNames: [
+        "General Memes", "Dank Memes", "Wholesome Memes", "Funny", "Programming Humor", "Me IRL",
+        "Star Wars Memes", "History Memes", "Gaming Memes", "Anime Memes", "Cursed Comments",
+        "Surreal Memes", "Memes of the Dank", "Meme Economy", "2meirl4meirl", "teenagers",
+        "Advice Animals", "Prequel Memes", "Sequel Memes", "OT Memes", "High Quality Memes",
+        "Low Effort Memes", "Political Memes", "Animal Memes", "Cat Memes", "Dog Memes",
+        "Wholesome Animemes", "Meme Art"
+    ]
 
     // Model
     MemeModel {
         id: memeModel
-
-        onModelUpdated: {
-            console.log("Main: Model updated with", count, "memes");
-        }
-
-        onModelCleared: {
-            console.log("Main: Model cleared");
-        }
+        onModelUpdated: console.log("Main: Model updated with", count, "memes")
+        onModelCleared: console.log("Main: Model cleared")
     }
 
     // Service
     MemeService {
         id: memeService
-
-        Component.onCompleted: {
-            console.log("Main: Setting model for service");
-            setModel(memeModel);
-        }
-
-        onMemesRefreshed: {
-            console.log("Main: Memes refreshed, count:", count);
-        }
-
-        onLoadingChanged: {
-            console.log("Main: Loading state changed:", loading);
-        }
-
-        onErrorOccurred: {
-            console.log("Main: Service error:", message);
-        }
-
-        onSubredditChanged: {
-            console.log("Main: Subreddit changed to:", subreddit);
-            root.selectedSubreddit = subreddit;
-        }
+        Component.onCompleted: setModel(memeModel)
+        onMemesRefreshed: console.log("Main: Memes refreshed, count:", count)
+        onLoadingChanged: console.log("Main: Loading state changed:", loading)
+        onErrorOccurred: console.log("Main: Service error:", message)
+        onSubredditChanged: root.selectedSubreddit = subreddit
     }
 
     // Download Manager
     QtObject {
         id: downloadManager
-
         function downloadMeme(imageUrl, title) {
             console.log("DownloadManager: Starting download for:", imageUrl);
-            try {
-                Qt.openUrlExternally(imageUrl);
-                console.log("DownloadManager: Opened image URL externally:", imageUrl);
-            } catch (e) {
-                console.log("DownloadManager: Failed to open URL externally:", e);
-            }
+            try { Qt.openUrlExternally(imageUrl); } catch (e) { console.error(e); }
         }
-
         function shareMeme(url, title) {
             console.log("DownloadManager: Sharing meme:", title, "URL:", url);
-            try {
-                Qt.openUrlExternally(url);
-                console.log("DownloadManager: Opened share URL externally:", url);
-            } catch (e) {
-                console.log("DownloadManager: Failed to open share URL externally:", e);
-            }
+            try { Qt.openUrlExternally(url); } catch (e) { console.error(e); }
         }
     }
 
@@ -173,23 +143,17 @@ ApplicationWindow {
                     Action {
                         iconName: "settings"
                         text: i18n.tr("Select Subreddit")
-                        onTriggered: {
-                            subredditSelectionDialog.open();
-                        }
+                        onTriggered: subredditSelectionDialog.open()
                     },
                     Action {
                         iconName: theme.name === "Ubuntu.Components.Themes.SuruDark" ? "weather-clear-night-symbolic" : "weather-clear-symbolic"
                         text: theme.name === "Ubuntu.Components.Themes.SuruDark" ? i18n.tr("Light Mode") : i18n.tr("Dark Mode")
-                        onTriggered: {
-                            Theme.name = theme.name === "Ubuntu.Components.Themes.SuruDark" ? "Ubuntu.Components.Themes.Ambiance" : "Ubuntu.Components.Themes.SuruDark";
-                        }
+                        onTriggered: Theme.name = theme.name === "Ubuntu.Components.Themes.SuruDark" ? "Ubuntu.Components.Themes.Ambiance" : "Ubuntu.Components.Themes.SuruDark"
                     },
                     Action {
                         iconName: root.isDesktopMode ? "view-list-symbolic" : "view-grid-symbolic"
                         text: i18n.tr(root.isDesktopMode ? "List View" : "Grid View")
-                        onTriggered: {
-                            root.isDesktopMode = !root.isDesktopMode;
-                        }
+                        onTriggered: root.isDesktopMode = !root.isDesktopMode
                     }
                 ]
             }
@@ -200,14 +164,12 @@ ApplicationWindow {
                 anchors.topMargin: units.gu(4)
                 spacing: units.gu(1.5)
 
-                // Loading indicator
                 BusyIndicator {
                     visible: memeService.isLoading
                     running: memeService.isLoading
                     Layout.alignment: Qt.AlignHCenter
                 }
 
-                // Current subreddit info
                 Text {
                     text: "r/" + root.selectedSubreddit
                     font.bold: true
@@ -217,230 +179,241 @@ ApplicationWindow {
                     Layout.alignment: Qt.AlignHCenter
                 }
 
-            GridView {
-    id: memeGridView
-    Layout.fillWidth: true
-    Layout.fillHeight: true
-    model: memeModel
-    visible: !memeService.isLoading
-    clip: true
+                /* ✅ OPTIMIZED LAZY-LOADING GRIDVIEW */
+                GridView {
+                    id: memeGridView
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    model: memeModel
+                    visible: !memeService.isLoading
+                    clip: true
 
-    // 🚫 Never let cellWidth exceed GridView width
-    cellWidth: root.isDesktopMode ? Math.min(width / 2, units.gu(35)) : width
-    cellHeight: root.isDesktopMode ? units.gu(45) : delegate.implicitHeight + units.gu(2)
+                    cellWidth: root.isDesktopMode ? Math.min(width / 2, units.gu(35)) : width
+                    cellHeight: root.isDesktopMode ? units.gu(45) : delegate.implicitHeight + units.gu(2)
+                    flow: root.isDesktopMode ? GridView.LeftToRight : GridView.TopToBottom
+                    snapMode: GridView.SnapToRow
+                    flickableDirection: root.isDesktopMode ? Flickable.AutoFlickDirection : Flickable.VerticalFlick
 
-    // ⬇️ Flow vertically in list mode, horizontally in grid mode
-    flow: root.isDesktopMode ? GridView.LeftToRight : GridView.TopToBottom
-    // 🚫 Use constants, not string enums (Qt 5.12+)
+                    // Pull-to-refresh (Qt 5.14+ or Lomiri extended)
+                    // pullToActivate: !root.isDesktopMode
+                    // onPullFinished: memeService.refreshMemes()
 
-    // 🔄 Snap to rows in list mode for better UX
-    snapMode: GridView.SnapToRow
+                    delegate: Rectangle {
+                        id: delegate
+                        width: memeGridView.cellWidth - (root.isDesktopMode ? units.gu(1) : 0)
+                        height: root.isDesktopMode
+                                ? memeGridView.cellHeight - units.gu(1)
+                                : delegateColumn.implicitHeight + units.gu(3)
+                        color: theme.palette.normal.background
+                        border.color: theme.palette.normal.base
+                        border.width: 1
+                        radius: 8
 
-    // 🚫 Disable horizontal scrolling in list mode
-    flickableDirection: root.isDesktopMode ? Flickable.AutoFlickDirection : Flickable.VerticalFlick
+                        Column {
+                            id: delegateColumn
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            anchors.top: parent.top
+                            anchors.margins: units.gu(1)
+                            spacing: units.gu(0.5)
 
-    delegate: Rectangle {
-        id: delegate
-        width: memeGridView.cellWidth - (root.isDesktopMode ? units.gu(1) : 0)
-        height: root.isDesktopMode
-                ? memeGridView.cellHeight - units.gu(1)
-                : delegateColumn.implicitHeight + units.gu(3)  // 👈 Use implicitHeight!
+                            Text {
+                                text: model.title || "Untitled"
+                                font.bold: true
+                                wrapMode: Text.WordWrap
+                                width: parent.width
+                                color: theme.palette.normal.backgroundText
+                                maximumLineCount: root.isDesktopMode ? 2 : 5
+                                elide: Text.ElideRight
+                            }
 
-        color: theme.palette.normal.background
-        border.color: theme.palette.normal.base
-        border.width: 1
-        radius: 8
+                            // ✅ LAZY IMAGE LOADER WITH PRELOAD, FADE-IN, PLACEHOLDER
+                            Item {
+                                id: imageContainer
+                                width: parent.width - units.gu(2)
+                                height: root.isDesktopMode ? Math.min(parent.width * 0.8, units.gu(25)) : units.gu(30)
+                                anchors.horizontalCenter: parent.horizontalCenter
 
-        Column {
-            id: delegateColumn
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.top: parent.top
-            anchors.margins: units.gu(1)
-            spacing: units.gu(0.5)
+                                // Placeholder
+                                Rectangle {
+                                    anchors.fill: parent
+                                    color: theme.palette.normal.background
+                                    border.color: theme.palette.normal.base
+                                    border.width: 1
+                                    radius: 4
+                                    visible: !imageLoader.active && !loadedImage.visible
+                                }
 
-            Text {
-                text: model.title || "Untitled"
-                font.bold: true
-                wrapMode: Text.WordWrap
-                width: parent.width
-                color: theme.palette.normal.backgroundText
-                maximumLineCount: root.isDesktopMode ? 2 : 5
-                elide: Text.ElideRight
-            }
+                                // Optional: Loading spinner
+                                BusyIndicator {
+                                    anchors.centerIn: parent
+                                    running: true
+                                    width: units.gu(3)
+                                    height: units.gu(3)
+                                    visible: !imageLoader.active && !loadedImage.visible
+                                }
 
-            Image {
-                source: model.image || ""
-                width: parent.width - units.gu(2)
-                height: root.isDesktopMode ? Math.min(parent.width * 0.8, units.gu(25)) : units.gu(30)
-                fillMode: Image.PreserveAspectFit
-                anchors.horizontalCenter: parent.horizontalCenter
-                visible: source != ""
+                                Loader {
+                                    id: imageLoader
+                                    active: false
+                                    sourceComponent: Image {
+                                        id: loadedImage
+                                        width: parent.width
+                                        height: parent.height
+                                        fillMode: Image.PreserveAspectFit
+                                        cache: true
+                                        smooth: true
+                                        visible: status === Image.Ready
+                                        opacity: 0
+                                        Behavior on opacity { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
 
-                onStatusChanged: {
-                    if (status === Image.Error) {
-                        console.log("Failed to load image:", model.image);
-                        visible = false;
-                    }
-                }
+                                        onStatusChanged: {
+                                            if (status === Image.Ready) {
+                                                visible = true;
+                                                opacity = 1;
+                                            } else if (status === Image.Error) {
+                                                console.log("Failed to load image:", model.image);
+                                                visible = false;
+                                            }
+                                        }
 
-                MouseArea {
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    onClicked: {
-                        if (model.image) {
-                            root.dialogImageSource = model.image;
-                            attachmentDialog.open();
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            hoverEnabled: true
+                                            onClicked: {
+                                                if (model.image) {
+                                                    root.dialogImageSource = model.image;
+                                                    attachmentDialog.open();
+                                                }
+                                            }
+                                            cursorShape: Qt.PointingHandCursor
+                                        }
+                                    }
+                                }
+
+                                function loadIfVisible() {
+                                    if (!model.image || imageLoader.active) return;
+
+                                    var view = memeGridView;
+                                    var itemTop = mapToItem(view, 0, 0).y;
+                                    var itemBottom = itemTop + height;
+                                    var buffer = view.height * 1.5; // Preload 1.5 screens ahead/behind
+                                    var viewTop = view.contentY - buffer;
+                                    var viewBottom = view.contentY + view.height + buffer;
+
+                                    if (itemBottom > viewTop && itemTop < viewBottom) {
+                                        imageLoader.active = true;
+                                        imageLoader.setSource("", { source: model.image });
+                                    }
+
+                                    // 🧠 OPTIONAL: Unload if too far away (saves memory)
+                                    // if (imageLoader.active && (itemBottom < view.contentY - view.height || itemTop > view.contentY + view.height * 2)) {
+                                    //     imageLoader.active = false;
+                                    // }
+                                }
+
+                                Component.onCompleted: loadIfVisible()
+
+                                Connections {
+                                    target: memeGridView
+                                    onContentYChanged: imageContainer.loadIfVisible()
+                                    onWidthChanged: imageContainer.loadIfVisible()
+                                }
+                            }
+
+                            Flow {
+                                width: parent.width
+                                spacing: root.isDesktopMode ? units.gu(1) : units.gu(2)
+
+                                Text {
+                                    text: "👍 " + (model.upvotes || 0)
+                                    color: theme.palette.normal.backgroundText
+                                    font.pixelSize: root.isDesktopMode ? units.gu(1.2) : units.gu(1.4)
+                                }
+
+                                Text {
+                                    text: "💬 " + (model.comments || 0)
+                                    color: theme.palette.normal.backgroundText
+                                    font.pixelSize: root.isDesktopMode ? units.gu(1.2) : units.gu(1.4)
+                                }
+
+                                Text {
+                                    text: "r/" + (model.subreddit || "")
+                                    color: theme.palette.normal.backgroundText
+                                    font.pixelSize: root.isDesktopMode ? units.gu(1.2) : units.gu(1.4)
+                                    elide: Text.ElideMiddle
+                                    maximumLineCount: 1
+                                }
+
+                                Text {
+                                    text: "📤"
+                                    font.pixelSize: units.gu(1.5)
+                                    color: theme.palette.normal.backgroundText
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        onClicked: downloadManager.shareMeme(model.permalink || model.image, model.title);
+                                        cursorShape: Qt.PointingHandCursor
+                                    }
+                                }
+
+                                Text {
+                                    text: "💾"
+                                    font.pixelSize: units.gu(1.5)
+                                    color: theme.palette.normal.backgroundText
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        onClicked: downloadManager.downloadMeme(model.image, model.title);
+                                        cursorShape: Qt.PointingHandCursor
+                                    }
+                                }
+                            }
+                        }
+
+                        Rectangle {
+                            anchors.fill: parent
+                            color: "transparent"
+                            border.color: theme.palette.normal.selection
+                            border.width: parent.hovered ? 2 : 0
+                            radius: 8
+                            visible: root.isDesktopMode
+                            property bool hovered: false
+                            MouseArea {
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                propagateComposedEvents: true
+                                onEntered: parent.hovered = true
+                                onExited: parent.hovered = false
+                            }
                         }
                     }
-                    cursorShape: Qt.PointingHandCursor
-                }
-            }
 
-            Flow {
-                width: parent.width
-                spacing: root.isDesktopMode ? units.gu(1) : units.gu(2)
-
-                Text {
-                    text: "👍 " + (model.upvotes || 0)
-                    color: theme.palette.normal.backgroundText
-                    font.pixelSize: root.isDesktopMode ? units.gu(1.2) : units.gu(1.4)
+                    ScrollBar.vertical: ScrollBar { visible: root.isDesktopMode; policy: ScrollBar.AsNeeded }
+                    ScrollBar.horizontal: ScrollBar { policy: ScrollBar.AlwaysOff }
                 }
 
-                Text {
-                    text: "💬 " + (model.comments || 0)
-                    color: theme.palette.normal.backgroundText
-                    font.pixelSize: root.isDesktopMode ? units.gu(1.2) : units.gu(1.4)
-                }
-
-                Text {
-                    text: "r/" + (model.subreddit || "")
-                    color: theme.palette.normal.backgroundText
-                    font.pixelSize: root.isDesktopMode ? units.gu(1.2) : units.gu(1.4)
-                    elide: Text.ElideMiddle
-                    maximumLineCount: 1
-                }
-
-                Text {
-                    text: "📤"
-                    font.pixelSize: units.gu(1.5)
-                    color: theme.palette.normal.backgroundText
-
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked: downloadManager.shareMeme(model.permalink || model.image, model.title);
-                        cursorShape: Qt.PointingHandCursor
-                    }
-                }
-
-                Text {
-                    text: "💾"
-                    font.pixelSize: units.gu(1.5)
-                    color: theme.palette.normal.backgroundText
-
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked: downloadManager.downloadMeme(model.image, model.title);
-                        cursorShape: Qt.PointingHandCursor
-                    }
-                }
-            }
-        }
-
-        // Hover effect for desktop mode
-        Rectangle {
-            anchors.fill: parent
-            color: "transparent"
-            border.color: theme.palette.normal.selection
-            border.width: parent.hovered ? 2 : 0
-            radius: 8
-            visible: root.isDesktopMode
-
-            property bool hovered: false
-
-            MouseArea {
-                anchors.fill: parent
-                hoverEnabled: true
-                propagateComposedEvents: true
-                onEntered: parent.hovered = true
-                onExited: parent.hovered = false
-            }
-        }
-    }
-
-    // ✅ ScrollBar — only in desktop mode
-    ScrollBar.vertical: ScrollBar {
-        active: true
-        visible: root.isDesktopMode
-        policy: ScrollBar.AsNeeded
-    }
-
-    // 🚫 Prevent horizontal scrolling in list mode
-    ScrollBar.horizontal: ScrollBar {
-        policy: ScrollBar.AlwaysOff
-    }
-}
-
-                // Empty state
+                // Empty & Error States (unchanged)
                 Column {
                     Layout.alignment: Qt.AlignCenter
                     visible: memeService.isModelEmpty() && !memeService.isLoading
                     spacing: units.gu(1.5)
-
-                    Text {
-                        text: "No memes found"
-                        font.pixelSize: units.gu(2)
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        color: theme.palette.normal.backgroundText
-                    }
-
-                    Text {
-                        text: root.useCustomSubreddit ? "Try a different subreddit or check the spelling" : "Try selecting a different category or refresh"
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        color: theme.palette.normal.backgroundSecondaryText
-                    }
-
-                    Button {
-                        text: "Refresh"
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        onClicked: memeService.refreshMemes()
-                    }
+                    Text { text: "No memes found"; font.pixelSize: units.gu(2); color: theme.palette.normal.backgroundText; anchors.horizontalCenter: parent.horizontalCenter }
+                    Text { text: root.useCustomSubreddit ? "Try a different subreddit or check the spelling" : "Try selecting a different category or refresh"; color: theme.palette.normal.backgroundSecondaryText; anchors.horizontalCenter: parent.horizontalCenter }
+                    Button { text: "Refresh"; anchors.horizontalCenter: parent.horizontalCenter; onClicked: memeService.refreshMemes() }
                 }
 
-                // Error state
                 Column {
                     Layout.alignment: Qt.AlignCenter
                     visible: memeService.lastError !== "" && !memeService.isLoading
                     spacing: units.gu(1.5)
-
-                    Text {
-                        text: "Error loading memes"
-                        font.pixelSize: units.gu(2)
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        color: theme.palette.normal.negative
-                    }
-
-                    Text {
-                        text: memeService.lastError
-                        font.pixelSize: units.gu(1.5)
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        color: theme.palette.normal.backgroundSecondaryText
-                        wrapMode: Text.WordWrap
-                        width: units.gu(40)
-                        horizontalAlignment: Text.AlignHCenter
-                    }
-
-                    Button {
-                        text: "Try Again"
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        onClicked: memeService.refreshMemes()
-                    }
+                    Text { text: "Error loading memes"; font.pixelSize: units.gu(2); color: theme.palette.normal.negative; anchors.horizontalCenter: parent.horizontalCenter }
+                    Text { text: memeService.lastError; font.pixelSize: units.gu(1.5); color: theme.palette.normal.backgroundSecondaryText; wrapMode: Text.WordWrap; width: units.gu(40); horizontalAlignment: Text.AlignHCenter }
+                    Button { text: "Try Again"; anchors.horizontalCenter: parent.horizontalCenter; onClicked: memeService.refreshMemes() }
                 }
             }
         }
     }
 
-    // Settings persistence
+    // Settings
     Settings {
         id: settings
         property alias darkMode: root.darkMode
@@ -448,43 +421,27 @@ ApplicationWindow {
         property alias useCustomSubreddit: root.useCustomSubreddit
     }
 
-    // Subreddit Selection Dialog
+    // Subreddit Dialog (unchanged from your original — working perfectly)
     Dialog {
         id: subredditSelectionDialog
         modal: true
         focus: true
         standardButtons: Dialog.Ok | Dialog.Cancel
-
         width: Math.min(root.width * 0.9, units.gu(50))
         x: (root.width - width) / 2
         y: (root.height - height) / 2
-
-        background: Rectangle {
-            color: theme.palette.normal.background
-            radius: units.gu(1)
-        }
+        background: Rectangle { color: theme.palette.normal.background; radius: units.gu(1) }
 
         ColumnLayout {
             anchors.fill: parent
             spacing: units.gu(2)
 
-            // Mode selector (Category vs Custom)
             GroupBox {
                 title: "Selection Mode"
                 Layout.fillWidth: true
                 anchors.margins: units.gu(1)
-
-                background: Rectangle {
-                    color: theme.palette.normal.background
-                    radius: units.gu(.5)
-                }
-
-                label: Text {
-                    text: "Selection Mode"
-                    color: theme.palette.normal.backgroundText
-                    anchors.margins: units.gu(1)
-                    font.bold: true
-                }
+                background: Rectangle { color: theme.palette.normal.background; radius: units.gu(.5) }
+                label: Text { text: "Selection Mode"; color: theme.palette.normal.backgroundText; anchors.margins: units.gu(1); font.bold: true }
 
                 Column {
                     anchors.fill: parent
@@ -494,74 +451,35 @@ ApplicationWindow {
                         id: dialogCategoryModeRadio
                         text: "Predefined Categories"
                         checked: !root.useCustomSubreddit
-
-                        contentItem: Text {
-                            text: dialogCategoryModeRadio.text
-                            color: theme.palette.normal.backgroundText
-                            leftPadding: dialogCategoryModeRadio.indicator.width + dialogCategoryModeRadio.spacing
-                        }
+                        contentItem: Text { text: dialogCategoryModeRadio.text; color: theme.palette.normal.backgroundText; leftPadding: dialogCategoryModeRadio.indicator.width + dialogCategoryModeRadio.spacing }
                     }
 
                     RadioButton {
                         id: dialogCustomModeRadio
                         text: "Custom Subreddit"
                         checked: root.useCustomSubreddit
-
-                        contentItem: Text {
-                            text: dialogCustomModeRadio.text
-                            color: theme.palette.normal.backgroundText
-                            leftPadding: dialogCustomModeRadio.indicator.width + dialogCustomModeRadio.spacing
-                        }
+                        contentItem: Text { text: dialogCustomModeRadio.text; color: theme.palette.normal.backgroundText; leftPadding: dialogCustomModeRadio.indicator.width + dialogCustomModeRadio.spacing }
                     }
                 }
             }
 
-            // Category Selector
             GroupBox {
                 title: "Choose Category"
                 Layout.fillWidth: true
                 visible: dialogCategoryModeRadio.checked
-
-                background: Rectangle {
-                    color: theme.palette.normal.background
-                    radius: 4
-                }
-
-                label: Text {
-                    text: "Choose Category"
-                    color: theme.palette.normal.backgroundText
-                    font.bold: true
-                }
+                background: Rectangle { color: theme.palette.normal.background; radius: 4 }
+                label: Text { text: "Choose Category"; color: theme.palette.normal.backgroundText; font.bold: true }
 
                 ColumnLayout {
                     anchors.fill: parent
                     spacing: units.gu(1)
-
-                    Text {
-                        text: "Select a meme category:"
-                        Layout.fillWidth: true
-                        color: theme.palette.normal.backgroundText
-                    }
-
+                    Text { text: "Select a meme category:"; Layout.fillWidth: true; color: theme.palette.normal.backgroundText }
                     ComboBox {
                         id: dialogCategoryCombo
                         model: root.categoryNames
                         Layout.fillWidth: true
-
-                        background: Rectangle {
-                            color: theme.palette.normal.background
-                            border.color: theme.palette.normal.base
-                            border.width: 1
-                            radius: 4
-                        }
-
-                        contentItem: Text {
-                            text: dialogCategoryCombo.displayText
-                            color: theme.palette.normal.fieldText
-                            leftPadding: units.gu(1)
-                            rightPadding: units.gu(3)
-                            verticalAlignment: Text.AlignVCenter
-                        }
+                        background: Rectangle { color: theme.palette.normal.background; border.color: theme.palette.normal.base; border.width: 1; radius: 4 }
+                        contentItem: Text { text: dialogCategoryCombo.displayText; color: theme.palette.normal.fieldText; leftPadding: units.gu(1); rightPadding: units.gu(3); verticalAlignment: Text.AlignVCenter }
 
                         Component.onCompleted: {
                             if (!root.useCustomSubreddit) {
@@ -577,80 +495,39 @@ ApplicationWindow {
                 }
             }
 
-            // Custom subreddit input
             GroupBox {
                 title: "Enter Custom Subreddit"
                 Layout.fillWidth: true
                 visible: dialogCustomModeRadio.checked
-
-                background: Rectangle {
-                    color: theme.palette.normal.background
-                    radius: 4
-                }
-
-                label: Text {
-                    text: "Enter Custom Subreddit"
-                    color: theme.palette.normal.backgroundText
-                    font.bold: true
-                }
+                background: Rectangle { color: theme.palette.normal.background; radius: 4 }
+                label: Text { text: "Enter Custom Subreddit"; color: theme.palette.normal.backgroundText; font.bold: true }
 
                 ColumnLayout {
                     anchors.fill: parent
                     spacing: units.gu(1)
-
-                    Text {
-                        text: "Enter the name of any subreddit:"
-                        Layout.fillWidth: true
-                        color: theme.palette.normal.backgroundText
-                    }
-
+                    Text { text: "Enter the name of any subreddit:"; Layout.fillWidth: true; color: theme.palette.normal.backgroundText }
                     RowLayout {
                         Layout.fillWidth: true
                         spacing: units.gu(1)
-
-                        Text {
-                            text: "r/"
-                            font.bold: true
-                            color: theme.palette.normal.backgroundText
-                        }
-
+                        Text { text: "r/"; font.bold: true; color: theme.palette.normal.backgroundText }
                         TextField {
                             id: dialogCustomSubredditField
                             Layout.fillWidth: true
                             placeholderText: "e.g., memes, funny, programming"
                             text: root.useCustomSubreddit ? root.selectedSubreddit : ""
-
-                             Rectangle {
-                                color: theme.palette.normal.background
-                                border.color: theme.palette.normal.base
-                                border.width: 1
-                                radius: 4
-                            }
-
+                             Rectangle { color: theme.palette.normal.background; border.color: theme.palette.normal.base; border.width: 1; radius: 4 }
                             color: theme.palette.normal.fieldText
 
                             onTextChanged: {
-                                if (text.toLowerCase().startsWith("r/")) {
-                                    text = text.substring(2);
-                                }
+                                if (text.toLowerCase().startsWith("r/")) text = text.substring(2);
                                 var cleanText = text.replace(/[^a-zA-Z0-9_]/g, '');
-                                if (cleanText !== text) {
-                                    text = cleanText;
-                                }
+                                if (cleanText !== text) text = cleanText;
                             }
-
                             Keys.onReturnPressed: subredditSelectionDialog.accept()
                             Keys.onEnterPressed: subredditSelectionDialog.accept()
                         }
                     }
-
-                    Text {
-                        text: "Note: Make sure the subreddit exists and contains images"
-                        font.pixelSize: units.gu(1.2)
-                        color: theme.palette.normal.backgroundSecondaryText
-                        Layout.fillWidth: true
-                        wrapMode: Text.WordWrap
-                    }
+                    Text { text: "Note: Make sure the subreddit exists and contains images"; font.pixelSize: units.gu(1.2); color: theme.palette.normal.backgroundSecondaryText; Layout.fillWidth: true; wrapMode: Text.WordWrap }
                 }
             }
         }
@@ -661,11 +538,8 @@ ApplicationWindow {
 
             if (newUseCustom) {
                 var customText = dialogCustomSubredditField.text.trim().toLowerCase();
-                if (customText !== "") {
-                    newSubreddit = customText;
-                } else {
-                    return; // Don't close if invalid
-                }
+                if (customText !== "") newSubreddit = customText;
+                else return;
             } else {
                 if (dialogCategoryCombo.currentIndex >= 0 && dialogCategoryCombo.currentText) {
                     var categoryName = dialogCategoryCombo.currentText;
@@ -699,22 +573,18 @@ ApplicationWindow {
         }
     }
 
-    // Fullscreen image viewer dialog
+    // Fullscreen Dialog (unchanged)
     Dialog {
         id: attachmentDialog
         modal: true
         focus: true
         padding: 0
-        x: 0
-        y: 0
-        width: root.width
-        height: root.height
+        x: 0; y: 0; width: root.width; height: root.height
         background: Rectangle { color: "transparent" }
 
         Rectangle {
             anchors.fill: parent
             color: "#000000CC"
-
             Image {
                 id: fullImage
                 anchors.centerIn: parent
@@ -725,31 +595,12 @@ ApplicationWindow {
                 cache: true
                 smooth: true
             }
-
-            MouseArea {
-                anchors.fill: fullImage
-                onClicked: {}
-                acceptedButtons: Qt.AllButtons
-            }
-
-            Button {
-                text: "\u2715"
-                anchors.top: parent.top
-                anchors.right: parent.right
-                anchors.margins: units.gu(1)
-                width: units.gu(4)
-                height: units.gu(4)
-                onClicked: attachmentDialog.close()
-            }
-
-            MouseArea {
-                anchors.fill: parent
-                onClicked: attachmentDialog.close()
-                hoverEnabled: true
-                propagateComposedEvents: true
-            }
+            MouseArea { anchors.fill: fullImage; 
+            onClicked: {}
+             acceptedButtons: Qt.AllButtons }
+            Button { text: "\u2715"; anchors.top: parent.top; anchors.right: parent.right; anchors.margins: units.gu(1); width: units.gu(4); height: units.gu(4); onClicked: attachmentDialog.close() }
+            MouseArea { anchors.fill: parent; onClicked: attachmentDialog.close(); hoverEnabled: true; propagateComposedEvents: true }
         }
-
         Keys.onEscapePressed: attachmentDialog.close()
         onClosed: root.dialogImageSource = ""
     }
@@ -760,13 +611,8 @@ ApplicationWindow {
         memeService.fetchMemes(subreddit);
     }
 
-    // Initialization
     Component.onCompleted: {
         console.log("Main: App starting up");
-        console.log("Main: Selected subreddit:", root.selectedSubreddit);
-        console.log("Main: Dark mode:", root.darkMode);
-        console.log("Main: Use custom subreddit:", root.useCustomSubreddit);
-
         Qt.callLater(function () {
             memeService.fetchMemes(root.selectedSubreddit);
         });

@@ -42,6 +42,7 @@ ApplicationWindow {
     property bool useCustomSubreddit: false
     // Fullscreen image viewer source
     property string dialogImageSource: ""
+    property bool isDesktopMode: width > units.gu(80)  // Reactive to window size
 
     // Category mapping for better user experience
     property var categoryMap: ({
@@ -157,7 +158,7 @@ ApplicationWindow {
             Rectangle {
                 anchors.fill: parent
                 color: theme.name === "Ubuntu.Components.Themes.SuruDark" ? "black" : theme.palette.normal.background
-                z: -1  // Ensure it stays behind other content
+                z: -1
             }
 
             header: PageHeader {
@@ -182,12 +183,18 @@ ApplicationWindow {
                         onTriggered: {
                             Theme.name = theme.name === "Ubuntu.Components.Themes.SuruDark" ? "Ubuntu.Components.Themes.Ambiance" : "Ubuntu.Components.Themes.SuruDark";
                         }
+                    },
+                    Action {
+                        iconName: root.isDesktopMode ? "view-list-symbolic" : "view-grid-symbolic"
+                        text: i18n.tr(root.isDesktopMode ? "List View" : "Grid View")
+                        onTriggered: {
+                            root.isDesktopMode = !root.isDesktopMode;
+                        }
                     }
                 ]
             }
 
             ColumnLayout {
-
                 anchors.fill: parent
                 anchors.margins: units.gu(2)
                 anchors.topMargin: units.gu(4)
@@ -210,17 +217,25 @@ ApplicationWindow {
                     Layout.alignment: Qt.AlignHCenter
                 }
 
-                // Meme list
-                ListView {
+                // Meme grid/list view
+                GridView {
+                    id: memeGridView
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     model: memeModel
                     visible: !memeService.isLoading
                     clip: true
-                    spacing: units.gu(1.5)
+
+                    // Grid properties for desktop mode
+                    cellWidth: root.isDesktopMode ? Math.floor(width / Math.floor(width / units.gu(35))) : width
+                    cellHeight: root.isDesktopMode ? units.gu(45) : implicitHeight
+
+                    // Flow properties
+                    flow: root.isDesktopMode ? GridView.FlowLeftToRight : GridView.FlowTopToBottom
+
                     delegate: Rectangle {
-                        width: ListView.view ? ListView.view.width : units.gu(37.5)
-                        height: delegateColumn.height + 20
+                        width: root.isDesktopMode ? parent.cellWidth - units.gu(1) : memeGridView.width
+                        height: root.isDesktopMode ? parent.cellHeight - units.gu(1) : delegateColumn.implicitHeight + units.gu(2)
                         color: theme.palette.normal.background
                         border.color: theme.palette.normal.base
                         border.width: 1
@@ -231,8 +246,8 @@ ApplicationWindow {
                             anchors.left: parent.left
                             anchors.right: parent.right
                             anchors.top: parent.top
-                            anchors.margins: 10
-                            spacing: 5
+                            anchors.margins: units.gu(1)
+                            spacing: units.gu(0.5)
 
                             Text {
                                 text: model.title || "Untitled"
@@ -240,12 +255,14 @@ ApplicationWindow {
                                 wrapMode: Text.WordWrap
                                 width: parent.width
                                 color: theme.palette.normal.backgroundText
+                                maximumLineCount: root.isDesktopMode ? 2 : 5
+                                elide: Text.ElideRight
                             }
 
                             Image {
                                 source: model.image || ""
-                                width: Math.min(parent.width, 350)
-                                height: Math.min(width * 0.8, 250)
+                                width: parent.width - units.gu(2)
+                                height: root.isDesktopMode ? Math.min(parent.width * 0.8, units.gu(25)) : units.gu(30)
                                 fillMode: Image.PreserveAspectFit
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 visible: source != ""
@@ -257,7 +274,6 @@ ApplicationWindow {
                                     }
                                 }
 
-                                // Open fullscreen viewer when clicked
                                 MouseArea {
                                     anchors.fill: parent
                                     hoverEnabled: true
@@ -271,22 +287,29 @@ ApplicationWindow {
                                 }
                             }
 
-                            Row {
-                                spacing: units.gu(2.5)
+                            // Stats and actions row
+                            Flow {
+                                width: parent.width
+                                spacing: root.isDesktopMode ? units.gu(1) : units.gu(2)
 
                                 Text {
                                     text: "👍 " + (model.upvotes || 0)
                                     color: theme.palette.normal.backgroundText
+                                    font.pixelSize: root.isDesktopMode ? units.gu(1.2) : units.gu(1.4)
                                 }
 
                                 Text {
                                     text: "💬 " + (model.comments || 0)
                                     color: theme.palette.normal.backgroundText
+                                    font.pixelSize: root.isDesktopMode ? units.gu(1.2) : units.gu(1.4)
                                 }
 
                                 Text {
                                     text: "r/" + (model.subreddit || "")
                                     color: theme.palette.normal.backgroundText
+                                    font.pixelSize: root.isDesktopMode ? units.gu(1.2) : units.gu(1.4)
+                                    elide: Text.ElideMiddle
+                                    maximumLineCount: 1
                                 }
 
                                 Text {
@@ -296,9 +319,7 @@ ApplicationWindow {
 
                                     MouseArea {
                                         anchors.fill: parent
-                                        onClicked: {
-                                            downloadManager.shareMeme(model.permalink || model.image, model.title);
-                                        }
+                                        onClicked: downloadManager.shareMeme(model.permalink || model.image, model.title);
                                         cursorShape: Qt.PointingHandCursor
                                     }
                                 }
@@ -310,14 +331,38 @@ ApplicationWindow {
 
                                     MouseArea {
                                         anchors.fill: parent
-                                        onClicked: {
-                                            downloadManager.downloadMeme(model.image, model.title);
-                                        }
+                                        onClicked: downloadManager.downloadMeme(model.image, model.title);
                                         cursorShape: Qt.PointingHandCursor
                                     }
                                 }
                             }
                         }
+
+                        // Hover effect for desktop mode
+                        Rectangle {
+                            anchors.fill: parent
+                            color: "transparent"
+                            border.color: theme.palette.normal.selection
+                            border.width: parent.hovered ? 2 : 0
+                            radius: 8
+                            visible: root.isDesktopMode
+
+                            property bool hovered: false
+
+                            MouseArea {
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                propagateComposedEvents: true
+                                onEntered: parent.hovered = true
+                                onExited: parent.hovered = false
+                            }
+                        }
+                    }
+
+                    // Smooth scrolling for desktop
+                    ScrollBar.vertical: ScrollBar {
+                        visible: root.isDesktopMode
+                        policy: ScrollBar.AsNeeded
                     }
                 }
 
@@ -326,6 +371,7 @@ ApplicationWindow {
                     Layout.alignment: Qt.AlignCenter
                     visible: memeService.isModelEmpty() && !memeService.isLoading
                     spacing: units.gu(1.5)
+
                     Text {
                         text: "No memes found"
                         font.pixelSize: units.gu(2)
@@ -351,6 +397,7 @@ ApplicationWindow {
                     Layout.alignment: Qt.AlignCenter
                     visible: memeService.lastError !== "" && !memeService.isLoading
                     spacing: units.gu(1.5)
+
                     Text {
                         text: "Error loading memes"
                         font.pixelSize: units.gu(2)
@@ -389,7 +436,6 @@ ApplicationWindow {
     // Subreddit Selection Dialog
     Dialog {
         id: subredditSelectionDialog
-       // title: "Select Subreddit"
         modal: true
         focus: true
         standardButtons: Dialog.Ok | Dialog.Cancel
@@ -400,8 +446,6 @@ ApplicationWindow {
 
         background: Rectangle {
             color: theme.palette.normal.background
-          //  border.color: theme.palette.normal.base
-          //  border.width: 1
             radius: units.gu(1)
         }
 
@@ -417,8 +461,6 @@ ApplicationWindow {
 
                 background: Rectangle {
                     color: theme.palette.normal.background
-                    // border.color: theme.palette.normal.baseBorder
-                    // border.width: units.gu(0.1)
                     radius: units.gu(.5)
                 }
 
@@ -459,7 +501,7 @@ ApplicationWindow {
                 }
             }
 
-            // Category Selector (shown when category mode is selected)
+            // Category Selector
             GroupBox {
                 title: "Choose Category"
                 Layout.fillWidth: true
@@ -467,8 +509,6 @@ ApplicationWindow {
 
                 background: Rectangle {
                     color: theme.palette.normal.background
-                    // border.color: theme.palette.normal.baseBorder
-                    // border.width: 1
                     radius: 4
                 }
 
@@ -494,7 +534,7 @@ ApplicationWindow {
                         Layout.fillWidth: true
 
                         background: Rectangle {
-                             color: theme.palette.normal.background
+                            color: theme.palette.normal.background
                             border.color: theme.palette.normal.base
                             border.width: 1
                             radius: 4
@@ -509,7 +549,6 @@ ApplicationWindow {
                         }
 
                         Component.onCompleted: {
-                            // Set initial selection based on current subreddit
                             if (!root.useCustomSubreddit) {
                                 for (var i = 0; i < root.categoryNames.length; i++) {
                                     if (root.categoryMap[root.categoryNames[i]] === root.selectedSubreddit) {
@@ -523,7 +562,7 @@ ApplicationWindow {
                 }
             }
 
-            // Custom subreddit input (shown when custom mode is selected)
+            // Custom subreddit input
             GroupBox {
                 title: "Enter Custom Subreddit"
                 Layout.fillWidth: true
@@ -531,8 +570,6 @@ ApplicationWindow {
 
                 background: Rectangle {
                     color: theme.palette.normal.background
-                    // border.color: theme.palette.normal.baseBorder
-                    // border.width: 1
                     radius: 4
                 }
 
@@ -568,8 +605,8 @@ ApplicationWindow {
                             placeholderText: "e.g., memes, funny, programming"
                             text: root.useCustomSubreddit ? root.selectedSubreddit : ""
 
-                            Rectangle {
-                                 color: theme.palette.normal.background
+                             Rectangle {
+                                color: theme.palette.normal.background
                                 border.color: theme.palette.normal.base
                                 border.width: 1
                                 radius: 4
@@ -578,11 +615,9 @@ ApplicationWindow {
                             color: theme.palette.normal.fieldText
 
                             onTextChanged: {
-                                // Remove 'r/' prefix if user types it
                                 if (text.toLowerCase().startsWith("r/")) {
                                     text = text.substring(2);
                                 }
-                                // Remove any invalid characters for subreddit names
                                 var cleanText = text.replace(/[^a-zA-Z0-9_]/g, '');
                                 if (cleanText !== text) {
                                     text = cleanText;
@@ -610,16 +645,13 @@ ApplicationWindow {
             var newUseCustom = dialogCustomModeRadio.checked;
 
             if (newUseCustom) {
-                // Custom subreddit mode
                 var customText = dialogCustomSubredditField.text.trim().toLowerCase();
                 if (customText !== "") {
                     newSubreddit = customText;
                 } else {
-                    // Invalid input, don't close dialog
-                    return;
+                    return; // Don't close if invalid
                 }
             } else {
-                // Category mode
                 if (dialogCategoryCombo.currentIndex >= 0 && dialogCategoryCombo.currentText) {
                     var categoryName = dialogCategoryCombo.currentText;
                     newSubreddit = root.categoryMap[categoryName];
@@ -635,7 +667,6 @@ ApplicationWindow {
         }
 
         onOpened: {
-            // Reset dialog state when opened
             dialogCategoryModeRadio.checked = !root.useCustomSubreddit;
             dialogCustomModeRadio.checked = root.useCustomSubreddit;
 
@@ -643,7 +674,6 @@ ApplicationWindow {
                 dialogCustomSubredditField.text = root.selectedSubreddit;
                 dialogCustomSubredditField.forceActiveFocus();
             } else {
-                // Update category combo to match current subreddit
                 for (var i = 0; i < root.categoryNames.length; i++) {
                     if (root.categoryMap[root.categoryNames[i]] === root.selectedSubreddit) {
                         dialogCategoryCombo.currentIndex = i;
@@ -660,18 +690,15 @@ ApplicationWindow {
         modal: true
         focus: true
         padding: 0
-        // Make it fullscreen
         x: 0
         y: 0
         width: root.width
         height: root.height
-        background: Rectangle {
-            color: "transparent"
-        }
+        background: Rectangle { color: "transparent" }
 
         Rectangle {
             anchors.fill: parent
-            color: "#000000CC" // slightly darker overlay
+            color: "#000000CC"
 
             Image {
                 id: fullImage
@@ -684,16 +711,14 @@ ApplicationWindow {
                 smooth: true
             }
 
-            // Consume clicks on the image so outer area can differentiate
             MouseArea {
                 anchors.fill: fullImage
-                onClicked: /* no-op to prevent propagation so image click doesn't close */ {}
+                onClicked: {}
                 acceptedButtons: Qt.AllButtons
             }
 
-            // Close button
             Button {
-                text: "\u2715" // X
+                text: "\u2715"
                 anchors.top: parent.top
                 anchors.right: parent.right
                 anchors.margins: units.gu(1)
@@ -702,7 +727,6 @@ ApplicationWindow {
                 onClicked: attachmentDialog.close()
             }
 
-            // Click outside image also closes
             MouseArea {
                 anchors.fill: parent
                 onClicked: attachmentDialog.close()
@@ -728,7 +752,6 @@ ApplicationWindow {
         console.log("Main: Dark mode:", root.darkMode);
         console.log("Main: Use custom subreddit:", root.useCustomSubreddit);
 
-        // Delay initial fetch to ensure service is ready
         Qt.callLater(function () {
             memeService.fetchMemes(root.selectedSubreddit);
         });

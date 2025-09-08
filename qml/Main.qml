@@ -217,154 +217,169 @@ ApplicationWindow {
                     Layout.alignment: Qt.AlignHCenter
                 }
 
-                // Meme grid/list view
-                GridView {
-                    id: memeGridView
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    model: memeModel
-                    visible: !memeService.isLoading
-                    clip: true
+            GridView {
+    id: memeGridView
+    Layout.fillWidth: true
+    Layout.fillHeight: true
+    model: memeModel
+    visible: !memeService.isLoading
+    clip: true
 
-                    // Grid properties for desktop mode
-                    cellWidth: root.isDesktopMode ? Math.floor(width / Math.floor(width / units.gu(35))) : width
-                    cellHeight: root.isDesktopMode ? units.gu(45) : implicitHeight
+    // 🚫 Never let cellWidth exceed GridView width
+    cellWidth: root.isDesktopMode ? Math.min(width / 2, units.gu(35)) : width
+    cellHeight: root.isDesktopMode ? units.gu(45) : delegate.implicitHeight + units.gu(2)
 
-                    // Flow properties
-                    flow: root.isDesktopMode ? GridView.FlowLeftToRight : GridView.FlowTopToBottom
+    // ⬇️ Flow vertically in list mode, horizontally in grid mode
+    flow: root.isDesktopMode ? GridView.LeftToRight : GridView.TopToBottom
+    // 🚫 Use constants, not string enums (Qt 5.12+)
 
-                    delegate: Rectangle {
-                        width: root.isDesktopMode ? parent.cellWidth - units.gu(1) : memeGridView.width
-                        height: root.isDesktopMode ? parent.cellHeight - units.gu(1) : delegateColumn.implicitHeight + units.gu(2)
-                        color: theme.palette.normal.background
-                        border.color: theme.palette.normal.base
-                        border.width: 1
-                        radius: 8
+    // 🔄 Snap to rows in list mode for better UX
+    snapMode: GridView.SnapToRow
 
-                        Column {
-                            id: delegateColumn
-                            anchors.left: parent.left
-                            anchors.right: parent.right
-                            anchors.top: parent.top
-                            anchors.margins: units.gu(1)
-                            spacing: units.gu(0.5)
+    // 🚫 Disable horizontal scrolling in list mode
+    flickableDirection: root.isDesktopMode ? Flickable.AutoFlickDirection : Flickable.VerticalFlick
 
-                            Text {
-                                text: model.title || "Untitled"
-                                font.bold: true
-                                wrapMode: Text.WordWrap
-                                width: parent.width
-                                color: theme.palette.normal.backgroundText
-                                maximumLineCount: root.isDesktopMode ? 2 : 5
-                                elide: Text.ElideRight
-                            }
+    delegate: Rectangle {
+        id: delegate
+        width: memeGridView.cellWidth - (root.isDesktopMode ? units.gu(1) : 0)
+        height: root.isDesktopMode
+                ? memeGridView.cellHeight - units.gu(1)
+                : delegateColumn.implicitHeight + units.gu(3)  // 👈 Use implicitHeight!
 
-                            Image {
-                                source: model.image || ""
-                                width: parent.width - units.gu(2)
-                                height: root.isDesktopMode ? Math.min(parent.width * 0.8, units.gu(25)) : units.gu(30)
-                                fillMode: Image.PreserveAspectFit
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                visible: source != ""
+        color: theme.palette.normal.background
+        border.color: theme.palette.normal.base
+        border.width: 1
+        radius: 8
 
-                                onStatusChanged: {
-                                    if (status === Image.Error) {
-                                        console.log("Failed to load image:", model.image);
-                                        visible = false;
-                                    }
-                                }
+        Column {
+            id: delegateColumn
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.margins: units.gu(1)
+            spacing: units.gu(0.5)
 
-                                MouseArea {
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    onClicked: {
-                                        if (model.image) {
-                                            root.dialogImageSource = model.image;
-                                            attachmentDialog.open();
-                                        }
-                                    }
-                                    cursorShape: Qt.PointingHandCursor
-                                }
-                            }
+            Text {
+                text: model.title || "Untitled"
+                font.bold: true
+                wrapMode: Text.WordWrap
+                width: parent.width
+                color: theme.palette.normal.backgroundText
+                maximumLineCount: root.isDesktopMode ? 2 : 5
+                elide: Text.ElideRight
+            }
 
-                            // Stats and actions row
-                            Flow {
-                                width: parent.width
-                                spacing: root.isDesktopMode ? units.gu(1) : units.gu(2)
+            Image {
+                source: model.image || ""
+                width: parent.width - units.gu(2)
+                height: root.isDesktopMode ? Math.min(parent.width * 0.8, units.gu(25)) : units.gu(30)
+                fillMode: Image.PreserveAspectFit
+                anchors.horizontalCenter: parent.horizontalCenter
+                visible: source != ""
 
-                                Text {
-                                    text: "👍 " + (model.upvotes || 0)
-                                    color: theme.palette.normal.backgroundText
-                                    font.pixelSize: root.isDesktopMode ? units.gu(1.2) : units.gu(1.4)
-                                }
-
-                                Text {
-                                    text: "💬 " + (model.comments || 0)
-                                    color: theme.palette.normal.backgroundText
-                                    font.pixelSize: root.isDesktopMode ? units.gu(1.2) : units.gu(1.4)
-                                }
-
-                                Text {
-                                    text: "r/" + (model.subreddit || "")
-                                    color: theme.palette.normal.backgroundText
-                                    font.pixelSize: root.isDesktopMode ? units.gu(1.2) : units.gu(1.4)
-                                    elide: Text.ElideMiddle
-                                    maximumLineCount: 1
-                                }
-
-                                Text {
-                                    text: "📤"
-                                    font.pixelSize: units.gu(1.5)
-                                    color: theme.palette.normal.backgroundText
-
-                                    MouseArea {
-                                        anchors.fill: parent
-                                        onClicked: downloadManager.shareMeme(model.permalink || model.image, model.title);
-                                        cursorShape: Qt.PointingHandCursor
-                                    }
-                                }
-
-                                Text {
-                                    text: "💾"
-                                    font.pixelSize: units.gu(1.5)
-                                    color: theme.palette.normal.backgroundText
-
-                                    MouseArea {
-                                        anchors.fill: parent
-                                        onClicked: downloadManager.downloadMeme(model.image, model.title);
-                                        cursorShape: Qt.PointingHandCursor
-                                    }
-                                }
-                            }
-                        }
-
-                        // Hover effect for desktop mode
-                        Rectangle {
-                            anchors.fill: parent
-                            color: "transparent"
-                            border.color: theme.palette.normal.selection
-                            border.width: parent.hovered ? 2 : 0
-                            radius: 8
-                            visible: root.isDesktopMode
-
-                            property bool hovered: false
-
-                            MouseArea {
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                propagateComposedEvents: true
-                                onEntered: parent.hovered = true
-                                onExited: parent.hovered = false
-                            }
-                        }
-                    }
-
-                    // Smooth scrolling for desktop
-                    ScrollBar.vertical: ScrollBar {
-                        visible: root.isDesktopMode
-                        policy: ScrollBar.AsNeeded
+                onStatusChanged: {
+                    if (status === Image.Error) {
+                        console.log("Failed to load image:", model.image);
+                        visible = false;
                     }
                 }
+
+                MouseArea {
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    onClicked: {
+                        if (model.image) {
+                            root.dialogImageSource = model.image;
+                            attachmentDialog.open();
+                        }
+                    }
+                    cursorShape: Qt.PointingHandCursor
+                }
+            }
+
+            Flow {
+                width: parent.width
+                spacing: root.isDesktopMode ? units.gu(1) : units.gu(2)
+
+                Text {
+                    text: "👍 " + (model.upvotes || 0)
+                    color: theme.palette.normal.backgroundText
+                    font.pixelSize: root.isDesktopMode ? units.gu(1.2) : units.gu(1.4)
+                }
+
+                Text {
+                    text: "💬 " + (model.comments || 0)
+                    color: theme.palette.normal.backgroundText
+                    font.pixelSize: root.isDesktopMode ? units.gu(1.2) : units.gu(1.4)
+                }
+
+                Text {
+                    text: "r/" + (model.subreddit || "")
+                    color: theme.palette.normal.backgroundText
+                    font.pixelSize: root.isDesktopMode ? units.gu(1.2) : units.gu(1.4)
+                    elide: Text.ElideMiddle
+                    maximumLineCount: 1
+                }
+
+                Text {
+                    text: "📤"
+                    font.pixelSize: units.gu(1.5)
+                    color: theme.palette.normal.backgroundText
+
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: downloadManager.shareMeme(model.permalink || model.image, model.title);
+                        cursorShape: Qt.PointingHandCursor
+                    }
+                }
+
+                Text {
+                    text: "💾"
+                    font.pixelSize: units.gu(1.5)
+                    color: theme.palette.normal.backgroundText
+
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: downloadManager.downloadMeme(model.image, model.title);
+                        cursorShape: Qt.PointingHandCursor
+                    }
+                }
+            }
+        }
+
+        // Hover effect for desktop mode
+        Rectangle {
+            anchors.fill: parent
+            color: "transparent"
+            border.color: theme.palette.normal.selection
+            border.width: parent.hovered ? 2 : 0
+            radius: 8
+            visible: root.isDesktopMode
+
+            property bool hovered: false
+
+            MouseArea {
+                anchors.fill: parent
+                hoverEnabled: true
+                propagateComposedEvents: true
+                onEntered: parent.hovered = true
+                onExited: parent.hovered = false
+            }
+        }
+    }
+
+    // ✅ ScrollBar — only in desktop mode
+    ScrollBar.vertical: ScrollBar {
+        active: true
+        visible: root.isDesktopMode
+        policy: ScrollBar.AsNeeded
+    }
+
+    // 🚫 Prevent horizontal scrolling in list mode
+    ScrollBar.horizontal: ScrollBar {
+        policy: ScrollBar.AlwaysOff
+    }
+}
 
                 // Empty state
                 Column {

@@ -42,7 +42,7 @@ ApplicationWindow {
     property bool useCustomSubreddit: false
     // Fullscreen image viewer source
     property string dialogImageSource: ""
-    property bool isDesktopMode: width > units.gu(80)  // Reactive to window size
+    property bool isDesktopMode: true  // Reactive to window size
 
     // Category mapping for better user experience
     property var categoryMap: ({

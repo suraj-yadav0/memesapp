@@ -57,7 +57,7 @@ ApplicationWindow {
             "History Memes": "HistoryMemes",
             "Gaming Memes": "gaming",
             "Anime Memes": "AnimeMemes",
-            "Cursed Comments" : "cursedcomments",
+            "Cursed Comments": "cursedcomments",
             "Surreal Memes": "surrealmemes",
             "Memes of the Dank": "memesofthedank",
             "Meme Economy": "MemeEconomy",
@@ -218,170 +218,168 @@ ApplicationWindow {
                     Layout.alignment: Qt.AlignHCenter
                 }
 
-            GridView {
-    id: memeGridView
-    Layout.fillWidth: true
-    Layout.fillHeight: true
-    model: memeModel
-    visible: !memeService.isLoading
-    clip: true
+                GridView {
+                    id: memeGridView
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    model: memeModel
+                    visible: !memeService.isLoading
+                    clip: true
 
-    // 🚫 Never let cellWidth exceed GridView width
-    cellWidth: root.isDesktopMode ? Math.min(width / 2, units.gu(35)) : width
-    cellHeight: root.isDesktopMode ? units.gu(45) : delegate.implicitHeight + units.gu(2)
+                    // 🚫 Never let cellWidth exceed GridView width
+                    cellWidth: root.isDesktopMode ? Math.min(width / 2, units.gu(35)) : width
+                    cellHeight: root.isDesktopMode ? units.gu(45) : delegate.implicitHeight + units.gu(2)
 
-    // ⬇️ Flow vertically in list mode, horizontally in grid mode
-    flow: root.isDesktopMode ? GridView.LeftToRight : GridView.TopToBottom
-    // 🚫 Use constants, not string enums (Qt 5.12+)
+                    // ⬇️ Flow vertically in list mode, horizontally in grid mode
+                    flow: root.isDesktopMode ? GridView.LeftToRight : GridView.TopToBottom
+                    // 🚫 Use constants, not string enums (Qt 5.12+)
 
-    // 🔄 Snap to rows in list mode for better UX
-    snapMode: GridView.SnapToRow
+                    // 🔄 Snap to rows in list mode for better UX
+                    snapMode: GridView.SnapToRow
 
-    // 🚫 Disable horizontal scrolling in list mode
-    flickableDirection: root.isDesktopMode ? Flickable.AutoFlickDirection : Flickable.VerticalFlick
+                    // 🚫 Disable horizontal scrolling in list mode
+                    flickableDirection: root.isDesktopMode ? Flickable.AutoFlickDirection : Flickable.VerticalFlick
 
-    delegate: Rectangle {
-        id: delegate
-        width: memeGridView.cellWidth - (root.isDesktopMode ? units.gu(1) : 0)
-        height: root.isDesktopMode
-                ? memeGridView.cellHeight - units.gu(1)
-                : delegateColumn.implicitHeight + units.gu(3)  // 👈 Use implicitHeight!
+                    delegate: Rectangle {
+                        id: delegate
+                        width: memeGridView.cellWidth - (root.isDesktopMode ? units.gu(1) : 0)
+                        height: root.isDesktopMode ? memeGridView.cellHeight - units.gu(1) : delegateColumn.implicitHeight + units.gu(3)  // 👈 Use implicitHeight!
 
-        color: theme.palette.normal.background
-        border.color: theme.palette.normal.base
-        border.width: 1
-        radius: 8
+                        color: theme.palette.normal.background
+                        border.color: theme.palette.normal.base
+                        border.width: 1
+                        radius: 8
 
-        Column {
-            id: delegateColumn
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.top: parent.top
-            anchors.margins: units.gu(1)
-            spacing: units.gu(0.5)
+                        Column {
+                            id: delegateColumn
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            anchors.top: parent.top
+                            anchors.margins: units.gu(1)
+                            spacing: units.gu(0.5)
 
-            Text {
-                text: model.title || "Untitled"
-                font.bold: true
-                wrapMode: Text.WordWrap
-                width: parent.width
-                color: theme.palette.normal.backgroundText
-                maximumLineCount: root.isDesktopMode ? 2 : 5
-                elide: Text.ElideRight
-            }
+                            Text {
+                                text: model.title || "Untitled"
+                                font.bold: true
+                                wrapMode: Text.WordWrap
+                                width: parent.width
+                                color: theme.palette.normal.backgroundText
+                                maximumLineCount: root.isDesktopMode ? 2 : 5
+                                elide: Text.ElideRight
+                            }
 
-            Image {
-                source: model.image || ""
-                width: parent.width - units.gu(2)
-                height: root.isDesktopMode ? Math.min(parent.width * 0.8, units.gu(25)) : units.gu(30)
-                fillMode: Image.PreserveAspectFit
-                anchors.horizontalCenter: parent.horizontalCenter
-                visible: source != ""
+                            Image {
+                                source: model.image || ""
+                                width: parent.width - units.gu(2)
+                                height: root.isDesktopMode ? Math.min(parent.width * 0.8, units.gu(25)) : units.gu(30)
+                                fillMode: Image.PreserveAspectFit
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                visible: source != ""
 
-                onStatusChanged: {
-                    if (status === Image.Error) {
-                        console.log("Failed to load image:", model.image);
-                        visible = false;
-                    }
-                }
+                                onStatusChanged: {
+                                    if (status === Image.Error) {
+                                        console.log("Failed to load image:", model.image);
+                                        visible = false;
+                                    }
+                                }
 
-                MouseArea {
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    onClicked: {
-                        if (model.image) {
-                            root.currentMemeIndex = index;
-                            root.dialogImageSource = model.image;
-                            attachmentDialog.open();
+                                MouseArea {
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    onClicked: {
+                                        if (model.image) {
+                                            root.currentMemeIndex = index;
+                                            root.dialogImageSource = model.image;
+                                            attachmentDialog.open();
+                                        }
+                                    }
+                                    cursorShape: Qt.PointingHandCursor
+                                }
+                            }
+
+                            Flow {
+                                width: parent.width
+                                spacing: root.isDesktopMode ? units.gu(1) : units.gu(2)
+
+                                Text {
+                                    text: "👍 " + (model.upvotes || 0)
+                                    color: theme.palette.normal.backgroundText
+                                    font.pixelSize: root.isDesktopMode ? units.gu(1.2) : units.gu(1.4)
+                                }
+
+                                Text {
+                                    text: "💬 " + (model.comments || 0)
+                                    color: theme.palette.normal.backgroundText
+                                    font.pixelSize: root.isDesktopMode ? units.gu(1.2) : units.gu(1.4)
+                                }
+
+                                Text {
+                                    text: "r/" + (model.subreddit || "")
+                                    color: theme.palette.normal.backgroundText
+                                    font.pixelSize: root.isDesktopMode ? units.gu(1.2) : units.gu(1.4)
+                                    elide: Text.ElideMiddle
+                                    maximumLineCount: 1
+                                }
+
+                                Text {
+                                    text: "📤"
+                                    font.pixelSize: units.gu(1.5)
+                                    color: theme.palette.normal.backgroundText
+
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        onClicked: downloadManager.shareMeme(model.permalink || model.image, model.title)
+                                        cursorShape: Qt.PointingHandCursor
+                                    }
+                                }
+
+                                Text {
+                                    text: "💾"
+                                    font.pixelSize: units.gu(1.5)
+                                    color: theme.palette.normal.backgroundText
+
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        onClicked: downloadManager.downloadMeme(model.image, model.title)
+                                        cursorShape: Qt.PointingHandCursor
+                                    }
+                                }
+                            }
+                        }
+
+                        // Hover effect for desktop mode
+                        Rectangle {
+                            anchors.fill: parent
+                            color: "transparent"
+                            border.color: theme.palette.normal.selection
+                            border.width: parent.hovered ? 2 : 0
+                            radius: 8
+                            visible: root.isDesktopMode
+
+                            property bool hovered: false
+
+                            MouseArea {
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                propagateComposedEvents: true
+                                onEntered: parent.hovered = true
+                                onExited: parent.hovered = false
+                            }
                         }
                     }
-                    cursorShape: Qt.PointingHandCursor
-                }
-            }
 
-            Flow {
-                width: parent.width
-                spacing: root.isDesktopMode ? units.gu(1) : units.gu(2)
+                    // ✅ ScrollBar — only in desktop mode
+                    ScrollBar.vertical: ScrollBar {
+                        active: true
+                        visible: root.isDesktopMode
+                        policy: ScrollBar.AsNeeded
+                    }
 
-                Text {
-                    text: "👍 " + (model.upvotes || 0)
-                    color: theme.palette.normal.backgroundText
-                    font.pixelSize: root.isDesktopMode ? units.gu(1.2) : units.gu(1.4)
-                }
-
-                Text {
-                    text: "💬 " + (model.comments || 0)
-                    color: theme.palette.normal.backgroundText
-                    font.pixelSize: root.isDesktopMode ? units.gu(1.2) : units.gu(1.4)
-                }
-
-                Text {
-                    text: "r/" + (model.subreddit || "")
-                    color: theme.palette.normal.backgroundText
-                    font.pixelSize: root.isDesktopMode ? units.gu(1.2) : units.gu(1.4)
-                    elide: Text.ElideMiddle
-                    maximumLineCount: 1
-                }
-
-                Text {
-                    text: "📤"
-                    font.pixelSize: units.gu(1.5)
-                    color: theme.palette.normal.backgroundText
-
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked: downloadManager.shareMeme(model.permalink || model.image, model.title);
-                        cursorShape: Qt.PointingHandCursor
+                    // 🚫 Prevent horizontal scrolling in list mode
+                    ScrollBar.horizontal: ScrollBar {
+                        policy: ScrollBar.AlwaysOff
                     }
                 }
-
-                Text {
-                    text: "💾"
-                    font.pixelSize: units.gu(1.5)
-                    color: theme.palette.normal.backgroundText
-
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked: downloadManager.downloadMeme(model.image, model.title);
-                        cursorShape: Qt.PointingHandCursor
-                    }
-                }
-            }
-        }
-
-        // Hover effect for desktop mode
-        Rectangle {
-            anchors.fill: parent
-            color: "transparent"
-            border.color: theme.palette.normal.selection
-            border.width: parent.hovered ? 2 : 0
-            radius: 8
-            visible: root.isDesktopMode
-
-            property bool hovered: false
-
-            MouseArea {
-                anchors.fill: parent
-                hoverEnabled: true
-                propagateComposedEvents: true
-                onEntered: parent.hovered = true
-                onExited: parent.hovered = false
-            }
-        }
-    }
-
-    // ✅ ScrollBar — only in desktop mode
-    ScrollBar.vertical: ScrollBar {
-        active: true
-        visible: root.isDesktopMode
-        policy: ScrollBar.AsNeeded
-    }
-
-    // 🚫 Prevent horizontal scrolling in list mode
-    ScrollBar.horizontal: ScrollBar {
-        policy: ScrollBar.AlwaysOff
-    }
-}
 
                 // Empty state
                 Column {
@@ -622,7 +620,7 @@ ApplicationWindow {
                             placeholderText: "e.g., memes, funny, programming"
                             text: root.useCustomSubreddit ? root.selectedSubreddit : ""
 
-                             Rectangle {
+                            Rectangle {
                                 color: theme.palette.normal.background
                                 border.color: theme.palette.normal.base
                                 border.width: 1
@@ -711,188 +709,204 @@ ApplicationWindow {
         y: 0
         width: root.width
         height: root.height
-        background: Rectangle { color: "transparent" }
-
-        Rectangle {
-            anchors.fill: parent
-            color: "#000000CC"
-
-            Image {
-                id: fullImage
-                anchors.centerIn: parent
-                width: parent.width * 0.94
-                height: parent.height * 0.94
-                fillMode: Image.PreserveAspectFit
-                source: root.dialogImageSource
-                cache: true
-                smooth: true
-            }
-
-            // Swipe gesture detection
-            MouseArea {
-                id: swipeArea
-                anchors.fill: fullImage
-                acceptedButtons: Qt.AllButtons
-                
-                property real startX: 0
-                property real startY: 0
-                property bool isDragging: false
-                property real minSwipeDistance: units.gu(8)  // Minimum distance for a swipe
-                
-                onPressed: {
-                    startX = mouse.x
-                    startY = mouse.y
-                    isDragging = true
-                }
-                
-                onReleased: {
-                    if (isDragging) {
-                        var deltaX = mouse.x - startX
-                        var deltaY = mouse.y - startY
-                        var distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY)
-                        
-                        // Check if it's a horizontal swipe (more horizontal than vertical)
-                        if (distance > minSwipeDistance && Math.abs(deltaX) > Math.abs(deltaY) * 1.5) {
-                            if (deltaX > 0) {
-                                // Swipe right - go to previous meme
-                                console.log("Main: Swipe right detected, navigating to previous meme")
-                                root.navigateToPrevMeme()
-                            } else {
-                                // Swipe left - go to next meme  
-                                console.log("Main: Swipe left detected, navigating to next meme")
-                                root.navigateToNextMeme()
-                            }
-                        } else if (distance < minSwipeDistance) {
-                            // Short tap - do nothing (prevent closing dialog)
-                        }
-                    }
-                    isDragging = false
-                }
-                
-                onCanceled: {
-                    isDragging = false
-                }
-            }
-
-            // Close button
-            Button {
-                text: "\u2715"
-                anchors.top: parent.top
-                anchors.right: parent.right
-                anchors.margins: units.gu(1)
-                width: units.gu(4)
-                height: units.gu(4)
-                onClicked: attachmentDialog.close()
-            }
-
-            // Navigation indicators (only show if there are multiple memes)
-            Rectangle {
-                id: navigationHint
-                anchors.bottom: parent.bottom
-                anchors.horizontalCenter: parent.horizontalCenter
-                anchors.margins: units.gu(2)
-                width: hintText.contentWidth + units.gu(2)
-                height: units.gu(4)
-                color: "#000000AA"
-                radius: units.gu(1)
-                visible: memeModel.count > 1
-                
-                Text {
-                    id: hintText
-                    anchors.centerIn: parent
-                    text: "Swipe ← → or use arrow keys to navigate • " + (root.currentMemeIndex + 1) + " / " + memeModel.count
-                    color: "white"
-                    font.pixelSize: units.gu(1.2)
-                }
-            }
-
-            // Previous/Next navigation areas (for visual feedback)
-            Rectangle {
-                id: prevArea
-                anchors.left: parent.left
-                anchors.top: parent.top
-                anchors.bottom: parent.bottom
-                width: parent.width * 0.15
-                color: "transparent"
-                visible: root.currentMemeIndex > 0
-                
-                Rectangle {
-                    anchors.centerIn: parent
-                    width: units.gu(6)
-                    height: units.gu(6)
-                    color: "#000000AA"
-                    radius: width / 2
-                    visible: parent.hovered
-                    
-                    Text {
-                        anchors.centerIn: parent
-                        text: "◀"
-                        color: "white"
-                        font.pixelSize: units.gu(2)
-                    }
-                }
-                
-                property bool hovered: false
-                
-                MouseArea {
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    onEntered: parent.hovered = true
-                    onExited: parent.hovered = false
-                    onClicked: root.navigateToPrevMeme()
-                }
-            }
-            
-            Rectangle {
-                id: nextArea
-                anchors.right: parent.right
-                anchors.top: parent.top
-                anchors.bottom: parent.bottom
-                width: parent.width * 0.15
-                color: "transparent"
-                visible: root.currentMemeIndex < memeModel.count - 1
-                
-                Rectangle {
-                    anchors.centerIn: parent
-                    width: units.gu(6)
-                    height: units.gu(6)
-                    color: "#000000AA"
-                    radius: width / 2
-                    visible: parent.hovered
-                    
-                    Text {
-                        anchors.centerIn: parent
-                        text: "▶"
-                        color: "white"
-                        font.pixelSize: units.gu(2)
-                    }
-                }
-                
-                property bool hovered: false
-                
-                MouseArea {
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    onEntered: parent.hovered = true
-                    onExited: parent.hovered = false
-                    onClicked: root.navigateToNextMeme()
-                }
-            }
-
-            MouseArea {
-                anchors.fill: parent
-                onClicked: attachmentDialog.close()
-                hoverEnabled: true
-                propagateComposedEvents: true
-            }
+        background: Rectangle {
+            color: "transparent"
         }
 
-        Keys.onEscapePressed: attachmentDialog.close()
-        Keys.onLeftPressed: root.navigateToPrevMeme()
-        Keys.onRightPressed: root.navigateToNextMeme()
+        FocusScope {
+            anchors.fill: parent
+            focus: true
+
+            Keys.onEscapePressed: attachmentDialog.close()
+            Keys.onLeftPressed: root.navigateToPrevMeme()
+            Keys.onRightPressed: root.navigateToNextMeme()
+
+            Rectangle {
+                anchors.fill: parent
+                color: "#000000CC"
+
+                Image {
+                    id: fullImage
+                    anchors.centerIn: parent
+                    width: parent.width * 0.94
+                    height: parent.height * 0.94
+                    fillMode: Image.PreserveAspectFit
+                    source: root.dialogImageSource
+                    cache: true
+                    smooth: true
+                }
+
+                // Swipe gesture detection
+                MouseArea {
+                    id: swipeArea
+                    anchors.fill: fullImage
+                    acceptedButtons: Qt.AllButtons
+
+                    property real startX: 0
+                    property real startY: 0
+                    property bool isDragging: false
+                    property real minSwipeDistance: units.gu(8)  // Minimum distance for a swipe
+
+                    onPressed: {
+                        startX = mouse.x;
+                        startY = mouse.y;
+                        isDragging = true;
+                        console.log("Main: Swipe started at:", startX, startY);
+                    }
+
+                    onReleased: {
+                        if (isDragging) {
+                            var deltaX = mouse.x - startX;
+                            var deltaY = mouse.y - startY;
+                            var distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+                            // Check if it's a horizontal swipe (more horizontal than vertical)
+                            if (distance > minSwipeDistance && Math.abs(deltaX) > Math.abs(deltaY) * 1.5) {
+                                if (deltaX > 0) {
+                                    // Swipe right - go to previous meme
+                                    console.log("Main: Swipe right detected, navigating to previous meme");
+                                    root.navigateToPrevMeme();
+                                } else {
+                                    // Swipe left - go to next meme
+                                    console.log("Main: Swipe left detected, navigating to next meme");
+                                    root.navigateToNextMeme();
+                                }
+                            } else if (distance < minSwipeDistance)
+                            // Short tap - do nothing (prevent closing dialog)
+                            {}
+                        }
+                        isDragging = false;
+                    }
+
+                    onCanceled: {
+                        isDragging = false;
+                    }
+                }
+
+                // Close button
+                Button {
+                    text: "\u2715"
+                    anchors.top: parent.top
+                    anchors.right: parent.right
+                    anchors.margins: units.gu(1)
+                    width: units.gu(4)
+                    height: units.gu(4)
+                    onClicked: attachmentDialog.close()
+                }
+
+                // Navigation indicators (only show if there are multiple memes)
+                Rectangle {
+                    id: navigationHint
+                    anchors.bottom: parent.bottom
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.margins: units.gu(2)
+                    width: hintText.contentWidth + units.gu(2)
+                    height: units.gu(4)
+                    color: "#000000AA"
+                    radius: units.gu(1)
+                    visible: memeModel.count > 1
+
+                    Text {
+                        id: hintText
+                        anchors.centerIn: parent
+                        text: "Swipe ← → or use arrow keys to navigate • " + (root.currentMemeIndex + 1) + " / " + memeModel.count
+                        color: "white"
+                        font.pixelSize: units.gu(1.2)
+                    }
+                }
+
+                // Previous/Next navigation areas (for visual feedback)
+                Rectangle {
+                    id: prevArea
+                    anchors.left: parent.left
+                    anchors.top: parent.top
+                    anchors.bottom: parent.bottom
+                    width: parent.width * 0.15
+                    color: "transparent"
+                    visible: root.currentMemeIndex > 0
+
+                    Rectangle {
+                        anchors.centerIn: parent
+                        width: units.gu(6)
+                        height: units.gu(6)
+                        color: "#000000AA"
+                        radius: width / 2
+                        visible: parent.hovered
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: "◀"
+                            color: "white"
+                            font.pixelSize: units.gu(2)
+                        }
+                    }
+
+                    property bool hovered: false
+
+                    MouseArea {
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        onEntered: parent.hovered = true
+                        onExited: parent.hovered = false
+                        onClicked: root.navigateToPrevMeme()
+                    }
+                }
+
+                Rectangle {
+                    id: nextArea
+                    anchors.right: parent.right
+                    anchors.top: parent.top
+                    anchors.bottom: parent.bottom
+                    width: parent.width * 0.15
+                    color: "transparent"
+                    visible: root.currentMemeIndex < memeModel.count - 1
+
+                    Rectangle {
+                        anchors.centerIn: parent
+                        width: units.gu(6)
+                        height: units.gu(6)
+                        color: "#000000AA"
+                        radius: width / 2
+                        visible: parent.hovered
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: "▶"
+                            color: "white"
+                            font.pixelSize: units.gu(2)
+                        }
+                    }
+
+                    property bool hovered: false
+
+                    MouseArea {
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        onEntered: parent.hovered = true
+                        onExited: parent.hovered = false
+                        onClicked: root.navigateToNextMeme()
+                    }
+                }
+
+                // Background click area (excludes the image area to prevent conflicts with swipe)
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: {
+                        // Only close if click is outside the image area
+                        var imageRect = fullImage.mapToItem(parent, 0, 0, fullImage.width, fullImage.height);
+                        if (mouse.x < imageRect.x || mouse.x > imageRect.x + imageRect.width || mouse.y < imageRect.y || mouse.y > imageRect.y + imageRect.height) {
+                            attachmentDialog.close();
+                        }
+                    }
+                    hoverEnabled: true
+                    propagateComposedEvents: false
+                }
+            }
+        } // Close FocusScope
+
         onClosed: {
-            root.dialogImageSource = ""
-            root.currentMemeIndex = -1
+            root.dialogImageSource = "";
+            root.currentMemeIndex = -1;
         }
     }
 

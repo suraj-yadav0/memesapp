@@ -42,6 +42,7 @@ ApplicationWindow {
     property bool useCustomSubreddit: false
     // Fullscreen image viewer source
     property string dialogImageSource: ""
+    property int currentMemeIndex: -1  // Track current meme index in fullscreen view
     property bool isDesktopMode: true  // Reactive to window size
 
     // Category mapping for better user experience
@@ -289,6 +290,7 @@ ApplicationWindow {
                     hoverEnabled: true
                     onClicked: {
                         if (model.image) {
+                            root.currentMemeIndex = index;
                             root.dialogImageSource = model.image;
                             attachmentDialog.open();
                         }
@@ -726,12 +728,53 @@ ApplicationWindow {
                 smooth: true
             }
 
+            // Swipe gesture detection
             MouseArea {
+                id: swipeArea
                 anchors.fill: fullImage
-                onClicked: {}
                 acceptedButtons: Qt.AllButtons
+                
+                property real startX: 0
+                property real startY: 0
+                property bool isDragging: false
+                property real minSwipeDistance: units.gu(8)  // Minimum distance for a swipe
+                
+                onPressed: {
+                    startX = mouse.x
+                    startY = mouse.y
+                    isDragging = true
+                }
+                
+                onReleased: {
+                    if (isDragging) {
+                        var deltaX = mouse.x - startX
+                        var deltaY = mouse.y - startY
+                        var distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY)
+                        
+                        // Check if it's a horizontal swipe (more horizontal than vertical)
+                        if (distance > minSwipeDistance && Math.abs(deltaX) > Math.abs(deltaY) * 1.5) {
+                            if (deltaX > 0) {
+                                // Swipe right - go to previous meme
+                                console.log("Main: Swipe right detected, navigating to previous meme")
+                                root.navigateToPrevMeme()
+                            } else {
+                                // Swipe left - go to next meme  
+                                console.log("Main: Swipe left detected, navigating to next meme")
+                                root.navigateToNextMeme()
+                            }
+                        } else if (distance < minSwipeDistance) {
+                            // Short tap - do nothing (prevent closing dialog)
+                        }
+                    }
+                    isDragging = false
+                }
+                
+                onCanceled: {
+                    isDragging = false
+                }
             }
 
+            // Close button
             Button {
                 text: "\u2715"
                 anchors.top: parent.top
@@ -740,6 +783,100 @@ ApplicationWindow {
                 width: units.gu(4)
                 height: units.gu(4)
                 onClicked: attachmentDialog.close()
+            }
+
+            // Navigation indicators (only show if there are multiple memes)
+            Rectangle {
+                id: navigationHint
+                anchors.bottom: parent.bottom
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.margins: units.gu(2)
+                width: hintText.contentWidth + units.gu(2)
+                height: units.gu(4)
+                color: "#000000AA"
+                radius: units.gu(1)
+                visible: memeModel.count > 1
+                
+                Text {
+                    id: hintText
+                    anchors.centerIn: parent
+                    text: "Swipe ← → or use arrow keys to navigate • " + (root.currentMemeIndex + 1) + " / " + memeModel.count
+                    color: "white"
+                    font.pixelSize: units.gu(1.2)
+                }
+            }
+
+            // Previous/Next navigation areas (for visual feedback)
+            Rectangle {
+                id: prevArea
+                anchors.left: parent.left
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+                width: parent.width * 0.15
+                color: "transparent"
+                visible: root.currentMemeIndex > 0
+                
+                Rectangle {
+                    anchors.centerIn: parent
+                    width: units.gu(6)
+                    height: units.gu(6)
+                    color: "#000000AA"
+                    radius: width / 2
+                    visible: parent.hovered
+                    
+                    Text {
+                        anchors.centerIn: parent
+                        text: "◀"
+                        color: "white"
+                        font.pixelSize: units.gu(2)
+                    }
+                }
+                
+                property bool hovered: false
+                
+                MouseArea {
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    onEntered: parent.hovered = true
+                    onExited: parent.hovered = false
+                    onClicked: root.navigateToPrevMeme()
+                }
+            }
+            
+            Rectangle {
+                id: nextArea
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+                width: parent.width * 0.15
+                color: "transparent"
+                visible: root.currentMemeIndex < memeModel.count - 1
+                
+                Rectangle {
+                    anchors.centerIn: parent
+                    width: units.gu(6)
+                    height: units.gu(6)
+                    color: "#000000AA"
+                    radius: width / 2
+                    visible: parent.hovered
+                    
+                    Text {
+                        anchors.centerIn: parent
+                        text: "▶"
+                        color: "white"
+                        font.pixelSize: units.gu(2)
+                    }
+                }
+                
+                property bool hovered: false
+                
+                MouseArea {
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    onEntered: parent.hovered = true
+                    onExited: parent.hovered = false
+                    onClicked: root.navigateToNextMeme()
+                }
             }
 
             MouseArea {
@@ -751,13 +888,45 @@ ApplicationWindow {
         }
 
         Keys.onEscapePressed: attachmentDialog.close()
-        onClosed: root.dialogImageSource = ""
+        Keys.onLeftPressed: root.navigateToPrevMeme()
+        Keys.onRightPressed: root.navigateToNextMeme()
+        onClosed: {
+            root.dialogImageSource = ""
+            root.currentMemeIndex = -1
+        }
     }
 
     function handleSelectedSubredditChanged(subreddit) {
         console.log("Main: Selected subreddit changed to:", subreddit);
         root.selectedSubreddit = subreddit;
         memeService.fetchMemes(subreddit);
+    }
+
+    // Navigation functions for fullscreen image viewer
+    function navigateToNextMeme() {
+        if (currentMemeIndex < memeModel.count - 1) {
+            currentMemeIndex++;
+            var nextMeme = memeModel.get(currentMemeIndex);
+            if (nextMeme && nextMeme.image) {
+                dialogImageSource = nextMeme.image;
+                console.log("Main: Navigated to next meme:", currentMemeIndex, nextMeme.title);
+            }
+        } else {
+            console.log("Main: Already at last meme");
+        }
+    }
+
+    function navigateToPrevMeme() {
+        if (currentMemeIndex > 0) {
+            currentMemeIndex--;
+            var prevMeme = memeModel.get(currentMemeIndex);
+            if (prevMeme && prevMeme.image) {
+                dialogImageSource = prevMeme.image;
+                console.log("Main: Navigated to previous meme:", currentMemeIndex, prevMeme.title);
+            }
+        } else {
+            console.log("Main: Already at first meme");
+        }
     }
 
     // Initialization

@@ -855,16 +855,22 @@ ApplicationWindow {
                     console.log("Main: Mouse gesture canceled");
                     mouseSwipeActive = false;
                 }
-            }                // Close button
-                Button {
-                    text: "\u2715"
-                    anchors.top: parent.top
-                    anchors.right: parent.right
-                    anchors.margins: units.gu(1)
-                    width: units.gu(4)
-                    height: units.gu(4)
-                    onClicked: attachmentDialog.close()
+            }
+
+            // Close button (placed after touch areas to ensure it's on top)
+            Button {
+                text: "\u2715"
+                anchors.top: parent.top
+                anchors.right: parent.right
+                anchors.margins: units.gu(1)
+                width: units.gu(4)
+                height: units.gu(4)
+                z: 100  // Ensure button is always on top
+                onClicked: {
+                    console.log("Main: Close button clicked");
+                    attachmentDialog.close();
                 }
+            }
 
                 // Navigation indicators (only show if there are multiple memes)
                 Rectangle {

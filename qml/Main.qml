@@ -736,54 +736,126 @@ ApplicationWindow {
                     smooth: true
                 }
 
-                // Swipe gesture detection
-                MouseArea {
-                    id: swipeArea
-                    anchors.fill: fullImage
-                    acceptedButtons: Qt.AllButtons
-
-                    property real startX: 0
-                    property real startY: 0
-                    property bool isDragging: false
-                    property real minSwipeDistance: units.gu(8)  // Minimum distance for a swipe
-
-                    onPressed: {
-                        startX = mouse.x;
-                        startY = mouse.y;
-                        isDragging = true;
-                        console.log("Main: Swipe started at:", startX, startY);
-                    }
-
-                    onReleased: {
-                        if (isDragging) {
-                            var deltaX = mouse.x - startX;
-                            var deltaY = mouse.y - startY;
-                            var distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-
-                            // Check if it's a horizontal swipe (more horizontal than vertical)
-                            if (distance > minSwipeDistance && Math.abs(deltaX) > Math.abs(deltaY) * 1.5) {
-                                if (deltaX > 0) {
-                                    // Swipe right - go to previous meme
-                                    console.log("Main: Swipe right detected, navigating to previous meme");
-                                    root.navigateToPrevMeme();
-                                } else {
-                                    // Swipe left - go to next meme
-                                    console.log("Main: Swipe left detected, navigating to next meme");
-                                    root.navigateToNextMeme();
-                                }
-                            } else if (distance < minSwipeDistance)
-                            // Short tap - do nothing (prevent closing dialog)
-                            {}
-                        }
-                        isDragging = false;
-                    }
-
-                    onCanceled: {
-                        isDragging = false;
+            // Touch and swipe gesture detection using MultiPointTouchArea
+            MultiPointTouchArea {
+                id: touchArea
+                anchors.fill: fullImage
+                mouseEnabled: true  // Also respond to mouse for desktop testing
+                
+                property real startX: 0
+                property real startY: 0
+                property real currentX: 0
+                property real currentY: 0
+                property bool isSwipeActive: false
+                property real minSwipeDistance: units.gu(8)  // Minimum distance for a swipe
+                
+                onPressed: {
+                    if (touchPoints.length > 0) {
+                        var touch = touchPoints[0];
+                        startX = touch.x;
+                        startY = touch.y;
+                        currentX = touch.x;
+                        currentY = touch.y;
+                        isSwipeActive = true;
+                        console.log("Main: Touch/swipe started at:", startX, startY);
                     }
                 }
+                
+                onUpdated: {
+                    // Track the primary touch point position continuously
+                    if (isSwipeActive && touchPoints.length > 0) {
+                        var touch = touchPoints[0];
+                        currentX = touch.x;
+                        currentY = touch.y;
+                        // Optional: Add visual feedback during swipe here
+                    }
+                }
+                
+                onReleased: {
+                    if (isSwipeActive) {
+                        var deltaX = currentX - startX;
+                        var deltaY = currentY - startY;
+                        var distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+                        
+                        console.log("Main: Touch released - deltaX:", deltaX, "deltaY:", deltaY, "distance:", distance);
+                        
+                        // Check if it's a horizontal swipe (more horizontal than vertical)
+                        if (distance > minSwipeDistance && Math.abs(deltaX) > Math.abs(deltaY) * 1.5) {
+                            if (deltaX > 0) {
+                                // Swipe right - go to previous meme
+                                console.log("Main: Touch swipe right detected, navigating to previous meme");
+                                root.navigateToPrevMeme();
+                            } else {
+                                // Swipe left - go to next meme
+                                console.log("Main: Touch swipe left detected, navigating to next meme");
+                                root.navigateToNextMeme();
+                            }
+                        } else if (distance < minSwipeDistance) {
+                            // Short tap - do nothing (prevent closing dialog)
+                            console.log("Main: Short tap detected, ignoring");
+                        }
+                        
+                        isSwipeActive = false;
+                    }
+                }
+                
+                onCanceled: {
+                    console.log("Main: Touch gesture canceled");
+                    isSwipeActive = false;
+                }
+            }
 
-                // Close button
+            // Fallback MouseArea for desktop mouse dragging
+            MouseArea {
+                id: mouseSwipeArea
+                anchors.fill: fullImage
+                enabled: !touchArea.isSwipeActive  // Only active when touch is not being used
+                
+                property real mouseStartX: 0
+                property real mouseStartY: 0
+                property bool mouseSwipeActive: false
+                property real minSwipeDistance: units.gu(8)
+                
+                onPressed: {
+                    mouseStartX = mouse.x;
+                    mouseStartY = mouse.y;
+                    mouseSwipeActive = true;
+                    console.log("Main: Mouse swipe started at:", mouseStartX, mouseStartY);
+                }
+                
+                onReleased: {
+                    if (mouseSwipeActive) {
+                        var deltaX = mouse.x - mouseStartX;
+                        var deltaY = mouse.y - mouseStartY;
+                        var distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+                        
+                        console.log("Main: Mouse released - deltaX:", deltaX, "deltaY:", deltaY, "distance:", distance);
+                        
+                        // Check if it's a horizontal swipe (more horizontal than vertical)
+                        if (distance > minSwipeDistance && Math.abs(deltaX) > Math.abs(deltaY) * 1.5) {
+                            if (deltaX > 0) {
+                                // Swipe right - go to previous meme
+                                console.log("Main: Mouse swipe right detected, navigating to previous meme");
+                                root.navigateToPrevMeme();
+                            } else {
+                                // Swipe left - go to next meme
+                                console.log("Main: Mouse swipe left detected, navigating to next meme");
+                                root.navigateToNextMeme();
+                            }
+                        } else if (distance < minSwipeDistance) {
+                            // Short click - do nothing (prevent closing dialog)
+                            console.log("Main: Short mouse click detected, ignoring");
+                        }
+                        
+                        mouseSwipeActive = false;
+                    }
+                }
+                
+                onCanceled: {
+                    console.log("Main: Mouse gesture canceled");
+                    mouseSwipeActive = false;
+                }
+            }                // Close button
                 Button {
                     text: "\u2715"
                     anchors.top: parent.top

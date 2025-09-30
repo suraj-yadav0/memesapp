@@ -48,6 +48,10 @@ ApplicationWindow {
     property bool isMultiSubredditMode: false
     property var selectedSubreddits: []
     property var subredditSources: ({}) // Maps meme IDs to their source subreddit
+    
+    // Bookmark properties
+    property var bookmarkedMemes: []
+    property var bookmarkStatus: ({}) // Maps meme IDs to bookmark status
 
     // Category mapping for better user experience
     property var categoryMap: ({
@@ -105,6 +109,16 @@ ApplicationWindow {
             console.log("Main: Subreddit removed from database:", displayName);
             updateCategoryLists();
         }
+        
+        onMemeBookmarked: {
+            console.log("Main: Meme bookmarked:", title);
+            updateBookmarkStatus(memeId, true);
+        }
+        
+        onMemeUnbookmarked: {
+            console.log("Main: Meme unbookmarked:", memeId);
+            updateBookmarkStatus(memeId, false);
+        }
     }
 
     // MemeAPI service
@@ -118,6 +132,7 @@ ApplicationWindow {
                 memeGrid.isLoading = false;
                 appHeader.isLoading = false;
                 memeGrid.clearError();
+                refreshBookmarkStatus(); // Update bookmark status for new memes
             } else {
                 memeGrid.setError("No memes found for this subreddit");
                 appHeader.isLoading = false;
@@ -132,6 +147,7 @@ ApplicationWindow {
                 memeGrid.isLoading = false;
                 appHeader.isLoading = false;
                 memeGrid.clearError();
+                refreshBookmarkStatus(); // Update bookmark status for new memes
             } else {
                 memeGrid.setError("No memes found from selected subreddits");
                 appHeader.isLoading = false;
@@ -173,6 +189,10 @@ ApplicationWindow {
             onSettingsRequested: settingsDialog.open()
             onRefreshRequested: refreshMemes()
             onMultiSubredditSelectionRequested: multiSubredditDialog.open()
+            onBookmarksRequested: {
+                loadBookmarks();
+                bookmarksDialog.open();
+            }
         }
         
         // Meme grid view
@@ -181,6 +201,7 @@ ApplicationWindow {
             anchors.fill: parent
             isMultiSubredditMode: root.isMultiSubredditMode
             subredditSources: root.subredditSources
+            bookmarkStatus: root.bookmarkStatus
             
             onMemeClicked: {
                 console.log("Main: Opening fullscreen viewer for meme:", index);
@@ -190,6 +211,19 @@ ApplicationWindow {
                 fullscreenViewer.currentIndex = index;
                 fullscreenViewer.totalCount = memeGrid.count;
                 fullscreenViewer.open();
+            }
+            
+            onBookmarkToggled: {
+                console.log("Main: Bookmark toggled for meme:", meme.title, "bookmark:", bookmark);
+                if (bookmark) {
+                    if (databaseManager.bookmarkMeme(meme)) {
+                        updateBookmarkStatus(meme.id, true);
+                    }
+                } else {
+                    if (databaseManager.unbookmarkMeme(meme.id)) {
+                        updateBookmarkStatus(meme.id, false);
+                    }
+                }
             }
             
             onLoadMore: {
@@ -257,6 +291,32 @@ ApplicationWindow {
             root.selectedSubreddits = subreddits;
             root.isMultiSubredditMode = true;
             loadMultiSubredditMemes();
+        }
+    }
+
+    BookmarksDialog {
+        id: bookmarksDialog
+        darkMode: root.darkMode
+        
+        onMemeSelected: {
+            console.log("Main: Opening meme from bookmarks:", meme.title);
+            root.dialogImageSource = meme.image;
+            fullscreenViewer.imageSource = meme.image;
+            fullscreenViewer.currentIndex = 0;
+            fullscreenViewer.totalCount = 1;
+            fullscreenViewer.open();
+        }
+        
+        onRemoveBookmark: {
+            console.log("Main: Removing bookmark for meme ID:", memeId);
+            databaseManager.unbookmarkMeme(memeId);
+            loadBookmarks();
+        }
+        
+        onClearAllBookmarks: {
+            console.log("Main: Clearing all bookmarks");
+            databaseManager.clearAllBookmarks();
+            loadBookmarks();
         }
     }
 
@@ -432,6 +492,49 @@ ApplicationWindow {
             }
         }
     }
+    
+    // ===== BOOKMARK MANAGEMENT FUNCTIONS =====
+    
+    function loadBookmarks() {
+        console.log("Main: Loading bookmarks");
+        var bookmarks = databaseManager.getBookmarks();
+        root.bookmarkedMemes = bookmarks;
+        bookmarksDialog.loadBookmarks(bookmarks);
+        
+        // Update bookmark status for currently loaded memes
+        refreshBookmarkStatus();
+        console.log("Main: Loaded", bookmarks.length, "bookmarks");
+    }
+    
+    function refreshBookmarkStatus() {
+        console.log("Main: Refreshing bookmark status");
+        var newStatus = {};
+        
+        // Check all currently loaded memes
+        for (var i = 0; i < memeGrid.count; i++) {
+            var meme = memeGrid.getMemeAt(i);
+            if (meme && meme.id) {
+                newStatus[meme.id] = databaseManager.isBookmarked(meme.id);
+            }
+        }
+        
+        root.bookmarkStatus = newStatus;
+        console.log("Main: Updated bookmark status for", Object.keys(newStatus).length, "memes");
+    }
+    
+    function updateBookmarkStatus(memeId, isBookmarked) {
+        console.log("Main: Updating bookmark status for meme:", memeId, "to:", isBookmarked);
+        var newStatus = {};
+        // Copy existing status
+        for (var key in root.bookmarkStatus) {
+            newStatus[key] = root.bookmarkStatus[key];
+        }
+        // Update the specific meme
+        newStatus[memeId] = isBookmarked;
+        root.bookmarkStatus = newStatus;
+    }
+    
+    // Note: bookmarkStatusChanged signal is automatically generated by QML for the bookmarkStatus property
 
     // Component initialization
     Component.onCompleted: {
@@ -443,6 +546,9 @@ ApplicationWindow {
         // Initialize database and load custom subreddits
         databaseManager.initializeDatabase();
         databaseManager.loadCustomSubreddits();
+        
+        // Load bookmarks
+        loadBookmarks();
         
         // Load initial memes
         refreshMemes();

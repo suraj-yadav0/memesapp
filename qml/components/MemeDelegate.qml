@@ -34,15 +34,20 @@ UbuntuShape {
     property string memeSubreddit: model.subreddit || ""
     property string memeAuthor: model.author || ""
     property string memePermalink: model.permalink || ""
+    property string memeId: model.id || ""
     
     // Multi-subreddit properties
     property bool isMultiSubredditMode: false
     property string subredditSource: ""
+    
+    // Bookmark properties
+    property bool isBookmarked: false
 
     // Signals
     signal shareRequested(string url, string title)
     signal downloadRequested(string url, string title)
     signal imageClicked(string url)
+    signal bookmarkToggled(var meme, bool bookmark)
 
     Column {
         id: contentColumn
@@ -193,8 +198,36 @@ UbuntuShape {
 
             // Spacer to push actions to the right
             Item {
-                width: parent.width - shareIcon.width - downloadIcon.width - units.gu(8)
+                width: parent.width - bookmarkIcon.width - shareIcon.width - downloadIcon.width - units.gu(12)
                 height: 1
+            }
+
+            // Bookmark action
+            Icon {
+                id: bookmarkIcon
+                name: memeDelegate.isBookmarked ? "starred" : "non-starred"
+                width: units.gu(2)
+                height: units.gu(2)
+                anchors.verticalCenter: parent.verticalCenter
+                color: memeDelegate.isBookmarked ? "#FFD700" : (memeDelegate.darkMode ? "#CCCCCC" : "#666666")
+
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: {
+                        console.log("MemeDelegate: Toggling bookmark for meme:", memeDelegate.memeTitle);
+                        var memeData = {
+                            id: memeDelegate.memeId,
+                            title: memeDelegate.memeTitle,
+                            image: memeDelegate.memeImage,
+                            subreddit: memeDelegate.memeSubreddit,
+                            author: memeDelegate.memeAuthor,
+                            permalink: memeDelegate.memePermalink,
+                            upvotes: memeDelegate.memeUpvotes,
+                            comments: memeDelegate.memeComments
+                        };
+                        memeDelegate.bookmarkToggled(memeData, !memeDelegate.isBookmarked);
+                    }
+                }
             }
 
             // Share action

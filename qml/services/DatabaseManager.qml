@@ -26,6 +26,11 @@ QtObject {
     signal customSubredditsLoaded(var subreddits)
     signal errorOccurred(string message)
     
+    // Bookmark signals
+    signal memeBookmarked(string memeId, string title)
+    signal memeUnbookmarked(string memeId)
+    signal bookmarksLoaded(var bookmarks)
+    
     // Properties
     property var db: null
     property bool initialized: false
@@ -54,6 +59,23 @@ QtObject {
                     'date_added DATETIME DEFAULT CURRENT_TIMESTAMP, ' +
                     'usage_count INTEGER DEFAULT 0, ' +
                     'is_favorite BOOLEAN DEFAULT 0' +
+                    ')'
+                );
+                
+                // Create bookmarks table for favorite memes
+                tx.executeSql(
+                    'CREATE TABLE IF NOT EXISTS bookmarks (' +
+                    'id INTEGER PRIMARY KEY AUTOINCREMENT, ' +
+                    'meme_id TEXT UNIQUE NOT NULL, ' +
+                    'title TEXT NOT NULL, ' +
+                    'image_url TEXT NOT NULL, ' +
+                    'subreddit TEXT NOT NULL, ' +
+                    'author TEXT, ' +
+                    'permalink TEXT, ' +
+                    'upvotes INTEGER DEFAULT 0, ' +
+                    'comments INTEGER DEFAULT 0, ' +
+                    'date_bookmarked DATETIME DEFAULT CURRENT_TIMESTAMP, ' +
+                    'thumbnail_data BLOB' +  // Store thumbnail for offline viewing
                     ')'
                 );
                 
@@ -271,5 +293,179 @@ QtObject {
         }
         
         return allSubreddits;
+    }
+    
+    // ===== BOOKMARK MANAGEMENT FUNCTIONS =====
+    
+    function bookmarkMeme(meme) {
+        if (!initialized) {
+            console.log("DatabaseManager: Database not initialized");
+            errorOccurred("Database not initialized");
+            return false;
+        }
+        
+        try {
+            var success = false;
+            db.transaction(function(tx) {
+                // Check if already bookmarked
+                var existing = tx.executeSql(
+                    'SELECT id FROM bookmarks WHERE meme_id = ?',
+                    [meme.id]
+                );
+                
+                if (existing.rows.length === 0) {
+                    // Add new bookmark
+                    tx.executeSql(
+                        'INSERT INTO bookmarks (meme_id, title, image_url, subreddit, author, permalink, upvotes, comments) ' +
+                        'VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+                        [
+                            meme.id || "",
+                            meme.title || "",
+                            meme.image || meme.url || "",
+                            meme.subreddit || "",
+                            meme.author || "",
+                            meme.permalink || "",
+                            meme.upvotes || 0,
+                            meme.comments || 0
+                        ]
+                    );
+                    success = true;
+                    console.log("DatabaseManager: Bookmarked meme:", meme.title);
+                } else {
+                    console.log("DatabaseManager: Meme already bookmarked:", meme.title);
+                    success = false;
+                }
+            });
+            
+            if (success) {
+                memeBookmarked(meme.id, meme.title);
+            }
+            return success;
+            
+        } catch (error) {
+            console.log("DatabaseManager: Error bookmarking meme:", error);
+            errorOccurred("Failed to bookmark meme: " + error);
+            return false;
+        }
+    }
+    
+    function unbookmarkMeme(memeId) {
+        if (!initialized) {
+            console.log("DatabaseManager: Database not initialized");
+            errorOccurred("Database not initialized");
+            return false;
+        }
+        
+        try {
+            var success = false;
+            db.transaction(function(tx) {
+                var result = tx.executeSql(
+                    'DELETE FROM bookmarks WHERE meme_id = ?',
+                    [memeId]
+                );
+                success = result.rowsAffected > 0;
+            });
+            
+            if (success) {
+                console.log("DatabaseManager: Removed bookmark for meme ID:", memeId);
+                memeUnbookmarked(memeId);
+            }
+            return success;
+            
+        } catch (error) {
+            console.log("DatabaseManager: Error removing bookmark:", error);
+            errorOccurred("Failed to remove bookmark: " + error);
+            return false;
+        }
+    }
+    
+    function isBookmarked(memeId) {
+        if (!initialized) return false;
+        
+        var isBookmarked = false;
+        try {
+            db.readTransaction(function(tx) {
+                var result = tx.executeSql(
+                    'SELECT id FROM bookmarks WHERE meme_id = ?',
+                    [memeId]
+                );
+                isBookmarked = result.rows.length > 0;
+            });
+        } catch (error) {
+            console.log("DatabaseManager: Error checking bookmark status:", error);
+        }
+        
+        return isBookmarked;
+    }
+    
+    function getBookmarks() {
+        if (!initialized) return [];
+        
+        var bookmarks = [];
+        try {
+            db.readTransaction(function(tx) {
+                var result = tx.executeSql(
+                    'SELECT * FROM bookmarks ORDER BY date_bookmarked DESC'
+                );
+                
+                for (var i = 0; i < result.rows.length; i++) {
+                    var row = result.rows.item(i);
+                    bookmarks.push({
+                        id: row.meme_id,
+                        title: row.title,
+                        image: row.image_url,
+                        url: row.image_url,  // For compatibility
+                        subreddit: row.subreddit,
+                        author: row.author,
+                        permalink: row.permalink,
+                        upvotes: row.upvotes,
+                        comments: row.comments,
+                        dateBookmarked: row.date_bookmarked
+                    });
+                }
+            });
+        } catch (error) {
+            console.log("DatabaseManager: Error loading bookmarks:", error);
+        }
+        
+        return bookmarks;
+    }
+    
+    function getBookmarkCount() {
+        if (!initialized) return 0;
+        
+        var count = 0;
+        try {
+            db.readTransaction(function(tx) {
+                var result = tx.executeSql('SELECT COUNT(*) as count FROM bookmarks');
+                if (result.rows.length > 0) {
+                    count = result.rows.item(0).count;
+                }
+            });
+        } catch (error) {
+            console.log("DatabaseManager: Error getting bookmark count:", error);
+        }
+        
+        return count;
+    }
+    
+    function clearAllBookmarks() {
+        if (!initialized) return false;
+        
+        try {
+            var success = false;
+            db.transaction(function(tx) {
+                tx.executeSql('DELETE FROM bookmarks');
+                success = true;
+            });
+            
+            console.log("DatabaseManager: Cleared all bookmarks");
+            return success;
+            
+        } catch (error) {
+            console.log("DatabaseManager: Error clearing bookmarks:", error);
+            errorOccurred("Failed to clear bookmarks: " + error);
+            return false;
+        }
     }
 }

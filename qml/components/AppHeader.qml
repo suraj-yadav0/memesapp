@@ -33,6 +33,7 @@ PageHeader {
     signal settingsRequested()
     signal refreshRequested()
     signal manageSubredditsRequested()
+    signal bookmarksRequested()
     
     title: isMultiSubredditMode ? 
            "Multi-Feed (" + currentSubreddits.length + ")" : 
@@ -80,6 +81,15 @@ PageHeader {
                 onTriggered: {
                     console.log("AppHeader: Refresh requested");
                     appHeader.refreshRequested();
+                }
+            },
+            Action {
+                id: bookmarksAction
+                iconName: "starred"
+                text: "Bookmarks"
+                onTriggered: {
+                    console.log("AppHeader: Bookmarks requested");
+                    appHeader.bookmarksRequested();
                 }
             },
             Action {

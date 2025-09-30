@@ -30,11 +30,13 @@ Item {
     property string errorMessage: ""
     property bool isMultiSubredditMode: false
     property var subredditSources: ({})
+    property var bookmarkStatus: ({}) // Maps meme IDs to bookmark status
     
     // Signals
     signal memeClicked(int index, string imageUrl)
     signal loadMore()
     signal refreshRequested()
+    signal bookmarkToggled(var meme, bool bookmark)
     
     // GridView
     GridView {
@@ -57,12 +59,18 @@ Item {
             isMultiSubredditMode: memeGridView.isMultiSubredditMode
             subredditSource: memeGridView.isMultiSubredditMode ? 
                             (memeGridView.subredditSources[memeData ? memeData.id : ""] || "unknown") : ""
+            isBookmarked: memeGridView.bookmarkStatus[memeData ? memeData.id : ""] || false
             
             onImageClicked: {
                 var meme = memeModel.get(index);
                 var imageUrl = meme ? meme.image : "";
                 console.log("MemeGridView: Meme clicked at index:", index, "URL:", imageUrl);
                 memeGridView.memeClicked(index, imageUrl);
+            }
+            
+            onBookmarkToggled: {
+                console.log("MemeGridView: Bookmark toggled for:", meme.title);
+                memeGridView.bookmarkToggled(meme, bookmark);
             }
         }
         

@@ -77,8 +77,38 @@ ApplicationWindow {
             "Meme Art": "MemeArt"
         })
 
-    // Array of category names for the OptionSelector
+    // Array of category names for the OptionSelector (will be updated with custom subreddits)
     property var categoryNames: ["General Memes", "Dank Memes", "Wholesome Memes", "Funny", "Programming Humor", "Me IRL", "Star Wars Memes", "History Memes", "Gaming Memes", "Anime Memes", "Cursed Comments", "Surreal Memes", "Memes of the Dank", "Meme Economy", "2meirl4meirl", "teenagers", "Advice Animals", "Prequel Memes", "Sequel Memes", "OT Memes", "High Quality Memes", "Low Effort Memes", "Political Memes", "Animal Memes", "Cat Memes", "Dog Memes", "Wholesome Animemes", "Meme Art"]
+    
+    // Extended category map including custom subreddits
+    property var extendedCategoryMap: categoryMap
+    property var customSubreddits: []
+
+    // Database Manager
+    DatabaseManager {
+        id: databaseManager
+        
+        onCustomSubredditsLoaded: {
+            console.log("Main: Custom subreddits loaded:", subreddits.length);
+            root.customSubreddits = subreddits;
+            updateCategoryLists();
+        }
+        
+        onSubredditAdded: {
+            console.log("Main: Subreddit added to database:", displayName);
+            updateCategoryLists();
+        }
+        
+        onSubredditRemoved: {
+            console.log("Main: Subreddit removed from database:", displayName);
+            updateCategoryLists();
+        }
+        
+        onErrorOccurred: {
+            console.log("Main: Database error:", message);
+            // Could show error notification to user here
+        }
+    }
 
     // Model
     MemeModel {
@@ -176,6 +206,13 @@ ApplicationWindow {
                         text: i18n.tr("Select Subreddit")
                         onTriggered: {
                             subredditSelectionDialog.open();
+                        }
+                    },
+                    Action {
+                        iconName: "bookmark-new"
+                        text: i18n.tr("Manage Collection")
+                        onTriggered: {
+                            manageSubredditsDialog.open();
                         }
                     },
                     Action {
@@ -566,7 +603,7 @@ ApplicationWindow {
                         Component.onCompleted: {
                             if (!root.useCustomSubreddit) {
                                 for (var i = 0; i < root.categoryNames.length; i++) {
-                                    if (root.categoryMap[root.categoryNames[i]] === root.selectedSubreddit) {
+                                    if (root.extendedCategoryMap[root.categoryNames[i]] === root.selectedSubreddit) {
                                         currentIndex = i;
                                         break;
                                     }
@@ -642,6 +679,35 @@ ApplicationWindow {
                             Keys.onReturnPressed: subredditSelectionDialog.accept()
                             Keys.onEnterPressed: subredditSelectionDialog.accept()
                         }
+                        
+                        // Add to Collection button
+                        Row {
+                            Layout.fillWidth: true
+                            spacing: units.gu(1)
+                            
+                            Button {
+                                text: "Add to My Collection"
+                                enabled: dialogCustomSubredditField.text.trim() !== ""
+                                
+                                onClicked: {
+                                    var subredditName = dialogCustomSubredditField.text.trim().toLowerCase();
+                                    if (subredditName !== "") {
+                                        var success = root.addCustomSubredditToDatabase(subredditName);
+                                        if (success) {
+                                            console.log("Main: Successfully added subreddit to collection");
+                                            // Don't close dialog, let user decide if they want to use it now
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            Text {
+                                text: "Save for future use"
+                                font.pixelSize: units.gu(1.1)
+                                color: theme.palette.normal.backgroundSecondaryText
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                        }
                     }
 
                     Text {
@@ -669,7 +735,7 @@ ApplicationWindow {
             } else {
                 if (dialogCategoryCombo.currentIndex >= 0 && dialogCategoryCombo.currentText) {
                     var categoryName = dialogCategoryCombo.currentText;
-                    newSubreddit = root.categoryMap[categoryName];
+                    newSubreddit = root.extendedCategoryMap[categoryName];
                 }
             }
 
@@ -690,11 +756,143 @@ ApplicationWindow {
                 dialogCustomSubredditField.forceActiveFocus();
             } else {
                 for (var i = 0; i < root.categoryNames.length; i++) {
-                    if (root.categoryMap[root.categoryNames[i]] === root.selectedSubreddit) {
+                    if (root.extendedCategoryMap[root.categoryNames[i]] === root.selectedSubreddit) {
                         dialogCategoryCombo.currentIndex = i;
                         break;
                     }
                 }
+            }
+        }
+    }
+
+    // Custom Subreddits Management Dialog
+    Dialog {
+        id: manageSubredditsDialog
+        modal: true
+        focus: true
+        standardButtons: Dialog.Close
+        
+        width: Math.min(root.width * 0.9, units.gu(60))
+        height: Math.min(root.height * 0.8, units.gu(50))
+        x: (root.width - width) / 2
+        y: (root.height - height) / 2
+        
+        title: "Manage My Subreddit Collection"
+        
+        background: Rectangle {
+            color: theme.palette.normal.background
+            radius: units.gu(1)
+        }
+        
+        ColumnLayout {
+            anchors.fill: parent
+            spacing: units.gu(1)
+            
+            Text {
+                text: "Your Custom Subreddits (" + root.customSubreddits.length + ")"
+                font.bold: true
+                color: theme.palette.normal.backgroundText
+                Layout.fillWidth: true
+            }
+            
+            ScrollView {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                clip: true
+                
+                ListView {
+                    id: customSubredditsListView
+                    model: root.customSubreddits
+                    spacing: units.gu(0.5)
+                    
+                    delegate: Rectangle {
+                        width: customSubredditsListView.width
+                        height: units.gu(6)
+                        color: theme.palette.normal.background
+                        border.color: theme.palette.normal.base
+                        border.width: 1
+                        radius: 4
+                        
+                        Row {
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            anchors.verticalCenter: parent.verticalCenter
+                            anchors.margins: units.gu(1)
+                            spacing: units.gu(1)
+                            
+                            Column {
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: parent.width - buttonRow.width - parent.spacing
+                                
+                                Text {
+                                    text: modelData.displayName + (modelData.isFavorite ? " ⭐" : "")
+                                    font.bold: true
+                                    color: theme.palette.normal.backgroundText
+                                    elide: Text.ElideRight
+                                    width: parent.width
+                                }
+                                
+                                Text {
+                                    text: "r/" + modelData.subredditName + " • Used " + modelData.usageCount + " times"
+                                    font.pixelSize: units.gu(1.2)
+                                    color: theme.palette.normal.backgroundSecondaryText
+                                    elide: Text.ElideRight
+                                    width: parent.width
+                                }
+                            }
+                            
+                            Row {
+                                id: buttonRow
+                                spacing: units.gu(0.5)
+                                anchors.verticalCenter: parent.verticalCenter
+                                
+                                Button {
+                                    text: modelData.isFavorite ? "★" : "☆"
+                                    width: units.gu(4)
+                                    height: units.gu(4)
+                                    onClicked: {
+                                        console.log("Main: Toggling favorite for:", modelData.subredditName);
+                                        databaseManager.toggleFavorite(modelData.subredditName);
+                                    }
+                                }
+                                
+                                Button {
+                                    text: "Use"
+                                    width: units.gu(6)
+                                    height: units.gu(4)
+                                    onClicked: {
+                                        console.log("Main: Using custom subreddit:", modelData.subredditName);
+                                        root.useCustomSubreddit = true;
+                                        root.selectedSubreddit = modelData.subredditName;
+                                        memeService.fetchMemes(modelData.subredditName);
+                                        manageSubredditsDialog.close();
+                                    }
+                                }
+                                
+                                Button {
+                                    text: "✕"
+                                    width: units.gu(4)
+                                    height: units.gu(4)
+                                    onClicked: {
+                                        console.log("Main: Removing custom subreddit:", modelData.subredditName);
+                                        databaseManager.removeCustomSubreddit(modelData.subredditName);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            Text {
+                text: root.customSubreddits.length === 0 ? 
+                      "No custom subreddits saved yet. Use 'Select Subreddit' → 'Custom Subreddit' → 'Add to My Collection' to save subreddits." :
+                      "Tip: ⭐ Mark favorites to show them at the top of the list."
+                font.pixelSize: units.gu(1.2)
+                color: theme.palette.normal.backgroundSecondaryText
+                Layout.fillWidth: true
+                wrapMode: Text.WordWrap
+                horizontalAlignment: Text.AlignCenter
             }
         }
     }
@@ -1138,6 +1336,46 @@ ApplicationWindow {
         console.log("Main: Selected subreddit changed to:", subreddit);
         root.selectedSubreddit = subreddit;
         memeService.fetchMemes(subreddit);
+        
+        // Increment usage count if it's a custom subreddit
+        databaseManager.incrementUsageCount(subreddit);
+    }
+    
+    function updateCategoryLists() {
+        console.log("Main: Updating category lists with custom subreddits");
+        
+        // Create new extended category map
+        var newCategoryMap = {};
+        var newCategoryNames = [];
+        
+        // Add built-in categories first
+        for (var key in categoryMap) {
+            newCategoryMap[key] = categoryMap[key];
+            newCategoryNames.push(key);
+        }
+        
+        // Add custom subreddits
+        for (var i = 0; i < customSubreddits.length; i++) {
+            var custom = customSubreddits[i];
+            var displayName = custom.displayName + (custom.isFavorite ? " ⭐" : "");
+            newCategoryMap[displayName] = custom.subredditName;
+            newCategoryNames.push(displayName);
+        }
+        
+        // Update properties
+        extendedCategoryMap = newCategoryMap;
+        categoryNames = newCategoryNames;
+        
+        console.log("Main: Updated category lists - total categories:", newCategoryNames.length);
+    }
+    
+    function addCustomSubredditToDatabase(subredditName) {
+        // Create a nice display name from subreddit name
+        var displayName = subredditName.charAt(0).toUpperCase() + subredditName.slice(1);
+        displayName = displayName.replace(/([A-Z])/g, ' $1').trim(); // Add spaces before capitals
+        
+        console.log("Main: Adding custom subreddit to database:", displayName, "->", subredditName);
+        return databaseManager.addCustomSubreddit(displayName, subredditName);
     }
 
     // Navigation functions for fullscreen image viewer

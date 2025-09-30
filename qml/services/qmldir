@@ -1,2 +1,3 @@
 module services
 MemeService 1.0 MemeService.qml
+DatabaseManager 1.0 DatabaseManager.qml

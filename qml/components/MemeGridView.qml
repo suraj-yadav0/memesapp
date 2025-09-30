@@ -52,8 +52,10 @@ Item {
             height: gridView.cellHeight - units.gu(0.5)
             
             onImageClicked: {
-                console.log("MemeGridView: Meme clicked at index:", index, "URL:", url);
-                memeGridView.memeClicked(index, url);
+                var meme = memeModel.get(index);
+                var imageUrl = meme ? meme.image : "";
+                console.log("MemeGridView: Meme clicked at index:", index, "URL:", imageUrl);
+                memeGridView.memeClicked(index, imageUrl);
             }
         }
         

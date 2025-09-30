@@ -360,14 +360,18 @@ ApplicationWindow {
         if (index >= 0 && index < memeGrid.count) {
             root.currentMemeIndex = index;
             var meme = memeGrid.getMemeAt(index);
-            if (meme && meme.url) {
-                root.dialogImageSource = meme.url;
-                fullscreenViewer.imageSource = meme.url;
+            if (meme && meme.image) {
+                root.dialogImageSource = meme.image;
+                fullscreenViewer.imageSource = meme.image;
                 fullscreenViewer.currentIndex = index;
                 fullscreenViewer.totalCount = memeGrid.count;
                 
+                console.log("Main: Updated fullscreen viewer with image:", meme.image);
+                
                 // Increment usage count for database tracking
                 databaseManager.incrementUsageCount(root.selectedSubreddit);
+            } else {
+                console.log("Main: Invalid meme data at index:", index, meme);
             }
         }
     }

@@ -49,7 +49,6 @@ Dialog {
 
         Keys.onEscapePressed: {
             fullscreenViewer.close();
-            fullscreenViewer.closed();
         }
         Keys.onLeftPressed: fullscreenViewer.navigatePrevious()
         Keys.onRightPressed: fullscreenViewer.navigateNext()
@@ -303,7 +302,6 @@ Dialog {
                 onClicked: {
                     console.log("FullscreenViewer: Close button clicked");
                     fullscreenViewer.close();
-                    fullscreenViewer.closed();
                 }
             }
 
@@ -427,7 +425,6 @@ Dialog {
                     if (clickOutsideImage && clickNotOnCloseButton) {
                         console.log("FullscreenViewer: Background clicked, closing dialog");
                         fullscreenViewer.close();
-                        fullscreenViewer.closed();
                     }
                 }
                 hoverEnabled: true
@@ -441,6 +438,7 @@ Dialog {
         if (imageFlickable) {
             imageFlickable.resetZoom();
         }
-        fullscreenViewer.closed();
+        // Emit the closed signal to parent
+        closed();
     }
 }

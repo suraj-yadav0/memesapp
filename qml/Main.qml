@@ -725,22 +725,156 @@ ApplicationWindow {
                 anchors.fill: parent
                 color: "#000000CC"
 
+            // Flickable container for zoom and pan functionality
+            Flickable {
+                id: imageFlickable
+                anchors.fill: parent
+                contentWidth: zoomableImage.width
+                contentHeight: zoomableImage.height
+                boundsBehavior: Flickable.StopAtBounds
+                clip: true
+                
+                // Enable interactive panning when zoomed
+                interactive: zoomableImage.scale > 1.0
+                
+                // Zoom limits
+                property real minZoom: 0.5
+                property real maxZoom: 5.0
+                
                 Image {
-                    id: fullImage
-                    anchors.centerIn: parent
-                    width: parent.width * 0.94
-                    height: parent.height * 0.94
+                    id: zoomableImage
+                    width: parent.parent.width * 0.94
+                    height: parent.parent.height * 0.94
                     fillMode: Image.PreserveAspectFit
                     source: root.dialogImageSource
                     cache: true
                     smooth: true
+                    transformOrigin: Item.Center
+                    
+                    property real initialScale: 1.0
+                    
+                    onStatusChanged: {
+                        if (status === Image.Ready) {
+                            // Reset zoom when new image loads
+                            imageFlickable.resetZoom();
+                        }
+                    }
                 }
-
-            // Touch and swipe gesture detection using MultiPointTouchArea
+                
+                // Pinch to zoom functionality
+                PinchArea {
+                    id: pinchArea
+                    anchors.fill: parent
+                    
+                    property real initialScale: 1.0
+                    property point initialCenter
+                    
+                    onPinchStarted: {
+                        initialScale = zoomableImage.scale;
+                        initialCenter = pinch.center;
+                        console.log("Main: Pinch zoom started, initial scale:", initialScale);
+                    }
+                    
+                    onPinchUpdated: {
+                        var newScale = initialScale * pinch.scale;
+                        newScale = Math.max(imageFlickable.minZoom, Math.min(imageFlickable.maxZoom, newScale));
+                        
+                        // Calculate new position to keep zoom centered on pinch center
+                        var centerX = initialCenter.x;
+                        var centerY = initialCenter.y;
+                        
+                        zoomableImage.scale = newScale;
+                        
+                        // Update flickable content size
+                        imageFlickable.contentWidth = zoomableImage.width * zoomableImage.scale;
+                        imageFlickable.contentHeight = zoomableImage.height * zoomableImage.scale;
+                        
+                        console.log("Main: Pinch zoom updated, scale:", newScale);
+                    }
+                    
+                    onPinchFinished: {
+                        console.log("Main: Pinch zoom finished, final scale:", zoomableImage.scale);
+                    }
+                }
+                
+                // Mouse wheel zoom functionality
+                MouseArea {
+                    id: wheelZoomArea
+                    anchors.fill: parent
+                    acceptedButtons: Qt.NoButton
+                    
+                    onWheel: {
+                        var scaleFactor = wheel.angleDelta.y > 0 ? 1.2 : 0.8;
+                        var newScale = zoomableImage.scale * scaleFactor;
+                        newScale = Math.max(imageFlickable.minZoom, Math.min(imageFlickable.maxZoom, newScale));
+                        
+                        // Zoom towards mouse position
+                        var mouseX = wheel.x;
+                        var mouseY = wheel.y;
+                        
+                        // Calculate the point in the image coordinate system
+                        var imageX = mouseX - zoomableImage.x;
+                        var imageY = mouseY - zoomableImage.y;
+                        
+                        // Apply zoom
+                        zoomableImage.scale = newScale;
+                        
+                        // Update flickable content size
+                        imageFlickable.contentWidth = zoomableImage.width * zoomableImage.scale;
+                        imageFlickable.contentHeight = zoomableImage.height * zoomableImage.scale;
+                        
+                        // Center the zoom on the mouse position
+                        if (zoomableImage.scale > 1.0) {
+                            imageFlickable.contentX = imageX * zoomableImage.scale - mouseX;
+                            imageFlickable.contentY = imageY * zoomableImage.scale - mouseY;
+                        } else {
+                            // Reset position when zoomed out
+                            imageFlickable.contentX = 0;
+                            imageFlickable.contentY = 0;
+                        }
+                        
+                        console.log("Main: Mouse wheel zoom, scale:", newScale);
+                    }
+                }
+                
+                // Function to reset zoom
+                function resetZoom() {
+                    zoomableImage.scale = 1.0;
+                    contentX = 0;
+                    contentY = 0;
+                    contentWidth = zoomableImage.width;
+                    contentHeight = zoomableImage.height;
+                    console.log("Main: Zoom reset");
+                }
+                
+                // Function to zoom to fit
+                function zoomToFit() {
+                    resetZoom();
+                }
+                
+                // Function to zoom to actual size
+                function zoomToActual() {
+                    if (zoomableImage.sourceSize.width > 0 && zoomableImage.sourceSize.height > 0) {
+                        var scaleX = parent.width / zoomableImage.sourceSize.width;
+                        var scaleY = parent.height / zoomableImage.sourceSize.height;
+                        zoomableImage.scale = Math.min(scaleX, scaleY);
+                        
+                        contentWidth = zoomableImage.width * zoomableImage.scale;
+                        contentHeight = zoomableImage.height * zoomableImage.scale;
+                        
+                        // Center the image
+                        contentX = Math.max(0, (contentWidth - width) / 2);
+                        contentY = Math.max(0, (contentHeight - height) / 2);
+                        
+                        console.log("Main: Zoom to actual size, scale:", zoomableImage.scale);
+                    }
+                }
+            }            // Touch and swipe gesture detection (only when not zoomed)
             MultiPointTouchArea {
                 id: touchArea
-                anchors.fill: fullImage
-                mouseEnabled: true  // Also respond to mouse for desktop testing
+                anchors.fill: imageFlickable
+                mouseEnabled: false  // Let mouse wheel area handle mouse events
+                enabled: zoomableImage.scale <= 1.0  // Only enable swipe when not zoomed
                 
                 property real startX: 0
                 property real startY: 0
@@ -750,7 +884,7 @@ ApplicationWindow {
                 property real minSwipeDistance: units.gu(8)  // Minimum distance for a swipe
                 
                 onPressed: {
-                    if (touchPoints.length > 0) {
+                    if (touchPoints.length === 1) { // Only handle single touch for swipe
                         var touch = touchPoints[0];
                         startX = touch.x;
                         startY = touch.y;
@@ -763,16 +897,15 @@ ApplicationWindow {
                 
                 onUpdated: {
                     // Track the primary touch point position continuously
-                    if (isSwipeActive && touchPoints.length > 0) {
+                    if (isSwipeActive && touchPoints.length === 1) { // Only single touch
                         var touch = touchPoints[0];
                         currentX = touch.x;
                         currentY = touch.y;
-                        // Optional: Add visual feedback during swipe here
                     }
                 }
                 
                 onReleased: {
-                    if (isSwipeActive) {
+                    if (isSwipeActive && touchPoints.length === 0) {
                         var deltaX = currentX - startX;
                         var deltaY = currentY - startY;
                         var distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
@@ -791,8 +924,12 @@ ApplicationWindow {
                                 root.navigateToNextMeme();
                             }
                         } else if (distance < minSwipeDistance) {
-                            // Short tap - do nothing (prevent closing dialog)
-                            console.log("Main: Short tap detected, ignoring");
+                            // Short tap - reset zoom if zoomed, otherwise ignore
+                            if (zoomableImage.scale > 1.0) {
+                                imageFlickable.resetZoom();
+                            } else {
+                                console.log("Main: Short tap detected, ignoring");
+                            }
                         }
                         
                         isSwipeActive = false;
@@ -805,55 +942,54 @@ ApplicationWindow {
                 }
             }
 
-            // Fallback MouseArea for desktop mouse dragging
-            MouseArea {
-                id: mouseSwipeArea
-                anchors.fill: fullImage
-                enabled: !touchArea.isSwipeActive  // Only active when touch is not being used
+            // Zoom control buttons
+            Row {
+                anchors.top: parent.top
+                anchors.left: parent.left
+                anchors.margins: units.gu(1)
+                spacing: units.gu(0.5)
+                z: 100
                 
-                property real mouseStartX: 0
-                property real mouseStartY: 0
-                property bool mouseSwipeActive: false
-                property real minSwipeDistance: units.gu(8)
-                
-                onPressed: {
-                    mouseStartX = mouse.x;
-                    mouseStartY = mouse.y;
-                    mouseSwipeActive = true;
-                    console.log("Main: Mouse swipe started at:", mouseStartX, mouseStartY);
-                }
-                
-                onReleased: {
-                    if (mouseSwipeActive) {
-                        var deltaX = mouse.x - mouseStartX;
-                        var deltaY = mouse.y - mouseStartY;
-                        var distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-                        
-                        console.log("Main: Mouse released - deltaX:", deltaX, "deltaY:", deltaY, "distance:", distance);
-                        
-                        // Check if it's a horizontal swipe (more horizontal than vertical)
-                        if (distance > minSwipeDistance && Math.abs(deltaX) > Math.abs(deltaY) * 1.5) {
-                            if (deltaX > 0) {
-                                // Swipe right - go to previous meme
-                                console.log("Main: Mouse swipe right detected, navigating to previous meme");
-                                root.navigateToPrevMeme();
-                            } else {
-                                // Swipe left - go to next meme
-                                console.log("Main: Mouse swipe left detected, navigating to next meme");
-                                root.navigateToNextMeme();
-                            }
-                        } else if (distance < minSwipeDistance) {
-                            // Short click - do nothing (prevent closing dialog)
-                            console.log("Main: Short mouse click detected, ignoring");
-                        }
-                        
-                        mouseSwipeActive = false;
+                Button {
+                    text: "🔍+"
+                    width: units.gu(4)
+                    height: units.gu(3)
+                    enabled: zoomableImage.scale < imageFlickable.maxZoom
+                    onClicked: {
+                        var newScale = Math.min(imageFlickable.maxZoom, zoomableImage.scale * 1.5);
+                        zoomableImage.scale = newScale;
+                        imageFlickable.contentWidth = zoomableImage.width * newScale;
+                        imageFlickable.contentHeight = zoomableImage.height * newScale;
+                        console.log("Main: Zoom in, scale:", newScale);
                     }
                 }
                 
-                onCanceled: {
-                    console.log("Main: Mouse gesture canceled");
-                    mouseSwipeActive = false;
+                Button {
+                    text: "🔍-"
+                    width: units.gu(4)
+                    height: units.gu(3)
+                    enabled: zoomableImage.scale > imageFlickable.minZoom
+                    onClicked: {
+                        var newScale = Math.max(imageFlickable.minZoom, zoomableImage.scale / 1.5);
+                        zoomableImage.scale = newScale;
+                        imageFlickable.contentWidth = zoomableImage.width * newScale;
+                        imageFlickable.contentHeight = zoomableImage.height * newScale;
+                        
+                        if (newScale <= 1.0) {
+                            imageFlickable.contentX = 0;
+                            imageFlickable.contentY = 0;
+                        }
+                        console.log("Main: Zoom out, scale:", newScale);
+                    }
+                }
+                
+                Button {
+                    text: "1:1"
+                    width: units.gu(4)
+                    height: units.gu(3)
+                    onClicked: {
+                        imageFlickable.resetZoom();
+                    }
                 }
             }
 
@@ -887,13 +1023,18 @@ ApplicationWindow {
                     Text {
                         id: hintText
                         anchors.centerIn: parent
-                        text: "Swipe ← → or use arrow keys to navigate • " + (root.currentMemeIndex + 1) + " / " + memeModel.count
+                        text: {
+                            var navText = "Swipe ← → or arrow keys • " + (root.currentMemeIndex + 1) + " / " + memeModel.count;
+                            var zoomText = "Pinch/wheel to zoom";
+                            var currentZoom = " • " + Math.round(zoomableImage.scale * 100) + "%";
+                            return navText + " • " + zoomText + currentZoom;
+                        }
                         color: "white"
-                        font.pixelSize: units.gu(1.2)
+                        font.pixelSize: units.gu(1.1)
                     }
                 }
 
-                // Previous/Next navigation areas (for visual feedback)
+                // Previous/Next navigation areas (only visible when not zoomed)
                 Rectangle {
                     id: prevArea
                     anchors.left: parent.left
@@ -901,8 +1042,9 @@ ApplicationWindow {
                     anchors.bottom: parent.bottom
                     width: parent.width * 0.15
                     color: "transparent"
-                    visible: root.currentMemeIndex > 0
-
+                    visible: root.currentMemeIndex > 0 && zoomableImage.scale <= 1.0
+                    z: 50
+                    
                     Rectangle {
                         anchors.centerIn: parent
                         width: units.gu(6)
@@ -910,7 +1052,7 @@ ApplicationWindow {
                         color: "#000000AA"
                         radius: width / 2
                         visible: parent.hovered
-
+                        
                         Text {
                             anchors.centerIn: parent
                             text: "◀"
@@ -918,9 +1060,9 @@ ApplicationWindow {
                             font.pixelSize: units.gu(2)
                         }
                     }
-
+                    
                     property bool hovered: false
-
+                    
                     MouseArea {
                         anchors.fill: parent
                         hoverEnabled: true
@@ -929,7 +1071,7 @@ ApplicationWindow {
                         onClicked: root.navigateToPrevMeme()
                     }
                 }
-
+                
                 Rectangle {
                     id: nextArea
                     anchors.right: parent.right
@@ -937,8 +1079,9 @@ ApplicationWindow {
                     anchors.bottom: parent.bottom
                     width: parent.width * 0.15
                     color: "transparent"
-                    visible: root.currentMemeIndex < memeModel.count - 1
-
+                    visible: root.currentMemeIndex < memeModel.count - 1 && zoomableImage.scale <= 1.0
+                    z: 50
+                    
                     Rectangle {
                         anchors.centerIn: parent
                         width: units.gu(6)
@@ -946,7 +1089,7 @@ ApplicationWindow {
                         color: "#000000AA"
                         radius: width / 2
                         visible: parent.hovered
-
+                        
                         Text {
                             anchors.centerIn: parent
                             text: "▶"
@@ -954,9 +1097,9 @@ ApplicationWindow {
                             font.pixelSize: units.gu(2)
                         }
                     }
-
+                    
                     property bool hovered: false
-
+                    
                     MouseArea {
                         anchors.fill: parent
                         hoverEnabled: true
@@ -964,15 +1107,14 @@ ApplicationWindow {
                         onExited: parent.hovered = false
                         onClicked: root.navigateToNextMeme()
                     }
-                }
-
-                // Background click area (excludes the image area to prevent conflicts with swipe)
+                }                // Background click area (excludes the image area to prevent conflicts with swipe)
                 MouseArea {
                     anchors.fill: parent
                     onClicked: {
                         // Only close if click is outside the image area
-                        var imageRect = fullImage.mapToItem(parent, 0, 0, fullImage.width, fullImage.height);
+                        var imageRect = zoomableImage.mapToItem(parent, 0, 0, zoomableImage.width, zoomableImage.height);
                         if (mouse.x < imageRect.x || mouse.x > imageRect.x + imageRect.width || mouse.y < imageRect.y || mouse.y > imageRect.y + imageRect.height) {
+                            console.log("Main: Background clicked, closing dialog");
                             attachmentDialog.close();
                         }
                     }
@@ -985,6 +1127,10 @@ ApplicationWindow {
         onClosed: {
             root.dialogImageSource = "";
             root.currentMemeIndex = -1;
+            // Reset zoom when dialog closes
+            if (imageFlickable) {
+                imageFlickable.resetZoom();
+            }
         }
     }
 

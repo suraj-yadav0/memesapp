@@ -24,14 +24,19 @@ PageHeader {
     // Properties
     property string currentSubreddit: "funny"
     property bool isLoading: false
+    property bool isMultiSubredditMode: false
+    property var currentSubreddits: []
     
     // Signals
     signal subredditSelectionRequested()
+    signal multiSubredditSelectionRequested()
     signal settingsRequested()
     signal refreshRequested()
     signal manageSubredditsRequested()
     
-    title: "r/" + currentSubreddit
+    title: isMultiSubredditMode ? 
+           "Multi-Feed (" + currentSubreddits.length + ")" : 
+           "r/" + currentSubreddit
     
     leadingActionBar {
         actions: [
@@ -42,6 +47,15 @@ PageHeader {
                 onTriggered: {
                     console.log("AppHeader: Subreddit selection requested");
                     appHeader.subredditSelectionRequested();
+                }
+            },
+            Action {
+                id: multiSubredditAction
+                iconName: "view-grid-symbolic"
+                text: "Multi-Subreddit Feed"
+                onTriggered: {
+                    console.log("AppHeader: Multi-subreddit selection requested");
+                    appHeader.multiSubredditSelectionRequested();
                 }
             }
         ]

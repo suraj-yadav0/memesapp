@@ -34,6 +34,10 @@ UbuntuShape {
     property string memeSubreddit: model.subreddit || ""
     property string memeAuthor: model.author || ""
     property string memePermalink: model.permalink || ""
+    
+    // Multi-subreddit properties
+    property bool isMultiSubredditMode: false
+    property string subredditSource: ""
 
     // Signals
     signal shareRequested(string url, string title)
@@ -95,6 +99,27 @@ UbuntuShape {
                     onClicked: {
                         memeDelegate.imageClicked(memeDelegate.memeImage);
                     }
+                }
+            }
+            
+            // Subreddit badge for multi-subreddit mode
+            UbuntuShape {
+                id: subredditBadge
+                visible: memeDelegate.isMultiSubredditMode && memeDelegate.subredditSource !== ""
+                anchors.top: parent.top
+                anchors.right: parent.right
+                anchors.margins: units.gu(1)
+                width: subredditLabel.width + units.gu(1.5)
+                height: units.gu(3)
+                backgroundColor: "#FF4500" // Reddit orange
+                
+                Label {
+                    id: subredditLabel
+                    text: "r/" + memeDelegate.subredditSource
+                    anchors.centerIn: parent
+                    color: "white"
+                    font.pixelSize: units.gu(1.5)
+                    font.bold: true
                 }
             }
 

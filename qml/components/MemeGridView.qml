@@ -28,6 +28,8 @@ Item {
     property bool isLoading: false
     property string loadingText: "Loading..."
     property string errorMessage: ""
+    property bool isMultiSubredditMode: false
+    property var subredditSources: ({})
     
     // Signals
     signal memeClicked(int index, string imageUrl)
@@ -50,6 +52,11 @@ Item {
         delegate: MemeDelegate {
             width: gridView.cellWidth - units.gu(0.5)
             height: gridView.cellHeight - units.gu(0.5)
+            
+            property var memeData: memeModel.get(index)
+            isMultiSubredditMode: memeGridView.isMultiSubredditMode
+            subredditSource: memeGridView.isMultiSubredditMode ? 
+                            (memeGridView.subredditSources[memeData ? memeData.id : ""] || "unknown") : ""
             
             onImageClicked: {
                 var meme = memeModel.get(index);

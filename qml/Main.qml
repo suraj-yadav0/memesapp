@@ -43,6 +43,11 @@ ApplicationWindow {
     property string dialogImageSource: ""
     property int currentMemeIndex: -1
     property bool isDesktopMode: true
+    
+    // Multi-subreddit properties
+    property bool isMultiSubredditMode: false
+    property var selectedSubreddits: []
+    property var subredditSources: ({}) // Maps meme IDs to their source subreddit
 
     // Category mapping for better user experience
     property var categoryMap: ({
@@ -119,6 +124,25 @@ ApplicationWindow {
             }
         }
         
+        onMultiSubredditMemesLoaded: {
+            console.log("Main: Multi-subreddit memes loaded, count:", memes.length);
+            root.subredditSources = subredditSources;
+            if (memes.length > 0) {
+                memeGrid.addMemes(memes);
+                memeGrid.isLoading = false;
+                appHeader.isLoading = false;
+                memeGrid.clearError();
+            } else {
+                memeGrid.setError("No memes found from selected subreddits");
+                appHeader.isLoading = false;
+            }
+        }
+        
+        onMultiSubredditProgress: {
+            console.log("Main: Multi-subreddit progress:", completed, "/", total);
+            // Could show progress in UI if needed
+        }
+        
         onError: {
             console.log("Main: Error loading memes:", message);
             memeGrid.setError(message);
@@ -141,17 +165,22 @@ ApplicationWindow {
         header: AppHeader {
             id: appHeader
             currentSubreddit: root.selectedSubreddit
+            isMultiSubredditMode: root.isMultiSubredditMode
+            currentSubreddits: root.selectedSubreddits
             
             onSubredditSelectionRequested: subredditDialog.open()
             onManageSubredditsRequested: manageDialog.open()
             onSettingsRequested: settingsDialog.open()
             onRefreshRequested: refreshMemes()
+            onMultiSubredditSelectionRequested: multiSubredditDialog.open()
         }
         
         // Meme grid view
         MemeGridView {
             id: memeGrid
             anchors.fill: parent
+            isMultiSubredditMode: root.isMultiSubredditMode
+            subredditSources: root.subredditSources
             
             onMemeClicked: {
                 console.log("Main: Opening fullscreen viewer for meme:", index);
@@ -214,6 +243,20 @@ ApplicationWindow {
             root.selectedSubreddit = subredditName;
             manageDialog.close();
             refreshMemes();
+        }
+    }
+
+    MultiSubredditDialog {
+        id: multiSubredditDialog
+        categoryNames: root.categoryNames
+        extendedCategoryMap: root.extendedCategoryMap
+        customSubreddits: root.customSubreddits
+        
+        onMultiSubredditSelected: {
+            console.log("Main: Multi-subreddit selected with:", subreddits.length, "subreddits");
+            root.selectedSubreddits = subreddits;
+            root.isMultiSubredditMode = true;
+            loadMultiSubredditMemes();
         }
     }
 
@@ -346,13 +389,27 @@ ApplicationWindow {
         memeGrid.clearError();
         memeGrid.isLoading = true;
         appHeader.isLoading = true;
+        root.isMultiSubredditMode = false;
         memeAPI.fetchMemes(root.selectedSubreddit);
     }
 
     function loadMoreMemes() {
         console.log("Main: Loading more memes");
         memeGrid.isLoading = true;
-        memeAPI.fetchMemes(root.selectedSubreddit); // MemeAPI handles pagination internally
+        if (root.isMultiSubredditMode) {
+            memeAPI.fetchMultipleSubreddits(root.selectedSubreddits);
+        } else {
+            memeAPI.fetchMemes(root.selectedSubreddit); // MemeAPI handles pagination internally
+        }
+    }
+    
+    function loadMultiSubredditMemes() {
+        console.log("Main: Loading multi-subreddit memes for:", root.selectedSubreddits);
+        memeGrid.clearMemes();
+        memeGrid.clearError();
+        memeGrid.isLoading = true;
+        appHeader.isLoading = true;
+        memeAPI.fetchMultipleSubreddits(root.selectedSubreddits);
     }
 
     function navigateToMeme(index) {

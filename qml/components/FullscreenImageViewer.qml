@@ -296,7 +296,7 @@ Dialog {
                 anchors.top: parent.top
                 anchors.right: parent.right
                 anchors.margins: units.gu(1)
-                width: units.gu(6)
+                width: units.gu(7)
                 height: units.gu(5)
                 z: 100
                 onClicked: {

@@ -199,6 +199,7 @@ ApplicationWindow {
         MemeGridView {
             id: memeGrid
             anchors.fill: parent
+            anchors.topMargin: appHeader.height
             isMultiSubredditMode: root.isMultiSubredditMode
             subredditSources: root.subredditSources
             bookmarkStatus: root.bookmarkStatus

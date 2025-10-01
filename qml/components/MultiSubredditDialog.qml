@@ -100,7 +100,7 @@ spacing: units.gu(5)
                     delegate: Rectangle {
                         width: subredditChip.width + units.gu(1)
                         height: units.gu(3)
-                        color: "#FF4500"
+                        color: "#3498db"
                         radius: height / 2
 
                         RowLayout {

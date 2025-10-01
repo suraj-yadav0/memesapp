@@ -42,10 +42,10 @@ Item {
     GridView {
         id: gridView
         anchors.fill: parent
-        anchors.margins: units.gu(1)
+        anchors.margins: units.gu(3)
         
         cellWidth: width / Math.floor(width / units.gu(20))
-        cellHeight: cellWidth * 1.2
+        cellHeight: cellWidth * 3
         
         model: MemeModel {
             id: memeModel

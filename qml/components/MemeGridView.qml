@@ -186,10 +186,10 @@ Item {
                     horizontalAlignment: Text.AlignHCenter
                 }
                 
-                Button {
+                CustomButton {
                     text: "Retry"
                     anchors.horizontalCenter: parent.horizontalCenter
-                    color: LomiriColors.orange
+                   // color: LomiriColors.orange
                     onClicked: {
                         memeGridView.errorMessage = "";
                         memeGridView.refreshRequested();

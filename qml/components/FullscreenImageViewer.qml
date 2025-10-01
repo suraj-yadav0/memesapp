@@ -247,7 +247,7 @@ Dialog {
                 spacing: units.gu(0.5)
                 z: 100
                 
-                Button {
+                CustomButton {
                     text: "🔍+"
                     width: units.gu(4)
                     height: units.gu(3)
@@ -261,7 +261,7 @@ Dialog {
                     }
                 }
                 
-                Button {
+                CustomButton {
                     text: "🔍-"
                     width: units.gu(4)
                     height: units.gu(3)
@@ -280,7 +280,7 @@ Dialog {
                     }
                 }
                 
-                Button {
+                CustomButton {
                     text: "1:1"
                     width: units.gu(4)
                     height: units.gu(3)
@@ -291,7 +291,7 @@ Dialog {
             }
 
             // Close button
-            Button {
+            CustomButton {
                 text: "\u2715"
                 anchors.top: parent.top
                 anchors.right: parent.right

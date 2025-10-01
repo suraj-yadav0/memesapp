@@ -33,704 +33,526 @@ ApplicationWindow {
     Rectangle {
         anchors.fill: parent
         color: theme.name === "Ubuntu.Components.Themes.SuruDark" ? "black" : theme.palette.normal.background
-        z: -1  // Ensure it stays behind other content
+        z: -1
     }
 
     // Application properties
     property bool darkMode: false
     property string selectedSubreddit: "memes"
     property bool useCustomSubreddit: false
-    // Fullscreen image viewer source
     property string dialogImageSource: ""
+    property int currentMemeIndex: -1
+    property bool isDesktopMode: true
+    
+    // Multi-subreddit properties
+    property bool isMultiSubredditMode: false
+    property var selectedSubreddits: []
+    property var subredditSources: ({}) // Maps meme IDs to their source subreddit
+    
+    // Bookmark properties
+    property var bookmarkedMemes: []
+    property var bookmarkStatus: ({}) // Maps meme IDs to bookmark status
 
     // Category mapping for better user experience
     property var categoryMap: ({
-            "General Memes": "memes",
-            "Dank Memes": "dankmemes",
-            "Wholesome Memes": "wholesomememes",
-            "Funny": "funny",
-            "Programming Humor": "ProgrammerHumor",
-            "Me IRL": "meirl",
-            "Star Wars Memes": "PrequelMemes",
-            "History Memes": "HistoryMemes",
-            "Gaming Memes": "gaming",
-            "Anime Memes": "AnimeMemes",
-            "Cursed Comments" : "cursedcomments",
-            "Surreal Memes": "surrealmemes",
-            "Memes of the Dank": "memesofthedank",
-            "Meme Economy": "MemeEconomy",
-            "2meirl4meirl": "2meirl4meirl",
-            "teenagers": "teenagers",
-            "Advice Animals": "AdviceAnimals",
-            "Prequel Memes": "PrequelMemes",
-            "Sequel Memes": "SequelMemes",
-            "OT Memes": "OTMemes",
-            "High Quality Memes": "HighQualityGifs",
-            "Low Effort Memes": "loweffortmemes",
-            "Political Memes": "PoliticalHumor",
-            "Animal Memes": "AnimalsBeingDerps",
-            "Cat Memes": "catmemes",
-            "Dog Memes": "dogmemes",
-            "Wholesome Animemes": "wholesomeanimemes",
-            "Meme Art": "MemeArt"
-        })
+        "General Memes": "memes",
+        "Dank Memes": "dankmemes",
+        "Wholesome Memes": "wholesomememes",
+        "Funny": "funny",
+        "Programming Humor": "ProgrammerHumor",
+        "Me IRL": "meirl",
+        "Star Wars Memes": "PrequelMemes",
+        "History Memes": "HistoryMemes",
+        "Gaming Memes": "gaming",
+        "Anime Memes": "AnimeMemes",
+        "Cursed Comments": "cursedcomments",
+        "Surreal Memes": "surrealmemes",
+        "Memes of the Dank": "memesofthedank",
+        "Meme Economy": "MemeEconomy",
+        "2meirl4meirl": "2meirl4meirl",
+        "teenagers": "teenagers",
+        "Advice Animals": "AdviceAnimals",
+        "Prequel Memes": "PrequelMemes",
+        "Sequel Memes": "SequelMemes",
+        "OT Memes": "OTMemes",
+        "High Quality Memes": "HighQualityGifs",
+        "Low Effort Memes": "loweffortmemes",
+        "Political Memes": "PoliticalHumor",
+        "Animal Memes": "AnimalsBeingDerps",
+        "Cat Memes": "catmemes",
+        "Dog Memes": "dogmemes",
+        "Wholesome Animemes": "wholesomeanimemes",
+        "Meme Art": "MemeArt"
+    })
 
-    // Array of category names for the OptionSelector
     property var categoryNames: ["General Memes", "Dank Memes", "Wholesome Memes", "Funny", "Programming Humor", "Me IRL", "Star Wars Memes", "History Memes", "Gaming Memes", "Anime Memes", "Cursed Comments", "Surreal Memes", "Memes of the Dank", "Meme Economy", "2meirl4meirl", "teenagers", "Advice Animals", "Prequel Memes", "Sequel Memes", "OT Memes", "High Quality Memes", "Low Effort Memes", "Political Memes", "Animal Memes", "Cat Memes", "Dog Memes", "Wholesome Animemes", "Meme Art"]
+    
+    property var extendedCategoryMap: categoryMap
+    property var customSubreddits: []
 
-    // Model
-    MemeModel {
-        id: memeModel
-
-        onModelUpdated: {
-            console.log("Main: Model updated with", count, "memes");
+    // Database Manager
+    DatabaseManager {
+        id: databaseManager
+        
+        onCustomSubredditsLoaded: {
+            console.log("Main: Custom subreddits loaded:", subreddits.length);
+            root.customSubreddits = subreddits;
+            updateCategoryLists();
         }
-
-        onModelCleared: {
-            console.log("Main: Model cleared");
+        
+        onSubredditAdded: {
+            console.log("Main: Subreddit added to database:", displayName);
+            updateCategoryLists();
         }
-    }
-
-    // Service
-    MemeService {
-        id: memeService
-
-        Component.onCompleted: {
-            console.log("Main: Setting model for service");
-            setModel(memeModel);
+        
+        onSubredditRemoved: {
+            console.log("Main: Subreddit removed from database:", displayName);
+            updateCategoryLists();
         }
-
-        onMemesRefreshed: {
-            console.log("Main: Memes refreshed, count:", count);
+        
+        onMemeBookmarked: {
+            console.log("Main: Meme bookmarked:", title);
+            updateBookmarkStatus(memeId, true);
         }
-
-        onLoadingChanged: {
-            console.log("Main: Loading state changed:", loading);
-        }
-
-        onErrorOccurred: {
-            console.log("Main: Service error:", message);
-        }
-
-        onSubredditChanged: {
-            console.log("Main: Subreddit changed to:", subreddit);
-            root.selectedSubreddit = subreddit;
+        
+        onMemeUnbookmarked: {
+            console.log("Main: Meme unbookmarked:", memeId);
+            updateBookmarkStatus(memeId, false);
         }
     }
 
-    // Download Manager
-    QtObject {
-        id: downloadManager
-
-        function downloadMeme(imageUrl, title) {
-            console.log("DownloadManager: Starting download for:", imageUrl);
-            try {
-                Qt.openUrlExternally(imageUrl);
-                console.log("DownloadManager: Opened image URL externally:", imageUrl);
-            } catch (e) {
-                console.log("DownloadManager: Failed to open URL externally:", e);
+    // MemeAPI service
+    MemeAPI {
+        id: memeAPI
+        
+        onMemesLoaded: {
+            console.log("Main: Memes loaded, count:", memes.length);
+            if (memes.length > 0) {
+                memeGrid.addMemes(memes);
+                memeGrid.isLoading = false;
+                appHeader.isLoading = false;
+                memeGrid.clearError();
+                refreshBookmarkStatus(); // Update bookmark status for new memes
+            } else {
+                memeGrid.setError("No memes found for this subreddit");
+                appHeader.isLoading = false;
             }
         }
-
-        function shareMeme(url, title) {
-            console.log("DownloadManager: Sharing meme:", title, "URL:", url);
-            try {
-                Qt.openUrlExternally(url);
-                console.log("DownloadManager: Opened share URL externally:", url);
-            } catch (e) {
-                console.log("DownloadManager: Failed to open share URL externally:", e);
+        
+        onMultiSubredditMemesLoaded: {
+            console.log("Main: Multi-subreddit memes loaded, count:", memes.length);
+            root.subredditSources = subredditSources;
+            if (memes.length > 0) {
+                memeGrid.addMemes(memes);
+                memeGrid.isLoading = false;
+                appHeader.isLoading = false;
+                memeGrid.clearError();
+                refreshBookmarkStatus(); // Update bookmark status for new memes
+            } else {
+                memeGrid.setError("No memes found from selected subreddits");
+                appHeader.isLoading = false;
             }
         }
-    }
-
-    StackView {
-        id: stackView
-        anchors.fill: parent
-        initialItem: mainPageComponent
-    }
-
-    Component {
-        id: mainPageComponent
-
-        Page {
-            title: "MemeStream"
-            Rectangle {
-                anchors.fill: parent
-                color: theme.name === "Ubuntu.Components.Themes.SuruDark" ? "black" : theme.palette.normal.background
-                z: -1  // Ensure it stays behind other content
-            }
-
-            header: PageHeader {
-                title: i18n.tr("M E M E S T R E A M")
-                subtitle: i18n.tr("r/" + root.selectedSubreddit)
-                StyleHints {
-                    backgroundColor: theme.name === "Ubuntu.Components.Themes.SuruDark" ? "black" : "#081831"
-                    foregroundColor: theme.name === "Ubuntu.Components.Themes.SuruDark" ? "#9b4f22" : "white"
-                }
-
-                trailingActionBar.actions: [
-                    Action {
-                        iconName: "settings"
-                        text: i18n.tr("Select Subreddit")
-                        onTriggered: {
-                            subredditSelectionDialog.open();
-                        }
-                    },
-                    Action {
-                        iconName: theme.name === "Ubuntu.Components.Themes.SuruDark" ? "weather-clear-night-symbolic" : "weather-clear-symbolic"
-                        text: theme.name === "Ubuntu.Components.Themes.SuruDark" ? i18n.tr("Light Mode") : i18n.tr("Dark Mode")
-                        onTriggered: {
-                            Theme.name = theme.name === "Ubuntu.Components.Themes.SuruDark" ? "Ubuntu.Components.Themes.Ambiance" : "Ubuntu.Components.Themes.SuruDark";
-                        }
-                    }
-                ]
-            }
-
-            ColumnLayout {
-
-                anchors.fill: parent
-                anchors.margins: units.gu(2)
-                anchors.topMargin: units.gu(4)
-                spacing: units.gu(1.5)
-
-                // Loading indicator
-                BusyIndicator {
-                    visible: memeService.isLoading
-                    running: memeService.isLoading
-                    Layout.alignment: Qt.AlignHCenter
-                }
-
-                // Current subreddit info
-                Text {
-                    text: "r/" + root.selectedSubreddit
-                    font.bold: true
-                    horizontalAlignment: Text.AlignHCenter
-                    color: theme.palette.normal.backgroundText
-                    visible: !memeService.isLoading && !memeService.isModelEmpty()
-                    Layout.alignment: Qt.AlignHCenter
-                }
-
-                // Meme list
-                ListView {
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    model: memeModel
-                    visible: !memeService.isLoading
-                    clip: true
-                    spacing: units.gu(1.5)
-                    delegate: Rectangle {
-                        width: ListView.view ? ListView.view.width : units.gu(37.5)
-                        height: delegateColumn.height + 20
-                        color: theme.palette.normal.background
-                        border.color: theme.palette.normal.base
-                        border.width: 1
-                        radius: 8
-
-                        Column {
-                            id: delegateColumn
-                            anchors.left: parent.left
-                            anchors.right: parent.right
-                            anchors.top: parent.top
-                            anchors.margins: 10
-                            spacing: 5
-
-                            Text {
-                                text: model.title || "Untitled"
-                                font.bold: true
-                                wrapMode: Text.WordWrap
-                                width: parent.width
-                                color: theme.palette.normal.backgroundText
-                            }
-
-                            Image {
-                                source: model.image || ""
-                                width: Math.min(parent.width, 350)
-                                height: Math.min(width * 0.8, 250)
-                                fillMode: Image.PreserveAspectFit
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                visible: source != ""
-
-                                onStatusChanged: {
-                                    if (status === Image.Error) {
-                                        console.log("Failed to load image:", model.image);
-                                        visible = false;
-                                    }
-                                }
-
-                                // Open fullscreen viewer when clicked
-                                MouseArea {
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    onClicked: {
-                                        if (model.image) {
-                                            root.dialogImageSource = model.image;
-                                            attachmentDialog.open();
-                                        }
-                                    }
-                                    cursorShape: Qt.PointingHandCursor
-                                }
-                            }
-
-                            Row {
-                                spacing: units.gu(2.5)
-
-                                Text {
-                                    text: "👍 " + (model.upvotes || 0)
-                                    color: theme.palette.normal.backgroundText
-                                }
-
-                                Text {
-                                    text: "💬 " + (model.comments || 0)
-                                    color: theme.palette.normal.backgroundText
-                                }
-
-                                Text {
-                                    text: "r/" + (model.subreddit || "")
-                                    color: theme.palette.normal.backgroundText
-                                }
-
-                                Text {
-                                    text: "📤"
-                                    font.pixelSize: units.gu(1.5)
-                                    color: theme.palette.normal.backgroundText
-
-                                    MouseArea {
-                                        anchors.fill: parent
-                                        onClicked: {
-                                            downloadManager.shareMeme(model.permalink || model.image, model.title);
-                                        }
-                                        cursorShape: Qt.PointingHandCursor
-                                    }
-                                }
-
-                                Text {
-                                    text: "💾"
-                                    font.pixelSize: units.gu(1.5)
-                                    color: theme.palette.normal.backgroundText
-
-                                    MouseArea {
-                                        anchors.fill: parent
-                                        onClicked: {
-                                            downloadManager.downloadMeme(model.image, model.title);
-                                        }
-                                        cursorShape: Qt.PointingHandCursor
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // Empty state
-                Column {
-                    Layout.alignment: Qt.AlignCenter
-                    visible: memeService.isModelEmpty() && !memeService.isLoading
-                    spacing: units.gu(1.5)
-                    Text {
-                        text: "No memes found"
-                        font.pixelSize: units.gu(2)
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        color: theme.palette.normal.backgroundText
-                    }
-
-                    Text {
-                        text: root.useCustomSubreddit ? "Try a different subreddit or check the spelling" : "Try selecting a different category or refresh"
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        color: theme.palette.normal.backgroundSecondaryText
-                    }
-
-                    Button {
-                        text: "Refresh"
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        onClicked: memeService.refreshMemes()
-                    }
-                }
-
-                // Error state
-                Column {
-                    Layout.alignment: Qt.AlignCenter
-                    visible: memeService.lastError !== "" && !memeService.isLoading
-                    spacing: units.gu(1.5)
-                    Text {
-                        text: "Error loading memes"
-                        font.pixelSize: units.gu(2)
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        color: theme.palette.normal.negative
-                    }
-
-                    Text {
-                        text: memeService.lastError
-                        font.pixelSize: units.gu(1.5)
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        color: theme.palette.normal.backgroundSecondaryText
-                        wrapMode: Text.WordWrap
-                        width: units.gu(40)
-                        horizontalAlignment: Text.AlignHCenter
-                    }
-
-                    Button {
-                        text: "Try Again"
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        onClicked: memeService.refreshMemes()
-                    }
-                }
-            }
+        
+        onMultiSubredditProgress: {
+            console.log("Main: Multi-subreddit progress:", completed, "/", total);
+            // Could show progress in UI if needed
+        }
+        
+        onError: {
+            console.log("Main: Error loading memes:", message);
+            memeGrid.setError(message);
+            appHeader.isLoading = false;
         }
     }
 
     // Settings persistence
     Settings {
         id: settings
-        property alias darkMode: root.darkMode
         property alias selectedSubreddit: root.selectedSubreddit
-        property alias useCustomSubreddit: root.useCustomSubreddit
+        property alias darkMode: root.darkMode
     }
 
-    // Subreddit Selection Dialog
-    Dialog {
-        id: subredditSelectionDialog
-       // title: "Select Subreddit"
-        modal: true
-        focus: true
-        standardButtons: Dialog.Ok | Dialog.Cancel
+    // Main layout
+    Page {
+        anchors.fill: parent
+        
+        // Application header
+        header: AppHeader {
+            id: appHeader
+            currentSubreddit: root.selectedSubreddit
+            isMultiSubredditMode: root.isMultiSubredditMode
+            currentSubreddits: root.selectedSubreddits
+            
+            onSubredditSelectionRequested: subredditDialog.open()
+            onManageSubredditsRequested: manageDialog.open()
+            onSettingsRequested: settingsDialog.open()
+            onRefreshRequested: refreshMemes()
+            onMultiSubredditSelectionRequested: multiSubredditDialog.open()
+            onBookmarksRequested: {
+                loadBookmarks();
+                bookmarksDialog.open();
+            }
+        }
+        
+        // Meme grid view
+        MemeGridView {
+            id: memeGrid
+            anchors.fill: parent
+            isMultiSubredditMode: root.isMultiSubredditMode
+            subredditSources: root.subredditSources
+            bookmarkStatus: root.bookmarkStatus
+            
+            onMemeClicked: {
+                console.log("Main: Opening fullscreen viewer for meme:", index);
+                root.currentMemeIndex = index;
+                root.dialogImageSource = imageUrl;
+                fullscreenViewer.imageSource = imageUrl;
+                fullscreenViewer.currentIndex = index;
+                fullscreenViewer.totalCount = memeGrid.count;
+                fullscreenViewer.open();
+            }
+            
+            onBookmarkToggled: {
+                console.log("Main: Bookmark toggled for meme:", meme.title, "bookmark:", bookmark);
+                if (bookmark) {
+                    if (databaseManager.bookmarkMeme(meme)) {
+                        updateBookmarkStatus(meme.id, true);
+                    }
+                } else {
+                    if (databaseManager.unbookmarkMeme(meme.id)) {
+                        updateBookmarkStatus(meme.id, false);
+                    }
+                }
+            }
+            
+            onLoadMore: {
+                if (!isLoading && !appHeader.isLoading) {
+                    console.log("Main: Loading more memes");
+                    loadMoreMemes();
+                }
+            }
+            
+            onRefreshRequested: {
+                console.log("Main: Pull to refresh triggered");
+                refreshMemes();
+            }
+        }
+    }
 
-        width: Math.min(root.width * 0.9, units.gu(50))
+    // Dialogs
+    SubredditSelectionDialog {
+        id: subredditDialog
+        categoryNames: root.categoryNames
+        extendedCategoryMap: root.extendedCategoryMap
+        
+        onSubredditSelected: {
+            console.log("Main: Subreddit selected:", subreddit);
+            root.selectedSubreddit = subreddit;
+            refreshMemes();
+        }
+        
+        onAddToCollection: {
+            console.log("Main: Adding custom subreddit to collection:", subredditName);
+            databaseManager.addCustomSubreddit(subredditName, subredditName, false);
+        }
+    }
+
+    ManageSubredditsDialog {
+        id: manageDialog
+        customSubreddits: root.customSubreddits
+        
+        onRemoveSubreddit: {
+            console.log("Main: Removing subreddit:", subredditName);
+            databaseManager.removeCustomSubreddit(subredditName);
+        }
+        
+        onToggleFavorite: {
+            console.log("Main: Toggling favorite for:", subredditName);
+            databaseManager.toggleFavorite(subredditName, true); // Need to determine isFavorite value
+        }
+        
+        onUseSubreddit: {
+            console.log("Main: Using subreddit:", subredditName);
+            root.selectedSubreddit = subredditName;
+            manageDialog.close();
+            refreshMemes();
+        }
+    }
+
+    MultiSubredditDialog {
+        id: multiSubredditDialog
+        categoryNames: root.categoryNames
+        extendedCategoryMap: root.extendedCategoryMap
+        customSubreddits: root.customSubreddits
+        
+        onMultiSubredditSelected: {
+            console.log("Main: Multi-subreddit selected with:", subreddits.length, "subreddits");
+            root.selectedSubreddits = subreddits;
+            root.isMultiSubredditMode = true;
+            loadMultiSubredditMemes();
+        }
+    }
+
+    BookmarksDialog {
+        id: bookmarksDialog
+        darkMode: root.darkMode
+        
+        onMemeSelected: {
+            console.log("Main: Opening meme from bookmarks:", meme.title);
+            root.dialogImageSource = meme.image;
+            fullscreenViewer.imageSource = meme.image;
+            fullscreenViewer.currentIndex = 0;
+            fullscreenViewer.totalCount = 1;
+            fullscreenViewer.open();
+        }
+        
+        onRemoveBookmark: {
+            console.log("Main: Removing bookmark for meme ID:", memeId);
+            databaseManager.unbookmarkMeme(memeId);
+            loadBookmarks();
+        }
+        
+        onClearAllBookmarks: {
+            console.log("Main: Clearing all bookmarks");
+            databaseManager.clearAllBookmarks();
+            loadBookmarks();
+        }
+    }
+
+    FullscreenImageViewer {
+        id: fullscreenViewer
+        
+        onNavigateNext: {
+            var nextIndex = root.currentMemeIndex + 1;
+            if (nextIndex < memeGrid.count) {
+                navigateToMeme(nextIndex);
+            }
+        }
+        
+        onNavigatePrevious: {
+            var prevIndex = root.currentMemeIndex - 1;
+            if (prevIndex >= 0) {
+                navigateToMeme(prevIndex);
+            }
+        }
+        
+        onClosed: {
+            root.currentMemeIndex = -1;
+            root.dialogImageSource = "";
+        }
+    }
+
+    // Settings dialog
+    Dialog {
+        id: settingsDialog
         x: (root.width - width) / 2
         y: (root.height - height) / 2
-
-        background: Rectangle {
-            color: theme.palette.normal.background
-          //  border.color: theme.palette.normal.base
-          //  border.width: 1
-            radius: units.gu(1)
-        }
+        width: Math.min(root.width * 0.9, units.gu(40))
+        height: Math.min(root.height * 0.8, units.gu(50))
+        modal: true
+        focus: true
+        title: "Settings"
 
         ColumnLayout {
             anchors.fill: parent
             spacing: units.gu(2)
 
-            // Mode selector (Category vs Custom)
-            GroupBox {
-                title: "Selection Mode"
+            Label {
+                text: "Application Settings"
+                font.weight: Font.Medium
                 Layout.fillWidth: true
-                anchors.margins: units.gu(1)
-
-                background: Rectangle {
-                    color: theme.palette.normal.background
-                    // border.color: theme.palette.normal.baseBorder
-                    // border.width: units.gu(0.1)
-                    radius: units.gu(.5)
-                }
-
-                label: Text {
-                    text: "Selection Mode"
-                    color: theme.palette.normal.backgroundText
-                    anchors.margins: units.gu(1)
-                    font.bold: true
-                }
-
-                Column {
-                    anchors.fill: parent
-                    spacing: units.gu(1)
-
-                    RadioButton {
-                        id: dialogCategoryModeRadio
-                        text: "Predefined Categories"
-                        checked: !root.useCustomSubreddit
-
-                        contentItem: Text {
-                            text: dialogCategoryModeRadio.text
-                            color: theme.palette.normal.backgroundText
-                            leftPadding: dialogCategoryModeRadio.indicator.width + dialogCategoryModeRadio.spacing
-                        }
-                    }
-
-                    RadioButton {
-                        id: dialogCustomModeRadio
-                        text: "Custom Subreddit"
-                        checked: root.useCustomSubreddit
-
-                        contentItem: Text {
-                            text: dialogCustomModeRadio.text
-                            color: theme.palette.normal.backgroundText
-                            leftPadding: dialogCustomModeRadio.indicator.width + dialogCustomModeRadio.spacing
-                        }
-                    }
-                }
             }
 
-            // Category Selector (shown when category mode is selected)
-            GroupBox {
-                title: "Choose Category"
+            Rectangle {
                 Layout.fillWidth: true
-                visible: dialogCategoryModeRadio.checked
-
-                background: Rectangle {
-                    color: theme.palette.normal.background
-                    // border.color: theme.palette.normal.baseBorder
-                    // border.width: 1
-                    radius: 4
-                }
-
-                label: Text {
-                    text: "Choose Category"
-                    color: theme.palette.normal.backgroundText
-                    font.bold: true
-                }
-
-                ColumnLayout {
-                    anchors.fill: parent
-                    spacing: units.gu(1)
-
-                    Text {
-                        text: "Select a meme category:"
-                        Layout.fillWidth: true
-                        color: theme.palette.normal.backgroundText
-                    }
-
-                    ComboBox {
-                        id: dialogCategoryCombo
-                        model: root.categoryNames
-                        Layout.fillWidth: true
-
-                        background: Rectangle {
-                             color: theme.palette.normal.background
-                            border.color: theme.palette.normal.base
-                            border.width: 1
-                            radius: 4
-                        }
-
-                        contentItem: Text {
-                            text: dialogCategoryCombo.displayText
-                            color: theme.palette.normal.fieldText
-                            leftPadding: units.gu(1)
-                            rightPadding: units.gu(3)
-                            verticalAlignment: Text.AlignVCenter
-                        }
-
-                        Component.onCompleted: {
-                            // Set initial selection based on current subreddit
-                            if (!root.useCustomSubreddit) {
-                                for (var i = 0; i < root.categoryNames.length; i++) {
-                                    if (root.categoryMap[root.categoryNames[i]] === root.selectedSubreddit) {
-                                        currentIndex = i;
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+                height: units.dp(1)
+                color: theme.palette.normal.base
             }
 
-            // Custom subreddit input (shown when custom mode is selected)
-            GroupBox {
-                title: "Enter Custom Subreddit"
+            RowLayout {
                 Layout.fillWidth: true
-                visible: dialogCustomModeRadio.checked
-
-                background: Rectangle {
-                    color: theme.palette.normal.background
-                    // border.color: theme.palette.normal.baseBorder
-                    // border.width: 1
-                    radius: 4
+                Label {
+                    text: "Dark Mode"
+                    Layout.fillWidth: true
                 }
-
-                label: Text {
-                    text: "Enter Custom Subreddit"
-                    color: theme.palette.normal.backgroundText
-                    font.bold: true
-                }
-
-                ColumnLayout {
-                    anchors.fill: parent
-                    spacing: units.gu(1)
-
-                    Text {
-                        text: "Enter the name of any subreddit:"
-                        Layout.fillWidth: true
-                        color: theme.palette.normal.backgroundText
-                    }
-
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: units.gu(1)
-
-                        Text {
-                            text: "r/"
-                            font.bold: true
-                            color: theme.palette.normal.backgroundText
-                        }
-
-                        TextField {
-                            id: dialogCustomSubredditField
-                            Layout.fillWidth: true
-                            placeholderText: "e.g., memes, funny, programming"
-                            text: root.useCustomSubreddit ? root.selectedSubreddit : ""
-
-                            Rectangle {
-                                 color: theme.palette.normal.background
-                                border.color: theme.palette.normal.base
-                                border.width: 1
-                                radius: 4
-                            }
-
-                            color: theme.palette.normal.fieldText
-
-                            onTextChanged: {
-                                // Remove 'r/' prefix if user types it
-                                if (text.toLowerCase().startsWith("r/")) {
-                                    text = text.substring(2);
-                                }
-                                // Remove any invalid characters for subreddit names
-                                var cleanText = text.replace(/[^a-zA-Z0-9_]/g, '');
-                                if (cleanText !== text) {
-                                    text = cleanText;
-                                }
-                            }
-
-                            Keys.onReturnPressed: subredditSelectionDialog.accept()
-                            Keys.onEnterPressed: subredditSelectionDialog.accept()
-                        }
-                    }
-
-                    Text {
-                        text: "Note: Make sure the subreddit exists and contains images"
-                        font.pixelSize: units.gu(1.2)
-                        color: theme.palette.normal.backgroundSecondaryText
-                        Layout.fillWidth: true
-                        wrapMode: Text.WordWrap
+                CheckBox {
+                    checked: root.darkMode
+                    onClicked: {
+                        root.darkMode = checked;
+                        theme.name = root.darkMode ? "Ubuntu.Components.Themes.SuruDark" : "Ubuntu.Components.Themes.Ambiance";
                     }
                 }
             }
-        }
 
-        onAccepted: {
-            var newSubreddit = "";
-            var newUseCustom = dialogCustomModeRadio.checked;
-
-            if (newUseCustom) {
-                // Custom subreddit mode
-                var customText = dialogCustomSubredditField.text.trim().toLowerCase();
-                if (customText !== "") {
-                    newSubreddit = customText;
-                } else {
-                    // Invalid input, don't close dialog
-                    return;
-                }
-            } else {
-                // Category mode
-                if (dialogCategoryCombo.currentIndex >= 0 && dialogCategoryCombo.currentText) {
-                    var categoryName = dialogCategoryCombo.currentText;
-                    newSubreddit = root.categoryMap[categoryName];
-                }
+            Label {
+                text: "Current Subreddit: r/" + root.selectedSubreddit
+                Layout.fillWidth: true
+                wrapMode: Text.WordWrap
             }
 
-            if (newSubreddit && (newSubreddit !== root.selectedSubreddit || newUseCustom !== root.useCustomSubreddit)) {
-                console.log("Dialog: Applying new subreddit:", newSubreddit, "Custom:", newUseCustom);
-                root.useCustomSubreddit = newUseCustom;
-                root.selectedSubreddit = newSubreddit;
-                memeService.fetchMemes(newSubreddit);
-            }
-        }
-
-        onOpened: {
-            // Reset dialog state when opened
-            dialogCategoryModeRadio.checked = !root.useCustomSubreddit;
-            dialogCustomModeRadio.checked = root.useCustomSubreddit;
-
-            if (root.useCustomSubreddit) {
-                dialogCustomSubredditField.text = root.selectedSubreddit;
-                dialogCustomSubredditField.forceActiveFocus();
-            } else {
-                // Update category combo to match current subreddit
-                for (var i = 0; i < root.categoryNames.length; i++) {
-                    if (root.categoryMap[root.categoryNames[i]] === root.selectedSubreddit) {
-                        dialogCategoryCombo.currentIndex = i;
-                        break;
-                    }
-                }
-            }
-        }
-    }
-
-    // Fullscreen image viewer dialog
-    Dialog {
-        id: attachmentDialog
-        modal: true
-        focus: true
-        padding: 0
-        // Make it fullscreen
-        x: 0
-        y: 0
-        width: root.width
-        height: root.height
-        background: Rectangle {
-            color: "transparent"
-        }
-
-        Rectangle {
-            anchors.fill: parent
-            color: "#000000CC" // slightly darker overlay
-
-            Image {
-                id: fullImage
-                anchors.centerIn: parent
-                width: parent.width * 0.94
-                height: parent.height * 0.94
-                fillMode: Image.PreserveAspectFit
-                source: root.dialogImageSource
-                cache: true
-                smooth: true
+            Label {
+                text: "Total Memes Loaded: " + memeGrid.count
+                Layout.fillWidth: true
             }
 
-            // Consume clicks on the image so outer area can differentiate
-            MouseArea {
-                anchors.fill: fullImage
-                onClicked: /* no-op to prevent propagation so image click doesn't close */ {}
-                acceptedButtons: Qt.AllButtons
+            Item {
+                Layout.fillHeight: true
             }
 
-            // Close button
             Button {
-                text: "\u2715" // X
-                anchors.top: parent.top
-                anchors.right: parent.right
-                anchors.margins: units.gu(1)
-                width: units.gu(4)
-                height: units.gu(4)
-                onClicked: attachmentDialog.close()
-            }
-
-            // Click outside image also closes
-            MouseArea {
-                anchors.fill: parent
-                onClicked: attachmentDialog.close()
-                hoverEnabled: true
-                propagateComposedEvents: true
+                text: "Close"
+                Layout.alignment: Qt.AlignCenter
+                onClicked: settingsDialog.close()
             }
         }
-
-        Keys.onEscapePressed: attachmentDialog.close()
-        onClosed: root.dialogImageSource = ""
     }
 
-    function handleSelectedSubredditChanged(subreddit) {
-        console.log("Main: Selected subreddit changed to:", subreddit);
-        root.selectedSubreddit = subreddit;
-        memeService.fetchMemes(subreddit);
+    // Functions
+    function updateCategoryLists() {
+        console.log("Main: Updating category lists with custom subreddits:", root.customSubreddits.length);
+        
+        // Create extended category map
+        var extended = {};
+        
+        // Add default categories
+        for (var key in root.categoryMap) {
+            extended[key] = root.categoryMap[key];
+        }
+        
+        // Add custom subreddits
+        var names = root.categoryNames.slice(); // Copy default names
+        
+        if (root.customSubreddits.length > 0) {
+            names.push("--- Custom Subreddits ---");
+            
+            for (var i = 0; i < root.customSubreddits.length; i++) {
+                var custom = root.customSubreddits[i];
+                var displayName = custom.displayName;
+                if (custom.isFavorite) {
+                    displayName = "⭐ " + displayName;
+                }
+                names.push(displayName);
+                extended[displayName] = custom.subredditName;
+            }
+        }
+        
+        root.extendedCategoryMap = extended;
+        root.categoryNames = names;
+        
+        console.log("Main: Category lists updated, total categories:", names.length);
     }
 
-    // Initialization
+    function refreshMemes() {
+        console.log("Main: Refreshing memes for subreddit:", root.selectedSubreddit);
+        memeGrid.clearMemes();
+        memeGrid.clearError();
+        memeGrid.isLoading = true;
+        appHeader.isLoading = true;
+        root.isMultiSubredditMode = false;
+        memeAPI.fetchMemes(root.selectedSubreddit);
+    }
+
+    function loadMoreMemes() {
+        console.log("Main: Loading more memes");
+        memeGrid.isLoading = true;
+        if (root.isMultiSubredditMode) {
+            memeAPI.fetchMultipleSubreddits(root.selectedSubreddits);
+        } else {
+            memeAPI.fetchMemes(root.selectedSubreddit); // MemeAPI handles pagination internally
+        }
+    }
+    
+    function loadMultiSubredditMemes() {
+        console.log("Main: Loading multi-subreddit memes for:", root.selectedSubreddits);
+        memeGrid.clearMemes();
+        memeGrid.clearError();
+        memeGrid.isLoading = true;
+        appHeader.isLoading = true;
+        memeAPI.fetchMultipleSubreddits(root.selectedSubreddits);
+    }
+
+    function navigateToMeme(index) {
+        console.log("Main: Navigating to meme at index:", index);
+        if (index >= 0 && index < memeGrid.count) {
+            root.currentMemeIndex = index;
+            var meme = memeGrid.getMemeAt(index);
+            if (meme && meme.image) {
+                root.dialogImageSource = meme.image;
+                fullscreenViewer.imageSource = meme.image;
+                fullscreenViewer.currentIndex = index;
+                fullscreenViewer.totalCount = memeGrid.count;
+                
+                console.log("Main: Updated fullscreen viewer with image:", meme.image);
+                
+                // Increment usage count for database tracking
+                databaseManager.incrementUsageCount(root.selectedSubreddit);
+            } else {
+                console.log("Main: Invalid meme data at index:", index, meme);
+            }
+        }
+    }
+    
+    // ===== BOOKMARK MANAGEMENT FUNCTIONS =====
+    
+    function loadBookmarks() {
+        console.log("Main: Loading bookmarks");
+        var bookmarks = databaseManager.getBookmarks();
+        root.bookmarkedMemes = bookmarks;
+        bookmarksDialog.loadBookmarks(bookmarks);
+        
+        // Update bookmark status for currently loaded memes
+        refreshBookmarkStatus();
+        console.log("Main: Loaded", bookmarks.length, "bookmarks");
+    }
+    
+    function refreshBookmarkStatus() {
+        console.log("Main: Refreshing bookmark status");
+        var newStatus = {};
+        
+        // Check all currently loaded memes
+        for (var i = 0; i < memeGrid.count; i++) {
+            var meme = memeGrid.getMemeAt(i);
+            if (meme && meme.id) {
+                newStatus[meme.id] = databaseManager.isBookmarked(meme.id);
+            }
+        }
+        
+        root.bookmarkStatus = newStatus;
+        console.log("Main: Updated bookmark status for", Object.keys(newStatus).length, "memes");
+    }
+    
+    function updateBookmarkStatus(memeId, isBookmarked) {
+        console.log("Main: Updating bookmark status for meme:", memeId, "to:", isBookmarked);
+        var newStatus = {};
+        // Copy existing status
+        for (var key in root.bookmarkStatus) {
+            newStatus[key] = root.bookmarkStatus[key];
+        }
+        // Update the specific meme
+        newStatus[memeId] = isBookmarked;
+        root.bookmarkStatus = newStatus;
+    }
+    
+    // Note: bookmarkStatusChanged signal is automatically generated by QML for the bookmarkStatus property
+
+    // Component initialization
     Component.onCompleted: {
-        console.log("Main: App starting up");
-        console.log("Main: Selected subreddit:", root.selectedSubreddit);
-        console.log("Main: Dark mode:", root.darkMode);
-        console.log("Main: Use custom subreddit:", root.useCustomSubreddit);
-
-        // Delay initial fetch to ensure service is ready
-        Qt.callLater(function () {
-            memeService.fetchMemes(root.selectedSubreddit);
-        });
+        console.log("Main: Application started");
+        
+        // Apply saved theme
+        theme.name = root.darkMode ? "Ubuntu.Components.Themes.SuruDark" : "Ubuntu.Components.Themes.Ambiance";
+        
+        // Initialize database and load custom subreddits
+        databaseManager.initializeDatabase();
+        databaseManager.loadCustomSubreddits();
+        
+        // Load bookmarks
+        loadBookmarks();
+        
+        // Load initial memes
+        refreshMemes();
+        
+        console.log("Main: Initial setup complete");
     }
 }

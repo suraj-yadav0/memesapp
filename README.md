@@ -19,10 +19,13 @@ A fun and intuitive memes app for Ubuntu Touch that brings the best of Reddit's 
 
 ### 🔧 **Smart Interface**
 - **Dark/Light Mode** - Adaptive theming for comfortable viewing
-- **Custom Subreddit Support** - Explore any meme subreddit
-- **Fullscreen Image Viewer** - Immersive meme viewing experience
-- **Share & Download** - Easy sharing and external access to memes
-- **Responsive Design** - Optimized for mobile screens
+- **Custom Subreddit Support** - Explore and save any meme subreddit
+- **Fullscreen Image Viewer** - Immersive viewing with zoom and swipe navigation
+- **Touch Gestures** - Swipe left/right to navigate between memes
+- **Zoom Functionality** - Pinch to zoom, mouse wheel, and zoom controls
+- **Local Database** - Save custom subreddits with favorites and usage tracking
+- **Pull-to-Refresh** - Easy content updates with gesture support
+- **Responsive Design** - Optimized for mobile and desktop screens
 
 ### 📱 **Ubuntu Touch Integration**
 - Native Lomiri UI components
@@ -65,30 +68,36 @@ A fun and intuitive memes app for Ubuntu Touch that brings the best of Reddit's 
 ```
 memesapp/
 ├── qml/
-│   ├── Main.qml                 # Main application window
-│   ├── components/              # Reusable UI components
-│   │   ├── CategorySelector.qml # Subreddit category picker
-│   │   ├── MemeDelegate.qml     # Individual meme display
-│   │   └── OptionSelector.qml   # Generic option selector
-│   ├── models/                  # Data models
-│   │   ├── MemeModel.qml        # Meme data structure
-│   │   └── MemeAPI.qml          # Reddit API interface
-│   └── services/                # Business logic
-│       └── MemeService.qml      # Meme fetching service
-├── assets/                      # Static resources
-├── po/                          # Internationalization files
-├── CMakeLists.txt              # Build configuration
-├── clickable.yaml              # Clickable configuration
-└── manifest.json               # App metadata
+│   ├── Main.qml                          # Main application (391 lines, refactored!)
+│   ├── components/                       # Modular UI components
+│   │   ├── AppHeader.qml                # Application header with actions
+│   │   ├── FullscreenImageViewer.qml    # Image viewer with zoom/swipe
+│   │   ├── ManageSubredditsDialog.qml   # Custom subreddit management
+│   │   ├── MemeDelegate.qml             # Individual meme display
+│   │   ├── MemeGridView.qml             # Grid layout with pull-to-refresh
+│   │   └── SubredditSelectionDialog.qml # Subreddit selection interface
+│   ├── models/                          # Data layer
+│   │   ├── MemeModel.qml                # Meme data structure
+│   │   └── MemeAPI.qml                  # Reddit API interface
+│   └── services/                        # Service layer
+│       └── DatabaseManager.qml          # SQLite database operations
+├── assets/                              # Static resources
+├── po/                                  # Internationalization files
+├── CMakeLists.txt                      # Build configuration
+├── clickable.yaml                      # Clickable configuration
+└── manifest.json                       # App metadata
 ```
 
 ### Key Components
 
-- **MemeService**: Handles Reddit API communication and data processing
-- **MemeModel**: Manages meme data and state
-- **CategorySelector**: Provides predefined subreddit categories
-- **Custom Input**: Allows users to enter any subreddit name
-- **Download Manager**: Handles meme sharing and external access
+- **MemeAPI**: Handles Reddit API communication and data processing
+- **MemeModel**: Manages meme data and state with ListModel
+- **DatabaseManager**: SQLite integration for custom subreddit storage
+- **FullscreenImageViewer**: Advanced image viewer with zoom, pan, and swipe navigation
+- **MemeGridView**: Responsive grid layout with pull-to-refresh and infinite scroll
+- **SubredditSelectionDialog**: Unified interface for subreddit selection and custom input
+- **ManageSubredditsDialog**: Complete CRUD interface for saved subreddits
+- **AppHeader**: Centralized navigation with settings and refresh actions
 
 ## Usage 📖
 
@@ -99,36 +108,46 @@ memesapp/
 4. Toggle between light and dark modes using the theme button
 
 ### Navigation
-- **Scroll** through the meme feed vertically
-- **Tap images** to view in fullscreen mode
-- **Tap share icon** (📤) to open memes externally
-- **Tap download icon** (💾) to access the image URL
-- Use the **back button** or **swipe** to exit fullscreen view
+- **Scroll** through the meme feed vertically or use pull-to-refresh
+- **Tap images** to view in fullscreen mode with zoom capabilities
+- **Swipe left/right** or use arrow keys to navigate between memes in fullscreen
+- **Pinch to zoom** or use mouse wheel for image scaling
+- **Pan** around zoomed images with touch or mouse
+- **Tap close button** (✕) or press Escape to exit fullscreen view
 
 ### Customization
-- **Theme Toggle**: Switch between light and dark modes
-- **Category Selection**: Choose from 10+ predefined meme categories
-- **Custom Subreddits**: Enter any subreddit name (e.g., "wholesomememes", "programmerhumor")
-- **Settings Persistence**: Your preferences are saved between sessions
+- **Theme Toggle**: Switch between light and dark modes in settings
+- **Category Selection**: Choose from 25+ predefined meme categories
+- **Custom Subreddits**: Enter and save any subreddit name to your collection
+- **Subreddit Management**: Add favorites, track usage, and organize saved subreddits
+- **Database Storage**: Custom subreddits persist locally with SQLite
+- **Settings Persistence**: All preferences saved between app sessions
 
 ## Development 🛠️
 
 ### Technology Stack
-- **QML/Qt**: User interface framework
+- **QML/Qt 2.12**: Modern user interface framework
 - **Ubuntu Touch SDK**: Native platform integration
-- **Lomiri Components**: Ubuntu Touch UI toolkit
-- **CMake**: Build system
-- **Clickable**: Ubuntu Touch development tool
+- **Lomiri Components 1.3**: Ubuntu Touch UI toolkit
+- **Qt LocalStorage/SQLite**: Local database for custom subreddits
+- **CMake**: Build system and deployment
+- **Clickable**: Ubuntu Touch development and testing tool
 
-### Building Components
+### Modular Architecture
 
-The app follows a modular architecture:
+The app follows a clean component-based architecture:
 
 ```qml
-// Example: Adding a new meme category
-var newCategory = {
-    "Your Category": "your_subreddit_name"
-};
+// Example: Using a reusable component
+MemeGridView {
+    onMemeClicked: fullscreenViewer.open()
+    onLoadMore: api.fetchMoreMemes()
+}
+
+// Example: Database integration
+DatabaseManager {
+    onCustomSubredditsLoaded: updateUI(subreddits)
+}
 ```
 
 ### API Integration
@@ -181,26 +200,45 @@ Contributions are welcome! Here's how you can help:
 - Remove any "r/" prefix from the input
 
 ### Debug Mode
-To enable verbose logging:
+To enable verbose logging and component debugging:
 ```bash
 clickable desktop --verbose
+# OR set QML debugging
+QT_LOGGING_RULES="*.debug=true" clickable desktop
 ```
+
+### Component Architecture
+The modular design makes debugging easier:
+- **Main.qml**: Check application state and component orchestration  
+- **MemeGridView**: Verify grid layout and refresh functionality
+- **FullscreenImageViewer**: Debug zoom, swipe, and navigation issues
+- **DatabaseManager**: Monitor SQLite operations and custom subreddit storage
 
 ## Roadmap 🗺️
 
-### Upcoming Features
-- [ ] **Offline Mode**: Cache memes for offline viewing
-- [ ] **Search Functionality**: Search within loaded memes
-- [ ] **User Preferences**: Customize feed order and filtering
-- [ ] **Multiple Feeds**: View multiple subreddits simultaneously
-- [ ] **Comment Viewing**: Read Reddit comments
-- [ ] **Favorites System**: Save favorite memes locally
-- [ ] **Improved Sharing**: Direct integration with system sharing
+### ✅ **Completed in v1.0.0**
+- [x] **Modular Architecture**: Refactored from monolithic to component-based design
+- [x] **Touch Gestures**: Swipe navigation and pinch-to-zoom functionality
+- [x] **Local Database**: SQLite integration for custom subreddit management
+- [x] **Advanced Image Viewer**: Zoom, pan, and swipe navigation
+- [x] **Pull-to-Refresh**: Gesture-based content updates
+- [x] **Custom Subreddit Storage**: Persistent favorites and usage tracking
 
-### Performance Improvements
+### 🚀 **Upcoming Features**
+- [ ] **Offline Mode**: Cache memes for offline viewing
+- [ ] **Search Functionality**: Search within loaded memes by title/content
+- [ ] **Multiple Feeds**: View multiple subreddits simultaneously in tabs
+- [ ] **Comment Viewing**: Read Reddit comments for memes
+- [ ] **Enhanced Favorites**: Local meme bookmarking with tags
+- [ ] **Improved Sharing**: Direct integration with system sharing
+- [ ] **Export/Import**: Backup and sync custom subreddit collections
+
+### ⚡ **Performance & UX Improvements**
 - [ ] **Image Caching**: Faster loading of previously viewed memes
-- [ ] **Lazy Loading**: Load images on demand
-- [ ] **Memory Optimization**: Better resource management
+- [ ] **Lazy Loading**: Load images on demand for better memory usage
+- [ ] **Memory Optimization**: Better resource management and cleanup
+- [ ] **Keyboard Shortcuts**: Desktop-friendly navigation
+- [ ] **Accessibility**: Screen reader support and improved contrast
 
 ## Privacy & Data 🔒
 
@@ -236,14 +274,16 @@ We love hearing from users! Share your thoughts on:
 ## Changelog 📋
 
 ### v1.0.0 (2025)
-- 🎉 Initial release
-- ✨ 10+ predefined meme categories
+- 🎉 Initial release with modular architecture
+- ✨ 25+ predefined meme categories
 - 🎨 Dark/Light theme support
-- 📱 Custom subreddit input
-- 🖼️ Fullscreen image viewer
-- 📤 Share and download functionality
-- 💾 Settings persistence
-- 🔄 Responsive mobile design
+- 📱 Custom subreddit input with database storage
+- 🖼️ Advanced fullscreen viewer with zoom and swipe navigation
+- � Pull-to-refresh and infinite scroll
+- 💾 SQLite database for persistent custom subreddit management
+- 🎯 Touch gesture support (swipe, pinch, pan)
+- � Responsive design optimized for mobile and desktop
+- 🏗️ Clean component-based architecture (Main.qml: 1420→391 lines!)
 
 ---
 

@@ -21,8 +21,10 @@ QtObject {
 
     // Signals
     signal memesLoaded(var memes)
+    signal multiSubredditMemesLoaded(var memes, var subredditSources)
     signal loadingStarted
     signal loadingFinished
+    signal multiSubredditProgress(int completed, int total)
     signal error(string message)
 
     // Properties
@@ -32,6 +34,9 @@ QtObject {
 
     // Private properties
     property var currentXhr: null
+    property var activeRequests: []  // Track multiple concurrent requests
+    property int completedRequests: 0
+    property int totalRequests: 0
 
     function fetchMemes(subreddit, limit) {
         if (isLoading) {
@@ -150,5 +155,137 @@ QtObject {
             isLoading = false;
             loadingFinished();
         }
+        
+        // Cancel all active multi-subreddit requests
+        for (var i = 0; i < activeRequests.length; i++) {
+            if (activeRequests[i]) {
+                activeRequests[i].abort();
+            }
+        }
+        activeRequests = [];
+        completedRequests = 0;
+        memeAPI.totalRequests = 0;
+    }
+
+    function fetchMultipleSubreddits(subreddits, limitPerSubreddit) {
+        if (isLoading) {
+            console.log("MemeAPI: Already loading, skipping multi-subreddit fetch");
+            return;
+        }
+
+        if (!subreddits || subreddits.length === 0) {
+            console.log("MemeAPI: No subreddits provided for multi-fetch");
+            error("No subreddits selected");
+            return;
+        }
+
+        console.log("MemeAPI: Starting multi-subreddit fetch for:", subreddits.length, "subreddits");
+
+        isLoading = true;
+        loadingStarted();
+
+        // Reset tracking variables
+        memeAPI.activeRequests = [];
+        memeAPI.completedRequests = 0;
+        memeAPI.totalRequests = subreddits.length;
+        
+        var allMemes = [];
+        var subredditSources = {}; // Track which subreddit each meme came from
+        var limit = limitPerSubreddit || Math.floor(defaultLimit / subreddits.length);
+
+        // Fetch from each subreddit
+        for (var i = 0; i < subreddits.length; i++) {
+            fetchSingleSubredditForMulti(subreddits[i], limit, allMemes, subredditSources);
+        }
+    }
+
+    function fetchSingleSubredditForMulti(subreddit, limit, allMemes, subredditSources) {
+        var xhr = new XMLHttpRequest();
+        memeAPI.activeRequests.push(xhr);
+
+        var url = "https://www.reddit.com/r/" + subreddit + ".json?limit=" + limit;
+        console.log("MemeAPI: Fetching from subreddit:", subreddit, "URL:", url);
+
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === XMLHttpRequest.DONE) {
+                memeAPI.completedRequests++;
+                console.log("MemeAPI: Multi-fetch progress:", memeAPI.completedRequests, "/", memeAPI.totalRequests);
+                
+                multiSubredditProgress(memeAPI.completedRequests, memeAPI.totalRequests);
+
+                if (xhr.status === 200) {
+                    try {
+                        var response = JSON.parse(xhr.responseText);
+                        var posts = response.data.children;
+                        
+                        console.log("MemeAPI: Processing", posts.length, "posts from r/" + subreddit);
+
+                        // Process posts from this subreddit
+                        var subredditMemes = [];
+                        for (var j = 0; j < posts.length; j++) {
+                            var post = posts[j].data;
+                            if (isImagePost(post)) {
+                                var meme = {
+                                    id: post.id,
+                                    title: post.title,
+                                    image: post.url,
+                                    upvotes: post.ups,
+                                    comments: post.num_comments,
+                                    subreddit: post.subreddit,
+                                    author: post.author,
+                                    created: post.created_utc,
+                                    permalink: "https://reddit.com" + post.permalink,
+                                    sourceSubreddit: subreddit // Track original subreddit
+                                };
+                                subredditMemes.push(meme);
+                                allMemes.push(meme);
+                                subredditSources[meme.id] = subreddit;
+                            }
+                        }
+                        
+                        console.log("MemeAPI: Added", subredditMemes.length, "memes from r/" + subreddit);
+                    } catch (e) {
+                        console.log("MemeAPI: Error parsing response from r/" + subreddit + ":", e);
+                    }
+                } else {
+                    console.log("MemeAPI: Error loading from r/" + subreddit + ":", xhr.status, xhr.statusText);
+                }
+
+                // Check if all requests are complete
+                if (memeAPI.completedRequests >= memeAPI.totalRequests) {
+                    console.log("MemeAPI: Multi-subreddit fetch complete. Total memes:", allMemes.length);
+                    
+                    // Sort combined memes by upvotes or created time for better mixing
+                    allMemes.sort(function(a, b) {
+                        return b.upvotes - a.upvotes; // Sort by upvotes (highest first)
+                    });
+                    
+                    isLoading = false;
+                    loadingFinished();
+                    multiSubredditMemesLoaded(allMemes, subredditSources);
+                }
+            }
+        };
+
+        xhr.onerror = function () {
+            memeAPI.completedRequests++;
+            console.log("MemeAPI: Network error for r/" + subreddit);
+            
+            multiSubredditProgress(completedRequests, totalRequests);
+            
+            if (completedRequests >= totalRequests) {
+                isLoading = false;
+                loadingFinished();
+                if (allMemes.length > 0) {
+                    multiSubredditMemesLoaded(allMemes, subredditSources);
+                } else {
+                    error("Failed to load memes from any subreddit");
+                }
+            }
+        };
+
+        xhr.open("GET", url, true);
+        xhr.setRequestHeader("User-Agent", userAgent);
+        xhr.send();
     }
 }

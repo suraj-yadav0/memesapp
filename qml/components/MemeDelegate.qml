@@ -22,8 +22,8 @@ UbuntuShape {
     id: memeDelegate
 
     width: parent.width
-    height: contentColumn.height + units.gu(2)
-    backgroundColor: darkMode ? "#2D2D2D" : "#FFFFFF"
+    height: parent.height
+    backgroundColor: memeDelegate.darkMode ? "#000000" : "#FFFFFF"
 
     // Properties
     property bool darkMode: false
@@ -49,86 +49,155 @@ UbuntuShape {
     signal imageClicked(string url)
     signal bookmarkToggled(var meme, bool bookmark)
 
-    Column {
-        id: contentColumn
-        width: parent.width - units.gu(2)
-        anchors.centerIn: parent
-        spacing: units.gu(1)
+    // Main container
+    Item {
+        anchors.fill: parent
 
-        // Title
-        Label {
-            id: titleLabel
-            text: memeDelegate.memeTitle
-            font.bold: true
-            wrapMode: Text.WordWrap
+        // Top info bar (like Reddit's header)
+        Rectangle {
+            id: topBar
+            anchors.top: parent.top
             width: parent.width
-            color: memeDelegate.darkMode ? "#FFFFFF" : "#000000"
-            maximumLineCount: 3
-            elide: Text.ElideRight
+            height: units.gu(6)
+            border.color: memeDelegate.darkMode ? "#333333" : "#DDDDDD"
+            color: memeDelegate.darkMode ? "#1A1A1A" : "#FFFFFF"
+            z: 10
+
+            Row {
+                anchors.fill: parent
+                anchors.leftMargin: units.gu(1.5)
+                anchors.rightMargin: units.gu(1.5)
+                spacing: units.gu(1)
+
+                // Subreddit info
+                Column {
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: units.gu(0.3)
+                    width: parent.width - bookmarkIcon.width - units.gu(3)
+
+                    Label {
+                        text: "r/" + (memeDelegate.isMultiSubredditMode && memeDelegate.subredditSource !== "" ? 
+                              memeDelegate.subredditSource : memeDelegate.memeSubreddit)
+                        font.bold: true
+                        fontSize: "medium"
+                        color: memeDelegate.darkMode ? "#FFFFFF" : "#000000"
+                        elide: Text.ElideRight
+                        width: parent.width
+                    }
+
+                    Label {
+                        text: "u/" + memeDelegate.memeAuthor
+                        fontSize: "small"
+                        color: memeDelegate.darkMode ? "#888888" : "#999999"
+                        elide: Text.ElideRight
+                        width: parent.width
+                    }
+                }
+
+                // Bookmark icon
+                Icon {
+                    id: bookmarkIcon
+                    name: memeDelegate.isBookmarked ? "starred" : "non-starred"
+                    width: units.gu(3)
+                    height: units.gu(3)
+                    anchors.verticalCenter: parent.verticalCenter
+                    color: memeDelegate.isBookmarked ? "#FFD700" : (memeDelegate.darkMode ? "#CCCCCC" : "#666666")
+
+                    MouseArea {
+                        anchors.fill: parent
+                        anchors.margins: -units.gu(1)
+                        onClicked: {
+                            console.log("MemeDelegate: Toggling bookmark for meme:", memeDelegate.memeTitle);
+                            var memeData = {
+                                id: memeDelegate.memeId,
+                                title: memeDelegate.memeTitle,
+                                image: memeDelegate.memeImage,
+                                subreddit: memeDelegate.memeSubreddit,
+                                author: memeDelegate.memeAuthor,
+                                permalink: memeDelegate.memePermalink,
+                                upvotes: memeDelegate.memeUpvotes,
+                                comments: memeDelegate.memeComments
+                            };
+                            memeDelegate.bookmarkToggled(memeData, !memeDelegate.isBookmarked);
+                        }
+                    }
+                }
+            }
         }
 
-        // Image container
-        UbuntuShape {
+        // Title section
+        Rectangle {
+            id: titleSection
+            anchors.top: topBar.bottom
             width: parent.width
-            height: memeImage.height
-            backgroundColor: memeDelegate.darkMode ? "#1A1A1A" : "#F5F5F5"
-            visible: memeDelegate.memeImage !== ""
+            height: titleLabel.height + units.gu(2)
+             border.color: memeDelegate.darkMode ? "#333333" : "#DDDDDD" // This title card is not working
+            color: memeDelegate.darkMode ? "#000000" : "#FFFFFF"
+            z: 9
+
+            Label {
+                id: titleLabel
+                anchors.fill: parent
+                anchors.leftMargin: units.gu(1.5)
+                anchors.rightMargin: units.gu(1.5)
+                anchors.topMargin: units.gu(1)
+                anchors.bottomMargin: units.gu(1)
+                text: "Hekko"
+                font.bold: true
+                fontSize: units.gu(1.5)
+                wrapMode: Text.WordWrap
+                color: memeDelegate.darkMode ? "#FFFFFF" : "#000000"
+                maximumLineCount: 3
+                elide: Text.ElideRight
+            }
+        }
+
+        // Image container - takes up all available space (Reddit style)
+        Rectangle {
+            id: imageContainer
+            anchors.top: titleSection.bottom
+            anchors.bottom: bottomBar.top
+            anchors.left: parent.left
+            anchors.right: parent.right
+            height: Image.height
+             border.color: memeDelegate.darkMode ? "#333333" : "#DDDDDD"
+            color: memeDelegate.darkMode ? "#000000" : "#FFFFFF"
+            clip: true
 
             Image {
                 id: memeImage
+                anchors.fill: parent
                 source: memeDelegate.memeImage
-                width: parent.width
-                height: {
-                    if (sourceSize.height > 0 && sourceSize.width > 0) {
-                        var ratio = sourceSize.height / sourceSize.width;
-                        return Math.min(width * ratio, units.gu(50));
-                    }
-                    return units.gu(30);
-                }
                 fillMode: Image.PreserveAspectFit
-                anchors.centerIn: parent
                 asynchronous: true
                 cache: true
+                visible: status === Image.Ready
 
                 onStatusChanged: {
                     if (status === Image.Error) {
                         console.log("MemeDelegate: Failed to load image:", memeDelegate.memeImage);
-                        visible = false;
                     } else if (status === Image.Ready) {
                         console.log("MemeDelegate: Image loaded successfully");
                     }
                 }
 
+                // Double tap to zoom (Reddit-like interaction)
                 MouseArea {
                     anchors.fill: parent
                     onClicked: {
                         memeDelegate.imageClicked(memeDelegate.memeImage);
                     }
-                }
-            }
-            
-            // Subreddit badge for multi-subreddit mode
-            UbuntuShape {
-                id: subredditBadge
-                visible: memeDelegate.isMultiSubredditMode && memeDelegate.subredditSource !== ""
-                anchors.top: parent.top
-                anchors.right: parent.right
-                anchors.margins: units.gu(1)
-                width: subredditLabel.width + units.gu(1.5)
-                height: units.gu(3)
-                backgroundColor: "#FF4500" // Reddit orange
-                
-                Label {
-                    id: subredditLabel
-                    text: "r/" + memeDelegate.subredditSource
-                    anchors.centerIn: parent
-                    color: "white"
-                    font.pixelSize: units.gu(1.5)
-                    font.bold: true
+                    onDoubleClicked: {
+                        if (memeImage.fillMode === Image.PreserveAspectFit) {
+                            memeImage.fillMode = Image.PreserveAspectCrop;
+                        } else {
+                            memeImage.fillMode = Image.PreserveAspectFit;
+                        }
+                    }
                 }
             }
 
-            // Loading indicator for image
+            // Loading indicator
             ActivityIndicator {
                 anchors.centerIn: parent
                 running: memeImage.status === Image.Loading
@@ -136,144 +205,180 @@ UbuntuShape {
             }
 
             // Error placeholder
-            Label {
-                anchors.centerIn: parent
-                text: "Image failed to load"
+            Rectangle {
+                anchors.fill: parent
+                color: memeDelegate.darkMode ? "#1A1A1A" : "#F5F5F5"
                 visible: memeImage.status === Image.Error
-                color: memeDelegate.darkMode ? "#CCCCCC" : "#666666"
-            }
-        }
 
-        // Metadata row
-        Row {
-            spacing: units.gu(2)
-            width: parent.width
-            height: units.gu(4)
+                Column {
+                    anchors.centerIn: parent
+                    spacing: units.gu(1)
 
-            // Upvotes
-            Row {
-                spacing: units.gu(0.5)
-                anchors.verticalCenter: parent.verticalCenter
+                    Icon {
+                        name: "image-x-generic-symbolic"
+                        width: units.gu(6)
+                        height: units.gu(6)
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        color: memeDelegate.darkMode ? "#666666" : "#999999"
+                    }
 
-                Label {
-                    text: "👍"
-                    anchors.verticalCenter: parent.verticalCenter
-                    fontSize: "small"
-                }
-
-                Label {
-                    text: memeDelegate.memeUpvotes.toString()
-                    color: memeDelegate.darkMode ? "#CCCCCC" : "#666666"
-                    fontSize: "small"
-                    anchors.verticalCenter: parent.verticalCenter
-                }
-            }
-
-            // Comments
-            Row {
-                spacing: units.gu(0.5)
-                anchors.verticalCenter: parent.verticalCenter
-
-                Label {
-                    text: "💬"
-                    anchors.verticalCenter: parent.verticalCenter
-                    fontSize: "small"
-                }
-
-                Label {
-                    text: memeDelegate.memeComments.toString()
-                    color: memeDelegate.darkMode ? "#CCCCCC" : "#666666"
-                    fontSize: "small"
-                    anchors.verticalCenter: parent.verticalCenter
-                }
-            }
-
-            // Subreddit
-            Label {
-                text: "r/" + memeDelegate.memeSubreddit
-                color: memeDelegate.darkMode ? "#CCCCCC" : "#666666"
-                fontSize: "small"
-                anchors.verticalCenter: parent.verticalCenter
-            }
-
-            // Spacer to push actions to the right
-            Item {
-                width: parent.width - bookmarkIcon.width - shareIcon.width - downloadIcon.width - units.gu(12)
-                height: 1
-            }
-
-            // Bookmark action
-            Icon {
-                id: bookmarkIcon
-                name: memeDelegate.isBookmarked ? "starred" : "non-starred"
-                width: units.gu(2)
-                height: units.gu(2)
-                anchors.verticalCenter: parent.verticalCenter
-                color: memeDelegate.isBookmarked ? "#FFD700" : (memeDelegate.darkMode ? "#CCCCCC" : "#666666")
-
-                MouseArea {
-                    anchors.fill: parent
-                    onClicked: {
-                        console.log("MemeDelegate: Toggling bookmark for meme:", memeDelegate.memeTitle);
-                        var memeData = {
-                            id: memeDelegate.memeId,
-                            title: memeDelegate.memeTitle,
-                            image: memeDelegate.memeImage,
-                            subreddit: memeDelegate.memeSubreddit,
-                            author: memeDelegate.memeAuthor,
-                            permalink: memeDelegate.memePermalink,
-                            upvotes: memeDelegate.memeUpvotes,
-                            comments: memeDelegate.memeComments
-                        };
-                        memeDelegate.bookmarkToggled(memeData, !memeDelegate.isBookmarked);
+                    Label {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        text: "Image failed to load"
+                        color: memeDelegate.darkMode ? "#CCCCCC" : "#666666"
+                        fontSize: "small"
                     }
                 }
             }
 
-            // Share action
-            Icon {
-                id: shareIcon
-                name: "share"
-                width: units.gu(2)
-                height: units.gu(2)
-                anchors.verticalCenter: parent.verticalCenter
-                color: memeDelegate.darkMode ? "#CCCCCC" : "#666666"
+            // Subreddit badge overlay (for multi-subreddit mode)
+            UbuntuShape {
+                id: subredditBadge
+                visible: memeDelegate.isMultiSubredditMode && memeDelegate.subredditSource !== ""
+                anchors.top: parent.top
+                anchors.right: parent.right
+                anchors.margins: units.gu(1.5)
+                width: subredditLabel.width + units.gu(2)
+                height: units.gu(3.5)
+                backgroundColor: "#FF4500"
+                opacity: 0.95
 
-                MouseArea {
-                    anchors.fill: parent
-                    onClicked: {
-                        console.log("MemeDelegate: Sharing meme:", memeDelegate.memeTitle);
-                        memeDelegate.shareRequested(memeDelegate.memePermalink || memeDelegate.memeImage, memeDelegate.memeTitle);
-                    }
-                }
-            }
-
-            // Download action
-            Icon {
-                id: downloadIcon
-                name: "save"
-                width: units.gu(2)
-                height: units.gu(2)
-                anchors.verticalCenter: parent.verticalCenter
-                color: memeDelegate.darkMode ? "#CCCCCC" : "#666666"
-
-                MouseArea {
-                    anchors.fill: parent
-                    onClicked: {
-                        console.log("MemeDelegate: Downloading meme:", memeDelegate.memeTitle);
-                        memeDelegate.downloadRequested(memeDelegate.memeImage, memeDelegate.memeTitle);
-                    }
+                Label {
+                    id: subredditLabel
+                    text: "r/" + memeDelegate.subredditSource
+                    anchors.centerIn: parent
+                    color: "white"
+                    fontSize: "small"
+                    font.bold: true
                 }
             }
         }
 
-        // Author info (optional, can be hidden)
-        Label {
-            text: "by u/" + memeDelegate.memeAuthor
-            color: memeDelegate.darkMode ? "#888888" : "#999999"
-            fontSize: "x-small"
-            visible: memeDelegate.memeAuthor !== ""
+        // Bottom action bar (Reddit style)
+        Rectangle {
+            id: bottomBar
+            anchors.bottom: parent.bottom
             width: parent.width
+            height: units.gu(6)
+            border.color: memeDelegate.darkMode ? "#333333" : "#DDDDDD"
+            color: memeDelegate.darkMode ? "#1A1A1A" : "#FFFFFF"
+            z: 10
+
+            Row {
+                anchors.fill: parent
+                anchors.leftMargin: units.gu(1)
+                anchors.rightMargin: units.gu(1)
+                spacing: units.gu(2)
+
+                // Upvotes button
+                Rectangle {
+                    width: parent.width / 4
+                    height: parent.height
+                    color: "transparent"
+
+                    Row {
+                        anchors.centerIn: parent
+                        spacing: units.gu(0.8)
+
+                        Icon {
+                            name: "like"
+                            width: units.gu(2.5)
+                            height: units.gu(2.5)
+                            anchors.verticalCenter: parent.verticalCenter
+                            color: memeDelegate.darkMode ? "#CCCCCC" : "#666666"
+                        }
+
+                        Label {
+                            text: memeDelegate.memeUpvotes > 999 ? 
+                                  (memeDelegate.memeUpvotes / 1000).toFixed(1) + "k" : 
+                                  memeDelegate.memeUpvotes.toString()
+                            color: memeDelegate.darkMode ? "#CCCCCC" : "#666666"
+                            fontSize: "medium"
+                            font.bold: true
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                    }
+                }
+
+                // Comments button
+                Rectangle {
+                    width: parent.width / 4
+                    height: parent.height
+                    color: "transparent"
+
+                    Row {
+                        anchors.centerIn: parent
+                        spacing: units.gu(1)
+
+                        Icon {
+                            name: "message"
+                            width: units.gu(2.5)
+                            height: units.gu(2.5)
+                            anchors.verticalCenter: parent.verticalCenter
+                            color: memeDelegate.darkMode ? "#CCCCCC" : "#666666"
+                        }
+
+                        Label {
+                            text: memeDelegate.memeComments > 999 ? 
+                                  (memeDelegate.memeComments / 1000).toFixed(1) + "k" : 
+                                  memeDelegate.memeComments.toString()
+                            color: memeDelegate.darkMode ? "#CCCCCC" : "#666666"
+                            fontSize: "medium"
+                            font.bold: true
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                    }
+                }
+
+                // Share button
+                // Rectangle {
+                //     width: parent.width / 4
+                //     height: parent.height
+                //     color: "transparent"
+
+                //     Icon {
+                //         name: "share"
+                //         width: units.gu(2.5)
+                //         height: units.gu(2.5)
+                //         anchors.centerIn: parent
+                //         color: memeDelegate.darkMode ? "#CCCCCC" : "#666666"
+                //     }
+
+                //     MouseArea {
+                //         anchors.fill: parent
+                //         onClicked: {
+                //             console.log("MemeDelegate: Sharing meme:", memeDelegate.memeTitle);
+                //             memeDelegate.shareRequested(
+                //                 "https://reddit.com" + memeDelegate.memePermalink, 
+                //                 memeDelegate.memeTitle
+                //             );
+                //         }
+                //     }
+                // }
+
+                // Download button
+                // Rectangle {
+                //     width: parent.width / 4
+                //     height: parent.height
+                //     color: "transparent"
+
+                //     Icon {
+                //         name: "save"
+                //         width: units.gu(2.5)
+                //         height: units.gu(2.5)
+                //         anchors.centerIn: parent
+                //         color: memeDelegate.darkMode ? "#CCCCCC" : "#666666"
+                //     }
+
+                //     MouseArea {
+                //         anchors.fill: parent
+                //         onClicked: {
+                //             console.log("MemeDelegate: Downloading meme:", memeDelegate.memeTitle);
+                //             memeDelegate.downloadRequested(memeDelegate.memeImage, memeDelegate.memeTitle);
+                //         }
+                //     }
+                // }
+            }
         }
     }
 }

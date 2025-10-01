@@ -38,6 +38,14 @@ PageHeader {
     title: isMultiSubredditMode ? 
            "Multi-Feed (" + currentSubreddits.length + ")" : 
            "r/" + currentSubreddit
+
+
+     StyleHints {
+            foregroundColor: "white"
+
+            backgroundColor: '#116297'
+            dividerColor: LomiriColors.slate
+        }
     
     leadingActionBar {
         actions: [

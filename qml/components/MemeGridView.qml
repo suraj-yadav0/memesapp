@@ -42,16 +42,18 @@ Item {
     GridView {
         id: gridView
         anchors.fill: parent
-        anchors.margins: units.gu(1)
+        anchors.margins: units.gu(2)
         
-        cellWidth: width / Math.floor(width / units.gu(20))
-        cellHeight: cellWidth * 1.2
-        
+        cellWidth: width / Math.floor(width / units.gu(21))
+        cellHeight: cellWidth * 3
+      
         model: MemeModel {
             id: memeModel
         }
         
         delegate: MemeDelegate {
+
+            
             width: gridView.cellWidth - units.gu(0.5)
             height: gridView.cellHeight - units.gu(0.5)
             
@@ -184,10 +186,10 @@ Item {
                     horizontalAlignment: Text.AlignHCenter
                 }
                 
-                Button {
+                CustomButton {
                     text: "Retry"
                     anchors.horizontalCenter: parent.horizontalCenter
-                    color: LomiriColors.orange
+                   // color: LomiriColors.orange
                     onClicked: {
                         memeGridView.errorMessage = "";
                         memeGridView.refreshRequested();

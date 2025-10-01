@@ -247,10 +247,10 @@ Dialog {
                 spacing: units.gu(0.5)
                 z: 100
                 
-                Button {
+                CustomButton {
                     text: "🔍+"
-                    width: units.gu(4)
-                    height: units.gu(3)
+                    width: units.gu(7)
+                    height: units.gu(5)
                     enabled: zoomableImage.scale < imageFlickable.maxZoom
                     onClicked: {
                         var newScale = Math.min(imageFlickable.maxZoom, zoomableImage.scale * 1.5);
@@ -261,10 +261,10 @@ Dialog {
                     }
                 }
                 
-                Button {
+                CustomButton {
                     text: "🔍-"
-                    width: units.gu(4)
-                    height: units.gu(3)
+                    width: units.gu(7)
+                    height: units.gu(5)
                     enabled: zoomableImage.scale > imageFlickable.minZoom
                     onClicked: {
                         var newScale = Math.max(imageFlickable.minZoom, zoomableImage.scale / 1.5);
@@ -280,10 +280,10 @@ Dialog {
                     }
                 }
                 
-                Button {
+                CustomButton {
                     text: "1:1"
-                    width: units.gu(4)
-                    height: units.gu(3)
+                    width: units.gu(7)
+                    height: units.gu(5)
                     onClicked: {
                         imageFlickable.resetZoom();
                     }
@@ -291,13 +291,13 @@ Dialog {
             }
 
             // Close button
-            Button {
+            CustomButton {
                 text: "\u2715"
                 anchors.top: parent.top
                 anchors.right: parent.right
                 anchors.margins: units.gu(1)
-                width: units.gu(4)
-                height: units.gu(4)
+                width: units.gu(7)
+                height: units.gu(5)
                 z: 100
                 onClicked: {
                     console.log("FullscreenViewer: Close button clicked");

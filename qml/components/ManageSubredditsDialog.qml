@@ -107,7 +107,7 @@ Dialog {
                             spacing: units.gu(0.5)
                             anchors.verticalCenter: parent.verticalCenter
                             
-                            Button {
+                            CustomButton {
                                 text: modelData.isFavorite ? "★" : "☆"
                                 width: units.gu(4)
                                 height: units.gu(4)
@@ -117,7 +117,7 @@ Dialog {
                                 }
                             }
                             
-                            Button {
+                            CustomButton {
                                 text: "Use"
                                 width: units.gu(6)
                                 height: units.gu(4)
@@ -127,7 +127,7 @@ Dialog {
                                 }
                             }
                             
-                            Button {
+                            CustomButton {
                                 text: "✕"
                                 width: units.gu(4)
                                 height: units.gu(4)

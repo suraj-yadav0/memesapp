@@ -27,7 +27,7 @@ Dialog {
     height: Math.min(parent.height * 0.85, units.gu(60))
     modal: true
     focus: true
-    title: "Multi-Subreddit Feed"
+    
 
     // Properties
     property var categoryNames: []
@@ -43,6 +43,7 @@ Dialog {
         radius: units.gu(1)
     }
 
+
     ColumnLayout {
         anchors.fill: parent
         spacing: units.gu(2)
@@ -54,12 +55,7 @@ Dialog {
             Layout.fillWidth: true
         }
 
-        Label {
-            text: "Select multiple subreddits to view posts from all of them in a single feed."
-            color: theme.palette.normal.backgroundSecondaryText
-            wrapMode: Text.WordWrap
-            Layout.fillWidth: true
-        }
+        
 
         Rectangle {
             Layout.fillWidth: true
@@ -71,13 +67,16 @@ Dialog {
         RowLayout {
             Layout.fillWidth: true
 
+spacing: units.gu(5)
             Label {
                 text: "Selected (" + selectedSubreddits.length + "):"
                 font.weight: Font.Medium
             }
 
-            Button {
+            CustomButton {
                 text: "Clear All"
+                anchors.right: parent.right
+              
                 visible: selectedSubreddits.length > 0
                 onClicked: {
                     selectedSubreddits = [];
@@ -221,20 +220,20 @@ Dialog {
             color: theme.palette.normal.base
         }
 
-        // Action buttons
+        // Action Buttons
         RowLayout {
             Layout.fillWidth: true
 
-            Button {
+            CustomButton {
                 text: "Cancel"
                 Layout.fillWidth: true
                 onClicked: multiDialog.close()
             }
 
-            Button {
+            CustomButton {
                 text: "Create Feed (" + selectedSubreddits.length + ")"
                 Layout.fillWidth: true
-                color: "#FF4500"
+               // color: "#FF4500"
                 enabled: selectedSubreddits.length >= 2
                 onClicked: {
                     if (selectedSubreddits.length >= 2) {

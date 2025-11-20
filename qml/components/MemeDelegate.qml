@@ -56,155 +56,154 @@ UbuntuShape {
         anchors.fill: parent
 
         // Header bar - Reddit style with "Post" title
-        Rectangle {
-            id: headerBar
-            anchors.top: parent.top
-            width: parent.width
-            height: units.gu(6)
-            color: memeDelegate.darkMode ? "#2B2B2B" : "#FFFFFF"
-            z: 10
+        // Rectangle {
+        //     id: headerBar
+        //     anchors.top: parent.top
+        //     width: parent.width
+            
+        //     color: memeDelegate.darkMode ? "#2B2B2B" : "#FFFFFF"
+        //     z: 10
 
-            Row {
-                anchors.fill: parent
-                anchors.leftMargin: units.gu(0.5)
-                anchors.rightMargin: units.gu(0.5)
-                spacing: 0
+            // Row {
+            //     anchors.fill: parent
+            //     anchors.leftMargin: units.gu(0.5)
+            //     anchors.rightMargin: units.gu(0.5)
+            //     spacing: 0
 
-                // Back button
-                Rectangle {
-                    width: units.gu(5)
-                    height: parent.height
-                    color: "transparent"
+            //     // Back button
+            //     Rectangle {
+            //         width: units.gu(5)
+            //         height: parent.height
+            //         color: "transparent"
 
-                    Icon {
-                        name: "back"
-                        width: units.gu(2.5)
-                        height: units.gu(2.5)
-                        anchors.centerIn: parent
-                        color: memeDelegate.darkMode ? "#FFFFFF" : "#1C1C1C"
-                    }
+            //         Icon {
+            //             name: "back"
+            //             width: units.gu(2.5)
+            //             height: units.gu(2.5)
+            //             anchors.centerIn: parent
+            //             color: memeDelegate.darkMode ? "#FFFFFF" : "#1C1C1C"
+            //         }
 
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked: {
-                            console.log("MemeDelegate: Back button clicked");
-                            memeDelegate.backRequested();
-                        }
-                    }
-                }
+            //         MouseArea {
+            //             anchors.fill: parent
+            //             onClicked: {
+            //                 console.log("MemeDelegate: Back button clicked");
+            //                 memeDelegate.backRequested();
+            //             }
+            //         }
+            //     }
 
-                // "Post" title (centered)
-                Item {
-                    width: parent.width - units.gu(17)
-                    height: parent.height
-                    anchors.verticalCenter: parent.verticalCenter
+            //     // "Post" title (centered)
+            //     Item {
+            //         width: parent.width - units.gu(17)
+            //         height: parent.height
+            //         anchors.verticalCenter: parent.verticalCenter
                     
-                    Label {
-                        text: "Post"
-                        font.bold: false
-                        fontSize: "large"
-                        color: memeDelegate.darkMode ? "#FFFFFF" : "#1C1C1C"
-                        anchors.verticalCenter: parent.verticalCenter
-                        anchors.left: parent.left
-                        anchors.leftMargin: units.gu(1)
-                    }
-                }
+            //         Label {
+            //             text: "Post"
+            //             font.bold: false
+            //             fontSize: "large"
+            //             color: memeDelegate.darkMode ? "#FFFFFF" : "#1C1C1C"
+            //             anchors.verticalCenter: parent.verticalCenter
+            //             anchors.left: parent.left
+            //             anchors.leftMargin: units.gu(1)
+            //         }
+            //     }
 
-                // Action buttons (right side)
-                Row {
-                    spacing: units.gu(0.5)
-                    anchors.verticalCenter: parent.verticalCenter
+            //     // Action buttons (right side)
+            //     Row {
+            //         spacing: units.gu(0.5)
+            //         anchors.verticalCenter: parent.verticalCenter
 
-                    // Bookmark button
-                    Rectangle {
-                        width: units.gu(5)
-                        height: units.gu(5)
-                        color: "transparent"
+            //         // Bookmark button
+            //         Rectangle {
+            //             width: units.gu(5)
+            //             height: units.gu(5)
+            //             color: "transparent"
 
-                        Icon {
-                            name: memeDelegate.isBookmarked ? "starred" : "non-starred"
-                            width: units.gu(2.5)
-                            height: units.gu(2.5)
-                            anchors.centerIn: parent
-                            color: memeDelegate.isBookmarked ? "#FFD700" : (memeDelegate.darkMode ? "#FFFFFF" : "#1C1C1C")
-                        }
+            //             Icon {
+            //                 name: memeDelegate.isBookmarked ? "starred" : "non-starred"
+            //                 width: units.gu(2.5)
+            //                 height: units.gu(2.5)
+            //                 anchors.centerIn: parent
+            //                 color: memeDelegate.isBookmarked ? "#FFD700" : (memeDelegate.darkMode ? "#FFFFFF" : "#1C1C1C")
+            //             }
 
-                        MouseArea {
-                            anchors.fill: parent
-                            onClicked: {
-                                console.log("MemeDelegate: Toggling bookmark for meme:", memeDelegate.memeTitle);
-                                var memeData = {
-                                    id: memeDelegate.memeId,
-                                    title: memeDelegate.memeTitle,
-                                    image: memeDelegate.memeImage,
-                                    subreddit: memeDelegate.memeSubreddit,
-                                    author: memeDelegate.memeAuthor,
-                                    permalink: memeDelegate.memePermalink,
-                                    upvotes: memeDelegate.memeUpvotes,
-                                    comments: memeDelegate.memeComments
-                                };
-                                memeDelegate.bookmarkToggled(memeData, !memeDelegate.isBookmarked);
-                            }
-                        }
-                    }
+            //             MouseArea {
+            //                 anchors.fill: parent
+            //                 onClicked: {
+            //                     console.log("MemeDelegate: Toggling bookmark for meme:", memeDelegate.memeTitle);
+            //                     var memeData = {
+            //                         id: memeDelegate.memeId,
+            //                         title: memeDelegate.memeTitle,
+            //                         image: memeDelegate.memeImage,
+            //                         subreddit: memeDelegate.memeSubreddit,
+            //                         author: memeDelegate.memeAuthor,
+            //                         permalink: memeDelegate.memePermalink,
+            //                         upvotes: memeDelegate.memeUpvotes,
+            //                         comments: memeDelegate.memeComments
+            //                     };
+            //                     memeDelegate.bookmarkToggled(memeData, !memeDelegate.isBookmarked);
+            //                 }
+            //             }
+            //         }
 
-                    // Share button
-                    Rectangle {
-                        width: units.gu(5)
-                        height: units.gu(5)
-                        color: "transparent"
+            //         // Share button
+            //         Rectangle {
+            //             width: units.gu(5)
+            //             height: units.gu(5)
+            //             color: "transparent"
 
-                        Icon {
-                            name: "share"
-                            width: units.gu(2.5)
-                            height: units.gu(2.5)
-                            anchors.centerIn: parent
-                            color: memeDelegate.darkMode ? "#FFFFFF" : "#1C1C1C"
-                        }
+            //             Icon {
+            //                 name: "share"
+            //                 width: units.gu(2.5)
+            //                 height: units.gu(2.5)
+            //                 anchors.centerIn: parent
+            //                 color: memeDelegate.darkMode ? "#FFFFFF" : "#1C1C1C"
+            //             }
 
-                        MouseArea {
-                            anchors.fill: parent
-                            onClicked: {
-                                console.log("MemeDelegate: Sharing meme:", memeDelegate.memeTitle);
-                                memeDelegate.shareRequested(
-                                    "https://reddit.com" + memeDelegate.memePermalink, 
-                                    memeDelegate.memeTitle
-                                );
-                            }
-                        }
-                    }
+            //             MouseArea {
+            //                 anchors.fill: parent
+            //                 onClicked: {
+            //                     console.log("MemeDelegate: Sharing meme:", memeDelegate.memeTitle);
+            //                     memeDelegate.shareRequested(
+            //                         "https://reddit.com" + memeDelegate.memePermalink, 
+            //                         memeDelegate.memeTitle
+            //                     );
+            //                 }
+            //             }
+            //         }
 
-                    // More options button
-                    Rectangle {
-                        width: units.gu(5)
-                        height: units.gu(5)
-                        color: "transparent"
+            //         // More options button
+            //         Rectangle {
+            //             width: units.gu(5)
+            //             height: units.gu(5)
+            //             color: "transparent"
 
-                        Icon {
-                            name: "navigation-menu"
-                            width: units.gu(2.5)
-                            height: units.gu(2.5)
-                            anchors.centerIn: parent
-                            color: memeDelegate.darkMode ? "#FFFFFF" : "#1C1C1C"
-                        }
+            //             Icon {
+            //                 name: "navigation-menu"
+            //                 width: units.gu(2.5)
+            //                 height: units.gu(2.5)
+            //                 anchors.centerIn: parent
+            //                 color: memeDelegate.darkMode ? "#FFFFFF" : "#1C1C1C"
+            //             }
 
-                        MouseArea {
-                            anchors.fill: parent
-                            onClicked: {
-                                console.log("MemeDelegate: More options clicked");
-                                // Can add menu functionality here
-                            }
-                        }
-                    }
-                }
-            }
-        }
+            //             MouseArea {
+            //                 anchors.fill: parent
+            //                 onClicked: {
+            //                     console.log("MemeDelegate: More options clicked");
+            //                     // Can add menu functionality here
+            //                 }
+            //             }
+            //         }
+            //     }
+            // }
+      //  }
 
         // Content area
         Rectangle {
             id: contentArea
-            anchors.top: headerBar.bottom
-            anchors.bottom: bottomBar.top
+         anchors.fill: parent
             width: parent.width
             color: memeDelegate.darkMode ? "#1A1A1A" : "#FFFFFF"
 
@@ -385,26 +384,26 @@ UbuntuShape {
                         }
 
                         // Subreddit badge overlay (for multi-subreddit mode)
-                        UbuntuShape {
-                            id: subredditBadge
-                            visible: memeDelegate.isMultiSubredditMode && memeDelegate.subredditSource !== ""
-                            anchors.top: parent.top
-                            anchors.right: parent.right
-                            anchors.margins: units.gu(1.5)
-                            width: subredditLabel.width + units.gu(2)
-                            height: units.gu(3.5)
-                            backgroundColor: "#FF4500"
-                            opacity: 0.95
+                        // UbuntuShape {
+                        //     id: subredditBadge
+                        //     visible: memeDelegate.isMultiSubredditMode && memeDelegate.subredditSource !== ""
+                        //     anchors.top: parent.top
+                        //     anchors.right: parent.right
+                        //     anchors.margins: units.gu(1.5)
+                        //     width: subredditLabel.width + units.gu(2)
+                        //     height: units.gu(3.5)
+                        //     backgroundColor: "#FF4500"
+                        //     opacity: 0.95
 
-                            Label {
-                                id: subredditLabel
-                                text: "r/" + memeDelegate.subredditSource
-                                anchors.centerIn: parent
-                                color: "white"
-                                fontSize: "small"
-                                font.bold: true
-                            }
-                        }
+                        //     Label {
+                        //         id: subredditLabel
+                        //         text: "r/" + memeDelegate.subredditSource
+                        //         anchors.centerIn: parent
+                        //         color: "white"
+                        //         fontSize: "small"
+                        //         font.bold: true
+                        //     }
+                        // }
                     }
                 }
             }

@@ -50,6 +50,7 @@ UbuntuShape {
     signal shareRequested(string url, string title)
     signal downloadRequested(string url, string title)
     signal imageClicked(string url)
+    signal commentClicked(string id, string subreddit)
     signal bookmarkToggled(var meme, bool bookmark)
     signal backRequested() // New signal for back button
 
@@ -288,6 +289,14 @@ UbuntuShape {
                             color: memeDelegate.darkMode ? "#FFFFFF" : "#1C1C1C"
                             maximumLineCount: 6
                         }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: {
+                                console.log("MemeDelegate: Title clicked, opening comments");
+                                memeDelegate.commentClicked(memeDelegate.memeId, memeDelegate.memeSubreddit);
+                            }
+                        }
                     }
 
                     // Text content for text posts
@@ -508,6 +517,14 @@ UbuntuShape {
                             fontSize: "medium"
                             font.bold: true
                             anchors.verticalCenter: parent.verticalCenter
+                        }
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: {
+                            console.log("MemeDelegate: Comments clicked");
+                            memeDelegate.commentClicked(memeDelegate.memeId, memeDelegate.memeSubreddit);
                         }
                     }
                 }

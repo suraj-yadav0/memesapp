@@ -34,6 +34,7 @@ Item {
     
     // Signals
     signal memeClicked(int index, string imageUrl)
+    signal commentClicked(string id, string subreddit, int index)
     signal loadMore()
     signal refreshRequested()
     signal bookmarkToggled(var meme, bool bookmark)
@@ -69,6 +70,11 @@ Item {
                 var imageUrl = meme ? meme.image : "";
                 console.log("MemeGridView: Meme clicked at index:", index, "URL:", imageUrl);
                 memeGridView.memeClicked(index, imageUrl);
+            }
+
+            onCommentClicked: {
+                console.log("MemeGridView: Comment clicked for id:", id);
+                memeGridView.commentClicked(id, subreddit, index);
             }
             
             onBookmarkToggled: {

@@ -214,6 +214,28 @@ ApplicationWindow {
                 fullscreenViewer.totalCount = memeGrid.count;
                 fullscreenViewer.open();
             }
+
+            onCommentClicked: {
+                console.log("Main: Opening comments for meme index:", index);
+                var meme = memeGrid.getMemeAt(index);
+                if (meme) {
+                    postDetailView.postId = meme.id;
+                    postDetailView.postTitle = meme.title;
+                    postDetailView.postImage = meme.image;
+                    postDetailView.postAuthor = meme.author;
+                    postDetailView.postSubreddit = meme.subreddit;
+                    postDetailView.postUpvotes = meme.upvotes;
+                    postDetailView.postCommentCount = meme.comments;
+                    postDetailView.postSelfText = meme.selftext;
+                    postDetailView.postType = meme.postType;
+                    postDetailView.postPermalink = meme.permalink;
+                    
+                    postDetailView.commentsModel = []; // Clear previous comments
+                    postDetailView.open();
+                    
+                    memeAPI.fetchComments(meme.subreddit, meme.id);
+                }
+            }
             
             onBookmarkToggled: {
                 console.log("Main: Bookmark toggled for meme:", meme.title, "bookmark:", bookmark);
@@ -346,6 +368,34 @@ ApplicationWindow {
         onClosed: {
             root.currentMemeIndex = -1;
             root.dialogImageSource = "";
+        }
+    }
+
+    // Post detail view for comments
+    PostDetailView {
+        id: postDetailView
+        
+        onImageClicked: {
+            console.log("Main: Image clicked in comments view, opening fullscreen");
+            root.dialogImageSource = url;
+            fullscreenViewer.imageSource = url;
+            fullscreenViewer.currentIndex = -1;
+            fullscreenViewer.totalCount = 1;
+            fullscreenViewer.open();
+        }
+    }
+
+    Connections {
+        target: memeAPI
+        onCommentsLoaded: {
+            console.log("Main: Comments loaded, count:", comments.length);
+            postDetailView.commentsModel = comments;
+        }
+        onCommentsLoadingStarted: {
+            postDetailView.isLoadingComments = true;
+        }
+        onCommentsLoadingFinished: {
+            postDetailView.isLoadingComments = false;
         }
     }
 

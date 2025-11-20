@@ -79,6 +79,15 @@ QtObject {
                     ')'
                 );
                 
+                // Create hidden_subreddits table for default subreddits user wants to hide
+                tx.executeSql(
+                    'CREATE TABLE IF NOT EXISTS hidden_subreddits (' +
+                    'id INTEGER PRIMARY KEY AUTOINCREMENT, ' +
+                    'subreddit_name TEXT UNIQUE NOT NULL, ' +
+                    'date_hidden DATETIME DEFAULT CURRENT_TIMESTAMP' +
+                    ')'
+                );
+                
                 console.log("DatabaseManager: Database tables created successfully");
             });
             
@@ -467,5 +476,111 @@ QtObject {
             errorOccurred("Failed to clear bookmarks: " + error);
             return false;
         }
+    }
+    
+    // ===== HIDDEN SUBREDDITS MANAGEMENT =====
+    
+    function hideDefaultSubreddit(subredditName) {
+        if (!initialized) {
+            console.log("DatabaseManager: Database not initialized");
+            errorOccurred("Database not initialized");
+            return false;
+        }
+        
+        try {
+            var success = false;
+            db.transaction(function(tx) {
+                // Check if already hidden
+                var existing = tx.executeSql(
+                    'SELECT id FROM hidden_subreddits WHERE subreddit_name = ?',
+                    [subredditName]
+                );
+                
+                if (existing.rows.length === 0) {
+                    tx.executeSql(
+                        'INSERT INTO hidden_subreddits (subreddit_name) VALUES (?)',
+                        [subredditName]
+                    );
+                    success = true;
+                    console.log("DatabaseManager: Hidden default subreddit:", subredditName);
+                }
+            });
+            
+            return success;
+            
+        } catch (error) {
+            console.log("DatabaseManager: Error hiding subreddit:", error);
+            errorOccurred("Failed to hide subreddit: " + error);
+            return false;
+        }
+    }
+    
+    function unhideDefaultSubreddit(subredditName) {
+        if (!initialized) {
+            console.log("DatabaseManager: Database not initialized");
+            errorOccurred("Database not initialized");
+            return false;
+        }
+        
+        try {
+            var success = false;
+            db.transaction(function(tx) {
+                var result = tx.executeSql(
+                    'DELETE FROM hidden_subreddits WHERE subreddit_name = ?',
+                    [subredditName]
+                );
+                success = result.rowsAffected > 0;
+            });
+            
+            if (success) {
+                console.log("DatabaseManager: Unhidden default subreddit:", subredditName);
+            }
+            return success;
+            
+        } catch (error) {
+            console.log("DatabaseManager: Error unhiding subreddit:", error);
+            errorOccurred("Failed to unhide subreddit: " + error);
+            return false;
+        }
+    }
+    
+    function isSubredditHidden(subredditName) {
+        if (!initialized) return false;
+        
+        var isHidden = false;
+        try {
+            db.readTransaction(function(tx) {
+                var result = tx.executeSql(
+                    'SELECT id FROM hidden_subreddits WHERE subreddit_name = ?',
+                    [subredditName]
+                );
+                isHidden = result.rows.length > 0;
+            });
+        } catch (error) {
+            console.log("DatabaseManager: Error checking if subreddit is hidden:", error);
+        }
+        
+        return isHidden;
+    }
+    
+    function getHiddenSubreddits() {
+        if (!initialized) return [];
+        
+        var hiddenList = [];
+        try {
+            db.readTransaction(function(tx) {
+                var result = tx.executeSql(
+                    'SELECT subreddit_name FROM hidden_subreddits ORDER BY date_hidden DESC'
+                );
+                
+                for (var i = 0; i < result.rows.length; i++) {
+                    hiddenList.push(result.rows.item(i).subreddit_name);
+                }
+            });
+        } catch (error) {
+            console.log("DatabaseManager: Error loading hidden subreddits:", error);
+        }
+        
+        return hiddenList;
     }
 }

@@ -48,6 +48,7 @@ ApplicationWindow {
     property bool isMultiSubredditMode: false
     property var selectedSubreddits: []
     property var subredditSources: ({}) // Maps meme IDs to their source subreddit
+    property bool useDefaultMultiFeed: true // Show combined feed from all subreddits by default
     
     // Bookmark properties
     property var bookmarkedMemes: []
@@ -250,6 +251,8 @@ ApplicationWindow {
         onSubredditSelected: {
             console.log("Main: Subreddit selected:", subreddit);
             root.selectedSubreddit = subreddit;
+            root.isMultiSubredditMode = false; // Switch to single subreddit mode
+            root.useDefaultMultiFeed = false; // Disable default multi-feed
             refreshMemes();
         }
         
@@ -276,6 +279,8 @@ ApplicationWindow {
         onUseSubreddit: {
             console.log("Main: Using subreddit:", subredditName);
             root.selectedSubreddit = subredditName;
+            root.isMultiSubredditMode = false; // Switch to single subreddit mode
+            root.useDefaultMultiFeed = false; // Disable default multi-feed
             manageDialog.close();
             refreshMemes();
         }
@@ -445,13 +450,21 @@ ApplicationWindow {
     }
 
     function refreshMemes() {
-        console.log("Main: Refreshing memes for subreddit:", root.selectedSubreddit);
+        console.log("Main: Refreshing memes");
         memeGrid.clearMemes();
         memeGrid.clearError();
         memeGrid.isLoading = true;
         appHeader.isLoading = true;
-        root.isMultiSubredditMode = false;
-        memeAPI.fetchMemes(root.selectedSubreddit);
+        
+        // Maintain multi-feed mode if active, otherwise load single subreddit
+        if (root.isMultiSubredditMode && root.selectedSubreddits.length > 0) {
+            console.log("Main: Refreshing multi-feed with", root.selectedSubreddits.length, "subreddits");
+            memeAPI.fetchMultipleSubreddits(root.selectedSubreddits);
+        } else {
+            console.log("Main: Refreshing single subreddit:", root.selectedSubreddit);
+            root.isMultiSubredditMode = false;
+            memeAPI.fetchMemes(root.selectedSubreddit);
+        }
     }
 
     function loadMoreMemes() {
@@ -471,6 +484,52 @@ ApplicationWindow {
         memeGrid.isLoading = true;
         appHeader.isLoading = true;
         memeAPI.fetchMultipleSubreddits(root.selectedSubreddits);
+    }
+    
+    function loadDefaultMultiFeed() {
+        console.log("Main: Loading default multi-feed from all subreddits");
+        
+        // Get all subreddit names from the category map
+        var allSubreddits = [];
+        for (var category in root.categoryMap) {
+            var subreddit = root.categoryMap[category];
+            if (allSubreddits.indexOf(subreddit) === -1) {
+                allSubreddits.push(subreddit);
+            }
+        }
+        
+        // Add custom subreddits
+        for (var i = 0; i < root.customSubreddits.length; i++) {
+            var customSub = root.customSubreddits[i].subredditName;
+            if (allSubreddits.indexOf(customSub) === -1) {
+                allSubreddits.push(customSub);
+            }
+        }
+        
+        console.log("Main: Default multi-feed includes", allSubreddits.length, "subreddits");
+        
+        // Select top subreddits for better performance (limit to 10-12 popular ones)
+        var popularSubreddits = [
+            "memes",
+            "dankmemes", 
+            "wholesomememes",
+            "funny",
+            "ProgrammerHumor",
+            "meirl",
+            "AnimeMemes",
+            "HistoryMemes",
+            "2meirl4meirl",
+            "PrequelMemes"
+        ];
+        
+        // Add any custom subreddits
+        for (var j = 0; j < root.customSubreddits.length; j++) {
+            popularSubreddits.push(root.customSubreddits[j].subredditName);
+        }
+        
+        root.selectedSubreddits = popularSubreddits;
+        root.isMultiSubredditMode = true;
+        loadMultiSubredditMemes();
     }
 
     function navigateToMeme(index) {
@@ -551,8 +610,14 @@ ApplicationWindow {
         // Load bookmarks
         loadBookmarks();
         
-        // Load initial memes
-        refreshMemes();
+        // Load initial memes - use default multi-feed or single subreddit
+        if (root.useDefaultMultiFeed) {
+            console.log("Main: Loading default combined multi-feed");
+            loadDefaultMultiFeed();
+        } else {
+            console.log("Main: Loading single subreddit:", root.selectedSubreddit);
+            refreshMemes();
+        }
         
         console.log("Main: Initial setup complete");
     }

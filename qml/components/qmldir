@@ -4,6 +4,7 @@ SubredditSelectionDialog 1.0 SubredditSelectionDialog.qml
 ManageSubredditsDialog 1.0 ManageSubredditsDialog.qml
 MultiSubredditDialog 1.0 MultiSubredditDialog.qml
 BookmarksDialog 1.0 BookmarksDialog.qml
+DefaultSubredditsDialog 1.0 DefaultSubredditsDialog.qml
 FullscreenImageViewer 1.0 FullscreenImageViewer.qml
 MemeGridView 1.0 MemeGridView.qml
 AppHeader 1.0 AppHeader.qml

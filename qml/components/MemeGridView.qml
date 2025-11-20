@@ -45,7 +45,7 @@ Item {
         anchors.fill: parent
         anchors.margins: units.gu(2)
         
-        cellWidth: width <= units.gu(80) ? width : width / 2
+        cellWidth: width <= units.gu(80) ? width : width / 3
         cellHeight: cellWidth * 1.5
       
         model: MemeModel {

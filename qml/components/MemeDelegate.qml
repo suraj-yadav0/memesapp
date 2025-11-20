@@ -130,9 +130,9 @@ UbuntuShape {
             id: titleSection
             anchors.top: topBar.bottom
             width: parent.width
-            height: titleLabel.height + units.gu(2)
+            height:  units.gu(8)
              border.color: memeDelegate.darkMode ? "#333333" : "#DDDDDD" // This title card is not working
-            color: memeDelegate.darkMode ? "#000000" : "#FFFFFF"
+            color: memeDelegate.darkMode ? "#333333" : "#E0E0E0"
             z: 9
 
             Label {
@@ -142,13 +142,13 @@ UbuntuShape {
                 anchors.rightMargin: units.gu(1.5)
                 anchors.topMargin: units.gu(1)
                 anchors.bottomMargin: units.gu(1)
-                text: "Hekko"
+                text: memeDelegate.memeTitle
                 font.bold: true
                 fontSize: units.gu(1.5)
-                wrapMode: Text.WordWrap
-                color: memeDelegate.darkMode ? "#FFFFFF" : "#000000"
+              //  wrapMode: Text.WordWrap
+                color: memeDelegate.darkMode ? '#d11111' : '#470404'
                 maximumLineCount: 3
-                elide: Text.ElideRight
+               
             }
         }
 
@@ -159,9 +159,8 @@ UbuntuShape {
             anchors.bottom: bottomBar.top
             anchors.left: parent.left
             anchors.right: parent.right
-            height: Image.height
              border.color: memeDelegate.darkMode ? "#333333" : "#DDDDDD"
-            color: memeDelegate.darkMode ? "#000000" : "#FFFFFF"
+           color: memeDelegate.darkMode ? "#000000" : "#FFFFFF"
             clip: true
 
             Image {

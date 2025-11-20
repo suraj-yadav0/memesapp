@@ -29,6 +29,8 @@ UbuntuShape {
     property bool darkMode: false
     property string memeTitle: model.title || "Untitled"
     property string memeImage: model.image || ""
+    property string postType: model.postType || "image"
+    property string selftext: model.selftext || ""
     property int memeUpvotes: model.upvotes || 0
     property int memeComments: model.comments || 0
     property string memeSubreddit: model.subreddit || ""
@@ -288,24 +290,32 @@ UbuntuShape {
                         }
                     }
 
-                    // Optional text content placeholder
+                    // Text content for text posts
                     Rectangle {
                         width: parent.width
-                        height: textLabel.height + units.gu(1.5)
+                        height: {
+                            if (memeDelegate.postType === "text" && memeDelegate.selftext !== "") {
+                                // For text-only posts, use much more space
+                                return Math.max(units.gu(30), Math.min(units.gu(60), textLabel.contentHeight + units.gu(3)));
+                            }
+                            return 0;
+                        }
                         color: "transparent"
-                        visible: false // Set to true if you want to show additional text
+                        visible: memeDelegate.postType === "text" && memeDelegate.selftext !== ""
                         
                         Label {
                             id: textLabel
                             anchors.fill: parent
                             anchors.leftMargin: units.gu(1.5)
                             anchors.rightMargin: units.gu(1.5)
-                            anchors.topMargin: units.gu(0.5)
+                            anchors.topMargin: units.gu(1)
                             anchors.bottomMargin: units.gu(1)
-                            text: "How's everyone else doing?"
+                            text: memeDelegate.selftext
                             fontSize: "medium"
                             color: memeDelegate.darkMode ? "#D7DADC" : "#1C1C1C"
-                            wrapMode: Text.WordWrap
+                            wrapMode: Text.Wrap
+                            elide: Text.ElideNone
+                            verticalAlignment: Text.AlignTop
                         }
                     }
 
@@ -315,6 +325,7 @@ UbuntuShape {
                         height: Math.min(memeImage.sourceSize.height * (parent.width / Math.max(memeImage.sourceSize.width, 1)), units.gu(80))
                         color: memeDelegate.darkMode ? "#000000" : "#F6F7F8"
                         clip: true
+                        visible: memeDelegate.postType === "image" && memeDelegate.memeImage !== ""
 
                         Image {
                             id: memeImage

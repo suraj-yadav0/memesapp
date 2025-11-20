@@ -42,6 +42,8 @@ ListModel {
             id: meme.id || "",
             title: meme.title || "Untitled",
             image: meme.image || "",
+            postType: meme.postType || "image",
+            selftext: meme.selftext || "",
             upvotes: meme.upvotes || 0,
             comments: meme.comments || 0,
             subreddit: meme.subreddit || "",

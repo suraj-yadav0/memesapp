@@ -79,12 +79,17 @@ QtObject {
                         for (var i = 0; i < posts.length; i++) {
                             var post = posts[i].data;
 
-                            // Check for images (including imgur, i.redd.it, etc.)
-                            if (isImagePost(post)) {
+                            // Include both image and text posts
+                            var isImage = isImagePost(post);
+                            var isText = isTextPost(post);
+                            
+                            if (isImage || isText) {
                                 var meme = {
                                     id: post.id,
                                     title: post.title,
-                                    image: post.url,
+                                    image: isImage ? post.url : "",
+                                    postType: isImage ? "image" : "text",
+                                    selftext: isText ? post.selftext : "",
                                     upvotes: post.ups || 0,
                                     comments: post.num_comments || 0,
                                     subreddit: post.subreddit,
@@ -97,7 +102,7 @@ QtObject {
                             }
                         }
 
-                        console.log("MemeAPI: Processed", memes.length, "image posts");
+                        console.log("MemeAPI: Processed", memes.length, "posts (image and text)");
                         memesLoaded(memes);
                     } catch (e) {
                         console.log("MemeAPI: Error parsing JSON:", e);
@@ -142,6 +147,24 @@ QtObject {
 
         // Known image hosts
         if (url.includes("i.redd.it") || url.includes("i.imgur.com") || url.includes("imgur.com/") || url.includes("preview.redd.it")) {
+            return true;
+        }
+
+        return false;
+    }
+
+    function isTextPost(post) {
+        if (!post) {
+            return false;
+        }
+
+        // Check if post is a self post (text post)
+        if (post.is_self === true) {
+            return true;
+        }
+
+        // Additional check for post_hint
+        if (post.post_hint === "self") {
             return true;
         }
 
@@ -224,11 +247,17 @@ QtObject {
                         var subredditMemes = [];
                         for (var j = 0; j < posts.length; j++) {
                             var post = posts[j].data;
-                            if (isImagePost(post)) {
+                            
+                            var isImage = isImagePost(post);
+                            var isText = isTextPost(post);
+                            
+                            if (isImage || isText) {
                                 var meme = {
                                     id: post.id,
                                     title: post.title,
-                                    image: post.url,
+                                    image: isImage ? post.url : "",
+                                    postType: isImage ? "image" : "text",
+                                    selftext: isText ? post.selftext : "",
                                     upvotes: post.ups,
                                     comments: post.num_comments,
                                     subreddit: post.subreddit,

@@ -37,6 +37,7 @@ Item {
     signal loadMore()
     signal refreshRequested()
     signal bookmarkToggled(var meme, bool bookmark)
+    signal backRequested() // New signal for back button
     
     // GridView
     GridView {
@@ -73,6 +74,11 @@ Item {
             onBookmarkToggled: {
                 console.log("MemeGridView: Bookmark toggled for:", meme.title);
                 memeGridView.bookmarkToggled(meme, bookmark);
+            }
+            
+            onBackRequested: {
+                console.log("MemeGridView: Back button pressed");
+                memeGridView.backRequested();
             }
         }
         

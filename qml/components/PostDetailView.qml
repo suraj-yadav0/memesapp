@@ -43,6 +43,16 @@ Dialog {
     
     property bool isLoadingComments: false
     property var commentsModel: []
+    
+    // Rainbow indentation colors
+    property var indentationColors: [
+        "#E74C3C", // Red
+        "#E67E22", // Orange
+        "#F1C40F", // Yellow
+        "#2ECC71", // Green
+        "#3498DB", // Blue
+        "#9B59B6"  // Purple
+    ]
 
     signal closed()
     signal imageClicked(string url)
@@ -227,7 +237,8 @@ Dialog {
 
             delegate: Item {
                 width: parent.width
-                height: commentColumn.height + units.gu(2)
+                // Ensure minimum height for avatar and dynamic height for content
+                height: Math.max(commentContentRow.height, units.gu(5)) + units.gu(1)
                 
                 // Indentation line
                 Row {
@@ -237,52 +248,83 @@ Dialog {
                     Repeater {
                         model: modelData.depth
                         Rectangle {
-                            width: units.gu(2)
+                            width: units.gu(1.5) // Reduced indentation width
                             height: parent.height
                             color: "transparent"
                             
                             Rectangle {
-                                width: 1
+                                width: 2 // Slightly thicker line
                                 height: parent.height
-                                color: theme.palette.normal.base
+                                color: postDetailView.indentationColors[index % postDetailView.indentationColors.length]
                                 anchors.right: parent.right
-                                opacity: 0.5
+                                opacity: 0.6
                             }
                         }
                     }
                     
                     // Comment Content
-                    Column {
-                        id: commentColumn
-                        width: parent.width - (modelData.depth * units.gu(2)) - units.gu(2)
+                    Row {
+                        id: commentContentRow
+                        width: parent.width - (modelData.depth * units.gu(1.5)) - units.gu(1)
                         anchors.verticalCenter: parent.verticalCenter
-                        spacing: units.gu(0.5)
-                        
-                        // Author Row
-                        Row {
-                            spacing: units.gu(1)
-                            Label {
-                                text: modelData.author
-                                font.bold: true
-                                font.pixelSize: units.gu(1.5)
-                                color: theme.palette.normal.foregroundText
-                                opacity: 0.8
-                            }
+                        spacing: units.gu(1)
+
+                        // Avatar
+                        Item {
+                            width: units.gu(4)
+                            height: units.gu(4)
+                            anchors.top: parent.top
                             
-                            Label {
-                                text: modelData.score + " points"
-                                font.pixelSize: units.gu(1.5)
-                                color: theme.palette.normal.foregroundText
-                                opacity: 0.6
+                            // Placeholder/Avatar
+                            Rectangle {
+                                anchors.fill: parent
+                                radius: width / 2
+                                color: theme.palette.normal.base
+                                clip: true
+                                
+                                // Default icon
+                                Icon {
+                                    anchors.centerIn: parent
+                                    width: parent.width * 0.6
+                                    height: parent.height * 0.6
+                                    name: "contact"
+                                    color: theme.palette.normal.foregroundText
+                                    opacity: 0.5
+                                }
                             }
                         }
-                        
-                        // Body
-                        Label {
-                            width: parent.width
-                            text: modelData.body
-                            wrapMode: Text.Wrap
-                            color: theme.palette.normal.foregroundText
+
+                        // Text Content
+                        Column {
+                            width: parent.width - units.gu(5)
+                            spacing: units.gu(0.5)
+                            
+                            // Author Row
+                            Row {
+                                spacing: units.gu(1)
+                                Label {
+                                    text: modelData.author
+                                    font.bold: true
+                                    font.pixelSize: units.gu(1.5)
+                                    color: theme.palette.normal.foregroundText
+                                    opacity: 0.8
+                                }
+                                
+                                Label {
+                                    text: modelData.score + " points"
+                                    font.pixelSize: units.gu(1.5)
+                                    color: theme.palette.normal.foregroundText
+                                    opacity: 0.6
+                                }
+                            }
+                            
+                            // Body
+                            Label {
+                                width: parent.width
+                                text: modelData.body
+                                wrapMode: Text.Wrap
+                                color: theme.palette.normal.foregroundText
+                            }
                         }
                     }
                 }

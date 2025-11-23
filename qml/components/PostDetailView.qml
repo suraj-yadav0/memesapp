@@ -319,11 +319,18 @@ Dialog {
                             }
                             
                             // Body
-                            Label {
+                            Text {
                                 width: parent.width
-                                text: modelData.body
+                                text: modelData.body_html || modelData.body
+                                textFormat: Text.RichText
                                 wrapMode: Text.Wrap
                                 color: theme.palette.normal.foregroundText
+                                linkColor: theme.palette.normal.focus
+                                
+                                onLinkActivated: {
+                                    console.log("Link clicked:", link);
+                                    Qt.openUrlExternally(link);
+                                }
                             }
                         }
                     }

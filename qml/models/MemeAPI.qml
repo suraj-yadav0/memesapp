@@ -377,6 +377,7 @@ QtObject {
                     id: data.id,
                     author: data.author,
                     body: data.body,
+                    body_html: unescapeHtml(data.body_html || ""),
                     score: data.ups,
                     created_utc: data.created_utc,
                     depth: depth,
@@ -389,5 +390,15 @@ QtObject {
                 }
             }
         }
+    }
+
+    function unescapeHtml(safe) {
+        if (!safe) return "";
+        return safe
+            .replace(/&amp;/g, "&")
+            .replace(/&lt;/g, "<")
+            .replace(/&gt;/g, ">")
+            .replace(/&quot;/g, "\"")
+            .replace(/&#039;/g, "'");
     }
 }

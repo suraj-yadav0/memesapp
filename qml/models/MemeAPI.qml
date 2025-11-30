@@ -105,13 +105,16 @@ QtObject {
                             // Include both image and text posts
                             var isImage = isImagePost(post);
                             var isText = isTextPost(post);
+                            var isGallery = isGalleryPost(post);
                             
-                            if (isImage || isText) {
+                            if (isImage || isText || isGallery) {
+                                var galleryImages = isGallery ? getGalleryImages(post) : [];
                                 var meme = {
                                     id: post.id,
                                     title: post.title,
-                                    image: isImage ? post.url : "",
-                                    postType: isImage ? "image" : "text",
+                                    image: isImage ? post.url : (isGallery && galleryImages.length > 0 ? galleryImages[0] : ""),
+                                    images: galleryImages,
+                                    postType: isGallery ? "gallery" : (isImage ? "image" : "text"),
                                     selftext: isText ? post.selftext : "",
                                     selftext_html: isText ? (post.selftext_html || "") : "",
                                     upvotes: post.ups || 0,
@@ -193,6 +196,35 @@ QtObject {
         }
 
         return false;
+    }
+
+    function isGalleryPost(post) {
+        if (!post) return false;
+        return post.is_gallery === true || (post.gallery_data && post.media_metadata);
+    }
+
+    function getGalleryImages(post) {
+        var images = [];
+        if (post.gallery_data && post.gallery_data.items && post.media_metadata) {
+            var items = post.gallery_data.items;
+            for (var i = 0; i < items.length; i++) {
+                var mediaId = items[i].media_id;
+                var media = post.media_metadata[mediaId];
+                if (media && media.s) {
+                    var url = "";
+                    if (media.s.u) {
+                        url = media.s.u.replace(/&amp;/g, "&");
+                    } else if (media.s.gif) {
+                        url = media.s.gif.replace(/&amp;/g, "&");
+                    }
+                    
+                    if (url !== "") {
+                        images.push(url);
+                    }
+                }
+            }
+        }
+        return images;
     }
 
     function cancelCurrentRequest() {
@@ -292,13 +324,16 @@ QtObject {
                             
                             var isImage = isImagePost(post);
                             var isText = isTextPost(post);
+                            var isGallery = isGalleryPost(post);
                             
-                            if (isImage || isText) {
+                            if (isImage || isText || isGallery) {
+                                var galleryImages = isGallery ? getGalleryImages(post) : [];
                                 var meme = {
                                     id: post.id,
                                     title: post.title,
-                                    image: isImage ? post.url : "",
-                                    postType: isImage ? "image" : "text",
+                                    image: isImage ? post.url : (isGallery && galleryImages.length > 0 ? galleryImages[0] : ""),
+                                    images: galleryImages,
+                                    postType: isGallery ? "gallery" : (isImage ? "image" : "text"),
                                     selftext: isText ? post.selftext : "",
                                     upvotes: post.ups,
                                     comments: post.num_comments,

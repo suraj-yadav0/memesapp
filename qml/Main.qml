@@ -822,6 +822,7 @@ MainView {
                                 postDetailView.postSelfText = meme.selftext;
                                 postDetailView.postSelfTextHtml = meme.selftext_html || "";
                                 postDetailView.postType = meme.postType;
+                                postDetailView.postImages = meme.images || [];
                                 postDetailView.postPermalink = meme.permalink;
                                 
                                 postDetailView.commentsModel = [];

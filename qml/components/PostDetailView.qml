@@ -33,6 +33,7 @@ Dialog {
     property string postId: ""
     property string postTitle: ""
     property string postImage: ""
+    property var postImages: []
     property string postAuthor: ""
     property string postSubreddit: ""
     property int postUpvotes: 0
@@ -234,7 +235,7 @@ Dialog {
                             lineHeight: 1.2
                         }
 
-                        // Post Content (Image or Text)
+                        // Post Content (Image, Gallery or Text)
                         Item {
                             width: parent.width
                             height: {
@@ -244,12 +245,14 @@ Dialog {
                                         return Math.min(width / Math.max(aspectRatio, 0.5), units.gu(50));
                                     }
                                     return units.gu(30);
+                                } else if (postDetailView.postType === "gallery" && postDetailView.postImages.length > 0) {
+                                    return units.gu(40); // Fixed height for gallery
                                 } else if (postDetailView.postType === "text" && postDetailView.postSelfText !== "") {
                                     return selfTextLabel.contentHeight + units.gu(3);
                                 }
                                 return 0;
                             }
-                            visible: postDetailView.postImage !== "" || postDetailView.postSelfText !== ""
+                            visible: postDetailView.postImage !== "" || postDetailView.postSelfText !== "" || (postDetailView.postType === "gallery" && postDetailView.postImages.length > 0)
 
                             // Image Content
                             Rectangle {
@@ -281,6 +284,71 @@ Dialog {
                                     height: units.gu(6)
                                     accentColor: "#FF4500"
                                     darkMode: postDetailView.darkMode
+                                }
+                            }
+
+                            // Gallery Content
+                            Rectangle {
+                                anchors.fill: parent
+                                color: postDetailView.darkMode ? "#0D0D0D" : "#F8F9FA"
+                                visible: postDetailView.postType === "gallery" && postDetailView.postImages.length > 0
+
+                                ListView {
+                                    id: detailGalleryView
+                                    anchors.fill: parent
+                                    orientation: ListView.Horizontal
+                                    snapMode: ListView.SnapOneItem
+                                    highlightRangeMode: ListView.StrictlyEnforceRange
+                                    model: postDetailView.postImages
+                                    
+                                    delegate: Item {
+                                        width: detailGalleryView.width
+                                        height: detailGalleryView.height
+                                        
+                                        Image {
+                                            id: detailGalleryImage
+                                            anchors.fill: parent
+                                            source: modelData
+                                            fillMode: Image.PreserveAspectFit
+                                            asynchronous: true
+                                            cache: true
+                                            
+                                            MouseArea {
+                                                anchors.fill: parent
+                                                onClicked: postDetailView.imageClicked(modelData)
+                                            }
+                                        }
+                                        
+                                        RedditLoadingAnimation {
+                                            anchors.centerIn: parent
+                                            running: detailGalleryImage.status === Image.Loading
+                                            visible: running
+                                            width: units.gu(6)
+                                            height: units.gu(6)
+                                            accentColor: "#FF4500"
+                                            darkMode: postDetailView.darkMode
+                                        }
+                                    }
+                                }
+                                
+                                // Gallery Page Indicator
+                                Rectangle {
+                                    anchors.bottom: parent.bottom
+                                    anchors.right: parent.right
+                                    anchors.margins: units.gu(1)
+                                    width: detailPageIndicatorLabel.width + units.gu(2)
+                                    height: units.gu(3)
+                                    radius: units.gu(1.5)
+                                    color: "#80000000"
+                                    
+                                    Label {
+                                        id: detailPageIndicatorLabel
+                                        anchors.centerIn: parent
+                                        text: (detailGalleryView.currentIndex + 1) + "/" + postDetailView.postImages.length
+                                        color: "white"
+                                        fontSize: "small"
+                                        font.bold: true
+                                    }
                                 }
                             }
 

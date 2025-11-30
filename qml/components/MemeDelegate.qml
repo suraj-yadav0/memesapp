@@ -29,6 +29,7 @@ Item {
     property bool darkMode: false
     property string memeTitle: model.title || "Untitled"
     property string memeImage: model.image || ""
+    property var memeImages: model.images || []
     property string postType: model.postType || "image"
     property string selftext: model.selftext || ""
     property int memeUpvotes: model.upvotes || 0
@@ -317,23 +318,26 @@ Item {
                 }
             }
 
-            // Image container - Adaptive sizing
+            // Image/Gallery container - Adaptive sizing
             Item {
                 id: imageContainer
                 width: parent.width
                 height: {
-                    if (memeDelegate.postType !== "image" || memeDelegate.memeImage === "") {
-                        return 0;
+                    if (memeDelegate.postType === "image" && memeDelegate.memeImage !== "") {
+                        if (memeImageLoader.status === Image.Ready) {
+                            var aspectRatio = memeImageLoader.sourceSize.width / Math.max(memeImageLoader.sourceSize.height, 1);
+                            var calculatedHeight = (width / Math.max(aspectRatio, 0.3));
+                            // Clamp: min 15gu for very wide images, max 60gu for very tall images
+                            return Math.max(units.gu(15), Math.min(calculatedHeight, units.gu(60)));
+                        }
+                        return units.gu(25); // Default placeholder height
+                    } else if (memeDelegate.postType === "gallery" && memeDelegate.memeImages.length > 0) {
+                        return units.gu(40); // Fixed height for gallery
                     }
-                    if (memeImageLoader.status === Image.Ready) {
-                        var aspectRatio = memeImageLoader.sourceSize.width / Math.max(memeImageLoader.sourceSize.height, 1);
-                        var calculatedHeight = (width / Math.max(aspectRatio, 0.3));
-                        // Clamp: min 15gu for very wide images, max 60gu for very tall images
-                        return Math.max(units.gu(15), Math.min(calculatedHeight, units.gu(60)));
-                    }
-                    return units.gu(25); // Default placeholder height
+                    return 0;
                 }
-                visible: memeDelegate.postType === "image" && memeDelegate.memeImage !== ""
+                visible: (memeDelegate.postType === "image" && memeDelegate.memeImage !== "") || 
+                         (memeDelegate.postType === "gallery" && memeDelegate.memeImages.length > 0)
                 clip: true
 
                 Rectangle {
@@ -341,16 +345,17 @@ Item {
                     color: memeDelegate.darkMode ? "#0D0D0D" : "#F8F9FA"
                 }
 
+                // Single Image View
                 Image {
                     id: memeImageLoader
                     anchors.centerIn: parent
                     width: parent.width
                     height: parent.height
-                    source: memeDelegate.memeImage
+                    source: memeDelegate.postType === "image" ? memeDelegate.memeImage : ""
                     fillMode: Image.PreserveAspectFit
                     asynchronous: true
                     cache: true
-                    visible: status === Image.Ready
+                    visible: memeDelegate.postType === "image" && status === Image.Ready
 
                     MouseArea {
                         anchors.fill: parent
@@ -360,11 +365,75 @@ Item {
                     }
                 }
 
-                // Loading indicator with shimmer effect
+                // Gallery View
+                ListView {
+                    id: galleryView
+                    anchors.fill: parent
+                    orientation: ListView.Horizontal
+                    snapMode: ListView.SnapOneItem
+                    highlightRangeMode: ListView.StrictlyEnforceRange
+                    visible: memeDelegate.postType === "gallery"
+                    model: memeDelegate.memeImages
+                    
+                    delegate: Item {
+                        width: galleryView.width
+                        height: galleryView.height
+                        
+                        Image {
+                            id: galleryImage
+                            anchors.fill: parent
+                            source: modelData
+                            fillMode: Image.PreserveAspectFit
+                            asynchronous: true
+                            cache: true
+                            
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: {
+                                    memeDelegate.imageClicked(modelData);
+                                }
+                            }
+                        }
+                        
+                        // Loading indicator for gallery item
+                        RedditLoadingAnimation {
+                            anchors.centerIn: parent
+                            running: galleryImage.status === Image.Loading
+                            width: units.gu(6)
+                            height: units.gu(6)
+                            accentColor: "#FF4500"
+                            darkMode: memeDelegate.darkMode
+                            visible: galleryImage.status === Image.Loading
+                        }
+                    }
+                }
+                
+                // Gallery Page Indicator
+                Rectangle {
+                    anchors.bottom: parent.bottom
+                    anchors.right: parent.right
+                    anchors.margins: units.gu(1)
+                    width: pageIndicatorLabel.width + units.gu(2)
+                    height: units.gu(3)
+                    radius: units.gu(1.5)
+                    color: "#80000000"
+                    visible: memeDelegate.postType === "gallery"
+                    
+                    Label {
+                        id: pageIndicatorLabel
+                        anchors.centerIn: parent
+                        text: (galleryView.currentIndex + 1) + "/" + memeDelegate.memeImages.length
+                        color: "white"
+                        fontSize: "small"
+                        font.bold: true
+                    }
+                }
+
+                // Loading indicator with shimmer effect (for single image)
                 Rectangle {
                     anchors.fill: parent
                     color: memeDelegate.darkMode ? "#1A1A1A" : "#F0F0F0"
-                    visible: memeImageLoader.status === Image.Loading
+                    visible: memeDelegate.postType === "image" && memeImageLoader.status === Image.Loading
 
                     RedditLoadingAnimation {
                         anchors.centerIn: parent
@@ -388,7 +457,7 @@ Item {
                 Rectangle {
                     anchors.fill: parent
                     color: memeDelegate.darkMode ? "#1A1A1A" : "#F5F5F5"
-                    visible: memeImageLoader.status === Image.Error
+                    visible: memeDelegate.postType === "image" && memeImageLoader.status === Image.Error
 
                     Column {
                         anchors.centerIn: parent

@@ -223,17 +223,19 @@ MainView {
                         anchors.centerIn: parent
                         spacing: units.gu(1)
                         
-                        // App icon placeholder
+                        // App icon
                         Rectangle {
                             width: units.gu(4)
                             height: units.gu(4)
                             radius: units.gu(2)
                             color: "white"
                             
-                            Label {
+                            Icon {
                                 anchors.centerIn: parent
-                                text: "📱"
-                                font.pixelSize: units.gu(2)
+                                width: units.gu(2.5)
+                                height: units.gu(2.5)
+                                name: "stock_image"
+                                color: root.accentColor
                             }
                         }
                         
@@ -264,10 +266,12 @@ MainView {
                             radius: units.gu(1)
                             color: root.isMultiSubredditMode ? root.accentColor : root.cardColor
                             
-                            Label {
+                            Icon {
                                 anchors.centerIn: parent
-                                text: "🏠"
-                                font.pixelSize: units.gu(2.5)
+                                width: units.gu(2.5)
+                                height: units.gu(2.5)
+                                name: "home"
+                                color: root.isMultiSubredditMode ? "white" : root.textColor
                             }
                             
                             MouseArea {
@@ -286,10 +290,12 @@ MainView {
                             radius: units.gu(1)
                             color: root.cardColor
                             
-                            Label {
+                            Icon {
                                 anchors.centerIn: parent
-                                text: "📋"
-                                font.pixelSize: units.gu(2.5)
+                                width: units.gu(2.5)
+                                height: units.gu(2.5)
+                                name: "view-grid-symbolic"
+                                color: root.textColor
                             }
                             
                             MouseArea {
@@ -305,10 +311,12 @@ MainView {
                             radius: units.gu(1)
                             color: root.cardColor
                             
-                            Label {
+                            Icon {
                                 anchors.centerIn: parent
-                                text: "⭐"
-                                font.pixelSize: units.gu(2.5)
+                                width: units.gu(2.5)
+                                height: units.gu(2.5)
+                                name: "starred"
+                                color: root.textColor
                             }
                             
                             MouseArea {
@@ -327,10 +335,12 @@ MainView {
                             radius: units.gu(1)
                             color: root.cardColor
                             
-                            Label {
+                            Icon {
                                 anchors.centerIn: parent
-                                text: "⚙️"
-                                font.pixelSize: units.gu(2.5)
+                                width: units.gu(2.5)
+                                height: units.gu(2.5)
+                                name: "settings"
+                                color: root.textColor
                             }
                             
                             MouseArea {
@@ -528,10 +538,11 @@ MainView {
                             radius: units.gu(0.5)
                             color: menuMouseArea.pressed ? root.dividerColor : "transparent"
                             
-                            Label {
+                            Icon {
                                 anchors.centerIn: parent
-                                text: "☰"
-                                font.pixelSize: units.gu(2.5)
+                                width: units.gu(2.5)
+                                height: units.gu(2.5)
+                                name: "navigation-menu"
                                 color: root.textColor
                             }
                             
@@ -580,10 +591,12 @@ MainView {
                             radius: units.gu(0.5)
                             color: refreshMouseArea.pressed ? root.dividerColor : "transparent"
                             
-                            Label {
+                            Icon {
                                 anchors.centerIn: parent
-                                text: "🔄"
-                                font.pixelSize: units.gu(2)
+                                width: units.gu(2.2)
+                                height: units.gu(2.2)
+                                name: "reload"
+                                color: root.textColor
                             }
                             
                             MouseArea {
@@ -601,10 +614,12 @@ MainView {
                             radius: units.gu(0.5)
                             color: multiFeedMouseArea.pressed ? root.dividerColor : "transparent"
                             
-                            Label {
+                            Icon {
                                 anchors.centerIn: parent
-                                text: "📋"
-                                font.pixelSize: units.gu(2)
+                                width: units.gu(2.2)
+                                height: units.gu(2.2)
+                                name: "view-grid-symbolic"
+                                color: root.textColor
                             }
                             
                             MouseArea {
@@ -622,10 +637,12 @@ MainView {
                             radius: units.gu(0.5)
                             color: bookmarkMouseArea.pressed ? root.dividerColor : "transparent"
                             
-                            Label {
+                            Icon {
                                 anchors.centerIn: parent
-                                text: "⭐"
-                                font.pixelSize: units.gu(2)
+                                width: units.gu(2.2)
+                                height: units.gu(2.2)
+                                name: "starred"
+                                color: root.textColor
                             }
                             
                             MouseArea {
@@ -646,10 +663,12 @@ MainView {
                             radius: units.gu(0.5)
                             color: settingsMouseArea.pressed ? root.dividerColor : "transparent"
                             
-                            Label {
+                            Icon {
                                 anchors.centerIn: parent
-                                text: "⚙️"
-                                font.pixelSize: units.gu(2)
+                                width: units.gu(2.2)
+                                height: units.gu(2.2)
+                                name: "settings"
+                                color: root.textColor
                             }
                             
                             MouseArea {
@@ -817,10 +836,11 @@ MainView {
                             radius: units.gu(0.5)
                             color: closeMouseArea.pressed ? root.dividerColor : "transparent"
                             
-                            Label {
+                            Icon {
                                 anchors.centerIn: parent
-                                text: "✕"
-                                font.pixelSize: units.gu(2)
+                                width: units.gu(2.2)
+                                height: units.gu(2.2)
+                                name: "close"
                                 color: root.textColor
                             }
                             

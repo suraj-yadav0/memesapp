@@ -23,18 +23,22 @@ import "components"
 import "models"
 import "services"
 
-ApplicationWindow {
+MainView {
     id: root
-    visible: true
-    title: "MemeStream"
-    width: 400
-    height: 600
-
-    Rectangle {
-        anchors.fill: parent
-        color: theme.name === "Ubuntu.Components.Themes.SuruDark" ? "black" : theme.palette.normal.background
-        z: -1
-    }
+    objectName: "mainView"
+    applicationName: "memesapp.surajyadav"
+    automaticOrientation: true
+    
+    width: units.gu(45)
+    height: units.gu(75)
+    
+    // Theme colors
+    readonly property color bgColor: darkMode ? "#0F0F0F" : "#F5F5F5"
+    readonly property color cardColor: darkMode ? "#1A1A1B" : "#FFFFFF"
+    readonly property color textColor: darkMode ? "#D7DADC" : "#1A1A1B"
+    readonly property color subtextColor: darkMode ? "#818384" : "#787C7E"
+    readonly property color accentColor: "#FF4500"
+    readonly property color dividerColor: darkMode ? "#343536" : "#EDEFF1"
 
     // Application properties
     property bool darkMode: false
@@ -131,12 +135,11 @@ ApplicationWindow {
             if (memes.length > 0) {
                 memeGrid.addMemes(memes);
                 memeGrid.isLoading = false;
-                appHeader.isLoading = false;
                 memeGrid.clearError();
                 refreshBookmarkStatus(); // Update bookmark status for new memes
             } else {
                 memeGrid.setError("No memes found for this subreddit");
-                appHeader.isLoading = false;
+                memeGrid.isLoading = false;
             }
         }
         
@@ -146,12 +149,11 @@ ApplicationWindow {
             if (memes.length > 0) {
                 memeGrid.addMemes(memes);
                 memeGrid.isLoading = false;
-                appHeader.isLoading = false;
                 memeGrid.clearError();
                 refreshBookmarkStatus(); // Update bookmark status for new memes
             } else {
                 memeGrid.setError("No memes found from selected subreddits");
-                appHeader.isLoading = false;
+                memeGrid.isLoading = false;
             }
         }
         
@@ -163,7 +165,7 @@ ApplicationWindow {
         onError: {
             console.log("Main: Error loading memes:", message);
             memeGrid.setError(message);
-            appHeader.isLoading = false;
+            memeGrid.isLoading = false;
         }
     }
 
@@ -174,93 +176,407 @@ ApplicationWindow {
         property alias darkMode: root.darkMode
     }
 
-    // Main layout
-    Page {
+    // Main layout with AdaptivePageLayout for convergence
+    AdaptivePageLayout {
+        id: adaptiveLayout
         anchors.fill: parent
         
-        // Application header
-        header: AppHeader {
-            id: appHeader
-            currentSubreddit: root.selectedSubreddit
-            isMultiSubredditMode: root.isMultiSubredditMode
-            currentSubreddits: root.selectedSubreddits
+        // Define layouts for different screen sizes
+        layouts: [
+            // Two-column layout for wide screens (desktop/tablet landscape)
+            PageColumnsLayout {
+                when: width > units.gu(80)
+                PageColumn {
+                    minimumWidth: units.gu(40)
+                    maximumWidth: units.gu(50)
+                    preferredWidth: units.gu(45)
+                }
+                PageColumn {
+                    fillWidth: true
+                }
+            },
+            // Single column for narrow screens (phone)
+            PageColumnsLayout {
+                when: true
+                PageColumn {
+                    fillWidth: true
+                    minimumWidth: units.gu(30)
+                }
+            }
+        ]
+        
+        // Primary page - Feed page
+        primaryPage: feedPage
+        
+        Page {
+            id: feedPage
             
-            onSubredditSelectionRequested: subredditDialog.open()
-            onManageSubredditsRequested: manageDialog.open()
-            onSettingsRequested: settingsDialog.open()
-            onRefreshRequested: refreshMemes()
-            onMultiSubredditSelectionRequested: multiSubredditDialog.open()
-            onBookmarksRequested: {
-                loadBookmarks();
-                bookmarksDialog.open();
+            // Background
+            Rectangle {
+                anchors.fill: parent
+                color: root.bgColor
+                z: -1
+            }
+            
+            header: PageHeader {
+                id: feedHeader
+                title: root.isMultiSubredditMode ? "Multi-Feed" : ("r/" + root.selectedSubreddit)
+                
+                StyleHints {
+                    backgroundColor: root.cardColor
+                    foregroundColor: root.textColor
+                }
+                
+                leadingActionBar.actions: [
+                    Action {
+                        iconName: "navigation-menu"
+                        text: "Subreddits"
+                        onTriggered: subredditDialog.open()
+                    }
+                ]
+                
+                trailingActionBar.actions: [
+                    Action {
+                        iconName: "reload"
+                        text: "Refresh"
+                        onTriggered: refreshMemes()
+                    },
+                    Action {
+                        iconName: "bookmark"
+                        text: "Bookmarks"
+                        onTriggered: {
+                            loadBookmarks();
+                            bookmarksDialog.open();
+                        }
+                    },
+                    Action {
+                        iconName: "settings"
+                        text: "Settings"
+                        onTriggered: settingsDialog.open()
+                    }
+                ]
+                
+                // Loading indicator
+                ActivityIndicator {
+                    anchors.right: parent.right
+                    anchors.rightMargin: units.gu(1)
+                    anchors.verticalCenter: parent.verticalCenter
+                    running: memeGrid.isLoading
+                    visible: running
+                }
+            }
+            
+            // Meme grid view
+            MemeGridView {
+                id: memeGrid
+                anchors.fill: parent
+                isMultiSubredditMode: root.isMultiSubredditMode
+                subredditSources: root.subredditSources
+                bookmarkStatus: root.bookmarkStatus
+                darkMode: root.darkMode
+                
+                onMemeClicked: {
+                    console.log("Main: Opening fullscreen viewer for meme:", index);
+                    root.currentMemeIndex = index;
+                    root.dialogImageSource = imageUrl;
+                    fullscreenViewer.imageSource = imageUrl;
+                    fullscreenViewer.currentIndex = index;
+                    fullscreenViewer.totalCount = memeGrid.count;
+                    fullscreenViewer.open();
+                }
+
+                onCommentClicked: {
+                    console.log("Main: Opening comments for meme index:", index);
+                    var meme = memeGrid.getMemeAt(index);
+                    if (meme) {
+                        // On wide screens, show in second column
+                        if (adaptiveLayout.columns > 1) {
+                            detailPage.loadMeme(meme);
+                            adaptiveLayout.addPageToNextColumn(feedPage, detailPage);
+                            memeAPI.fetchComments(meme.subreddit, meme.id);
+                        } else {
+                            // On narrow screens, use dialog
+                            postDetailView.postId = meme.id;
+                            postDetailView.postTitle = meme.title;
+                            postDetailView.postImage = meme.image;
+                            postDetailView.postAuthor = meme.author;
+                            postDetailView.postSubreddit = meme.subreddit;
+                            postDetailView.postUpvotes = meme.upvotes;
+                            postDetailView.postCommentCount = meme.comments;
+                            postDetailView.postSelfText = meme.selftext;
+                            postDetailView.postType = meme.postType;
+                            postDetailView.postPermalink = meme.permalink;
+                            
+                            postDetailView.commentsModel = [];
+                            postDetailView.open();
+                            
+                            memeAPI.fetchComments(meme.subreddit, meme.id);
+                        }
+                    }
+                }
+                
+                onBookmarkToggled: {
+                    console.log("Main: Bookmark toggled for meme:", meme.title, "bookmark:", bookmark);
+                    if (bookmark) {
+                        if (databaseManager.bookmarkMeme(meme)) {
+                            updateBookmarkStatus(meme.id, true);
+                        }
+                    } else {
+                        if (databaseManager.unbookmarkMeme(meme.id)) {
+                            updateBookmarkStatus(meme.id, false);
+                        }
+                    }
+                }
+                
+                onLoadMore: {
+                    if (!isLoading) {
+                        console.log("Main: Loading more memes");
+                        loadMoreMemes();
+                    }
+                }
+                
+                onRefreshRequested: {
+                    console.log("Main: Pull to refresh triggered");
+                    refreshMemes();
+                }
             }
         }
         
-        // Meme grid view
-        MemeGridView {
-            id: memeGrid
-            anchors.fill: parent
-            anchors.topMargin: appHeader.height
-            isMultiSubredditMode: root.isMultiSubredditMode
-            subredditSources: root.subredditSources
-            bookmarkStatus: root.bookmarkStatus
-            darkMode: root.darkMode
+        // Detail page for comments (shown in second column on wide screens)
+        Page {
+            id: detailPage
+            visible: false
             
-            onMemeClicked: {
-                console.log("Main: Opening fullscreen viewer for meme:", index);
-                root.currentMemeIndex = index;
-                root.dialogImageSource = imageUrl;
-                fullscreenViewer.imageSource = imageUrl;
-                fullscreenViewer.currentIndex = index;
-                fullscreenViewer.totalCount = memeGrid.count;
-                fullscreenViewer.open();
+            property string postId: ""
+            property string postTitle: ""
+            property string postImage: ""
+            property string postAuthor: ""
+            property string postSubreddit: ""
+            property int postUpvotes: 0
+            property int postCommentCount: 0
+            property string postSelfText: ""
+            property string postType: ""
+            property string postPermalink: ""
+            property var commentsModel: []
+            property bool isLoadingComments: false
+            
+            function loadMeme(meme) {
+                postId = meme.id;
+                postTitle = meme.title;
+                postImage = meme.image || "";
+                postAuthor = meme.author || "";
+                postSubreddit = meme.subreddit || "";
+                postUpvotes = meme.upvotes || 0;
+                postCommentCount = meme.comments || 0;
+                postSelfText = meme.selftext || "";
+                postType = meme.postType || "";
+                postPermalink = meme.permalink || "";
+                commentsModel = [];
+                isLoadingComments = true;
             }
-
-            onCommentClicked: {
-                console.log("Main: Opening comments for meme index:", index);
-                var meme = memeGrid.getMemeAt(index);
-                if (meme) {
-                    postDetailView.postId = meme.id;
-                    postDetailView.postTitle = meme.title;
-                    postDetailView.postImage = meme.image;
-                    postDetailView.postAuthor = meme.author;
-                    postDetailView.postSubreddit = meme.subreddit;
-                    postDetailView.postUpvotes = meme.upvotes;
-                    postDetailView.postCommentCount = meme.comments;
-                    postDetailView.postSelfText = meme.selftext;
-                    postDetailView.postType = meme.postType;
-                    postDetailView.postPermalink = meme.permalink;
-                    
-                    postDetailView.commentsModel = []; // Clear previous comments
-                    postDetailView.open();
-                    
-                    memeAPI.fetchComments(meme.subreddit, meme.id);
+            
+            // Background
+            Rectangle {
+                anchors.fill: parent
+                color: root.bgColor
+                z: -1
+            }
+            
+            header: PageHeader {
+                title: detailPage.postTitle
+                subtitle: "r/" + detailPage.postSubreddit
+                
+                StyleHints {
+                    backgroundColor: root.cardColor
+                    foregroundColor: root.textColor
                 }
-            }
-            
-            onBookmarkToggled: {
-                console.log("Main: Bookmark toggled for meme:", meme.title, "bookmark:", bookmark);
-                if (bookmark) {
-                    if (databaseManager.bookmarkMeme(meme)) {
-                        updateBookmarkStatus(meme.id, true);
+                
+                leadingActionBar.actions: [
+                    Action {
+                        iconName: "back"
+                        text: "Back"
+                        visible: adaptiveLayout.columns === 1
+                        onTriggered: adaptiveLayout.removePages(detailPage)
                     }
-                } else {
-                    if (databaseManager.unbookmarkMeme(meme.id)) {
-                        updateBookmarkStatus(meme.id, false);
+                ]
+            }
+            
+            // Detail content
+            Flickable {
+                anchors.fill: parent
+                contentHeight: detailColumn.height
+                clip: true
+                
+                Column {
+                    id: detailColumn
+                    width: parent.width
+                    spacing: units.gu(1)
+                    
+                    // Post image if exists
+                    Image {
+                        width: parent.width
+                        height: detailPage.postImage ? Math.min(width * 0.75, units.gu(40)) : 0
+                        source: detailPage.postImage
+                        fillMode: Image.PreserveAspectFit
+                        visible: detailPage.postImage !== ""
+                        
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: {
+                                fullscreenViewer.imageSource = detailPage.postImage;
+                                fullscreenViewer.currentIndex = -1;
+                                fullscreenViewer.totalCount = 1;
+                                fullscreenViewer.open();
+                            }
+                        }
                     }
+                    
+                    // Post info
+                    Rectangle {
+                        width: parent.width
+                        height: infoColumn.height + units.gu(2)
+                        color: root.cardColor
+                        
+                        Column {
+                            id: infoColumn
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            anchors.top: parent.top
+                            anchors.margins: units.gu(1.5)
+                            spacing: units.gu(1)
+                            
+                            // Title
+                            Label {
+                                width: parent.width
+                                text: detailPage.postTitle
+                                font.pixelSize: units.gu(2)
+                                font.weight: Font.Medium
+                                color: root.textColor
+                                wrapMode: Text.WordWrap
+                            }
+                            
+                            // Meta info
+                            Row {
+                                spacing: units.gu(2)
+                                
+                                Label {
+                                    text: "u/" + detailPage.postAuthor
+                                    font.pixelSize: units.gu(1.5)
+                                    color: root.accentColor
+                                }
+                                
+                                Label {
+                                    text: "↑ " + detailPage.postUpvotes
+                                    font.pixelSize: units.gu(1.5)
+                                    color: root.subtextColor
+                                }
+                                
+                                Label {
+                                    text: "💬 " + detailPage.postCommentCount
+                                    font.pixelSize: units.gu(1.5)
+                                    color: root.subtextColor
+                                }
+                            }
+                            
+                            // Self text if exists
+                            Label {
+                                width: parent.width
+                                text: detailPage.postSelfText
+                                font.pixelSize: units.gu(1.7)
+                                color: root.textColor
+                                wrapMode: Text.WordWrap
+                                visible: detailPage.postSelfText !== ""
+                            }
+                        }
+                    }
+                    
+                    // Comments section header
+                    Rectangle {
+                        width: parent.width
+                        height: units.gu(5)
+                        color: root.cardColor
+                        
+                        Row {
+                            anchors.verticalCenter: parent.verticalCenter
+                            anchors.left: parent.left
+                            anchors.leftMargin: units.gu(1.5)
+                            spacing: units.gu(1)
+                            
+                            Label {
+                                text: "Comments"
+                                font.pixelSize: units.gu(1.8)
+                                font.weight: Font.Medium
+                                color: root.textColor
+                            }
+                            
+                            ActivityIndicator {
+                                running: detailPage.isLoadingComments
+                                visible: running
+                            }
+                        }
+                    }
+                    
+                    // Comments list
+                    Repeater {
+                        model: detailPage.commentsModel
+                        
+                        delegate: Rectangle {
+                            width: detailColumn.width
+                            height: commentCol.height + units.gu(2)
+                            color: root.cardColor
+                            
+                            Column {
+                                id: commentCol
+                                anchors.left: parent.left
+                                anchors.right: parent.right
+                                anchors.top: parent.top
+                                anchors.margins: units.gu(1.5)
+                                anchors.leftMargin: units.gu(1.5) + (modelData.depth || 0) * units.gu(2)
+                                spacing: units.gu(0.5)
+                                
+                                Row {
+                                    spacing: units.gu(1)
+                                    
+                                    Label {
+                                        text: modelData.author || "[deleted]"
+                                        font.pixelSize: units.gu(1.4)
+                                        font.weight: Font.Medium
+                                        color: root.accentColor
+                                    }
+                                    
+                                    Label {
+                                        text: "• " + (modelData.score || 0) + " pts"
+                                        font.pixelSize: units.gu(1.3)
+                                        color: root.subtextColor
+                                    }
+                                }
+                                
+                                Label {
+                                    width: parent.width
+                                    text: modelData.body || ""
+                                    font.pixelSize: units.gu(1.6)
+                                    color: root.textColor
+                                    wrapMode: Text.WordWrap
+                                }
+                            }
+                            
+                            // Thread line
+                            Rectangle {
+                                visible: (modelData.depth || 0) > 0
+                                width: units.gu(0.3)
+                                height: parent.height
+                                x: units.gu(1) + ((modelData.depth || 1) - 1) * units.gu(2)
+                                color: {
+                                    var colors = ["#FF4500", "#0079D3", "#46D160", "#FFD700", "#9B59B6"];
+                                    return colors[((modelData.depth || 1) - 1) % colors.length];
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Bottom padding
+                    Item { width: 1; height: units.gu(4) }
                 }
-            }
-            
-            onLoadMore: {
-                if (!isLoading && !appHeader.isLoading) {
-                    console.log("Main: Loading more memes");
-                    loadMoreMemes();
-                }
-            }
-            
-            onRefreshRequested: {
-                console.log("Main: Pull to refresh triggered");
-                refreshMemes();
             }
         }
     }
@@ -392,12 +708,16 @@ ApplicationWindow {
         onCommentsLoaded: {
             console.log("Main: Comments loaded, count:", comments.length);
             postDetailView.commentsModel = comments;
+            detailPage.commentsModel = comments;
+            detailPage.isLoadingComments = false;
         }
         onCommentsLoadingStarted: {
             postDetailView.isLoadingComments = true;
+            detailPage.isLoadingComments = true;
         }
         onCommentsLoadingFinished: {
             postDetailView.isLoadingComments = false;
+            detailPage.isLoadingComments = false;
         }
     }
 
@@ -466,7 +786,6 @@ ApplicationWindow {
         memeGrid.clearMemes();
         memeGrid.clearError();
         memeGrid.isLoading = true;
-        appHeader.isLoading = true;
         
         // Maintain multi-feed mode if active, otherwise load single subreddit
         if (root.isMultiSubredditMode && root.selectedSubreddits.length > 0) {
@@ -494,7 +813,6 @@ ApplicationWindow {
         memeGrid.clearMemes();
         memeGrid.clearError();
         memeGrid.isLoading = true;
-        appHeader.isLoading = true;
         memeAPI.fetchMultipleSubreddits(root.selectedSubreddits);
     }
     

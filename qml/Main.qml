@@ -375,6 +375,7 @@ ApplicationWindow {
     // Post detail view for comments
     PostDetailView {
         id: postDetailView
+        darkMode: root.darkMode
         
         onImageClicked: {
             console.log("Main: Image clicked in comments view, opening fullscreen");

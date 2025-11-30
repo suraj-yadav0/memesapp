@@ -1224,6 +1224,7 @@ MainView {
         id: subredditDialog
         categoryNames: root.categoryNames
         extendedCategoryMap: root.extendedCategoryMap
+        darkMode: root.darkMode
         
         onSubredditSelected: {
             console.log("Main: Subreddit selected:", subreddit);

@@ -22,8 +22,11 @@ QtObject {
     // Signals
     signal memesLoaded(var memes)
     signal multiSubredditMemesLoaded(var memes, var subredditSources)
+    signal commentsLoaded(var comments)
     signal loadingStarted
     signal loadingFinished
+    signal commentsLoadingStarted
+    signal commentsLoadingFinished
     signal multiSubredditProgress(int completed, int total)
     signal error(string message)
 
@@ -316,5 +319,86 @@ QtObject {
         xhr.open("GET", url, true);
         xhr.setRequestHeader("User-Agent", userAgent);
         xhr.send();
+    }
+
+    function fetchComments(subreddit, articleId) {
+        console.log("MemeAPI: Fetching comments for", subreddit, articleId);
+        
+        commentsLoadingStarted();
+
+        var xhr = new XMLHttpRequest();
+        var url = "https://www.reddit.com/r/" + subreddit + "/comments/" + articleId + ".json";
+
+        xhr.open("GET", url, true);
+        xhr.setRequestHeader("User-Agent", userAgent);
+
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === XMLHttpRequest.DONE) {
+                commentsLoadingFinished();
+
+                if (xhr.status === 200) {
+                    try {
+                        var json = JSON.parse(xhr.responseText);
+                        // json[0] is the post, json[1] is the comments
+                        if (json.length > 1 && json[1].data && json[1].data.children) {
+                            var comments = [];
+                            flattenComments(json[1].data.children, 0, comments);
+                            console.log("MemeAPI: Processed", comments.length, "comments");
+                            commentsLoaded(comments);
+                        } else {
+                            console.log("MemeAPI: No comments found or invalid format");
+                            commentsLoaded([]);
+                        }
+                    } catch (e) {
+                        console.log("MemeAPI: Error parsing comments JSON:", e);
+                        error("Failed to parse comments: " + e.toString());
+                    }
+                } else {
+                    console.log("MemeAPI: Network error fetching comments:", xhr.status);
+                    error("Network error: " + xhr.status);
+                }
+            }
+        };
+
+        xhr.onerror = function () {
+            commentsLoadingFinished();
+            error("Network request failed");
+        };
+
+        xhr.send();
+    }
+
+    function flattenComments(children, depth, result) {
+        for (var i = 0; i < children.length; i++) {
+            var child = children[i];
+            if (child.kind === 't1') { // t1 is comment
+                var data = child.data;
+                var comment = {
+                    id: data.id,
+                    author: data.author,
+                    body: data.body,
+                    body_html: unescapeHtml(data.body_html || ""),
+                    score: data.ups,
+                    created_utc: data.created_utc,
+                    depth: depth,
+                    kind: 'comment'
+                };
+                result.push(comment);
+                
+                if (data.replies && data.replies.data && data.replies.data.children) {
+                    flattenComments(data.replies.data.children, depth + 1, result);
+                }
+            }
+        }
+    }
+
+    function unescapeHtml(safe) {
+        if (!safe) return "";
+        return safe
+            .replace(/&amp;/g, "&")
+            .replace(/&lt;/g, "<")
+            .replace(/&gt;/g, ">")
+            .replace(/&quot;/g, "\"")
+            .replace(/&#039;/g, "'");
     }
 }

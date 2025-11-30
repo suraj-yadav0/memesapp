@@ -204,6 +204,7 @@ ApplicationWindow {
             isMultiSubredditMode: root.isMultiSubredditMode
             subredditSources: root.subredditSources
             bookmarkStatus: root.bookmarkStatus
+            darkMode: root.darkMode
             
             onMemeClicked: {
                 console.log("Main: Opening fullscreen viewer for meme:", index);
@@ -213,6 +214,28 @@ ApplicationWindow {
                 fullscreenViewer.currentIndex = index;
                 fullscreenViewer.totalCount = memeGrid.count;
                 fullscreenViewer.open();
+            }
+
+            onCommentClicked: {
+                console.log("Main: Opening comments for meme index:", index);
+                var meme = memeGrid.getMemeAt(index);
+                if (meme) {
+                    postDetailView.postId = meme.id;
+                    postDetailView.postTitle = meme.title;
+                    postDetailView.postImage = meme.image;
+                    postDetailView.postAuthor = meme.author;
+                    postDetailView.postSubreddit = meme.subreddit;
+                    postDetailView.postUpvotes = meme.upvotes;
+                    postDetailView.postCommentCount = meme.comments;
+                    postDetailView.postSelfText = meme.selftext;
+                    postDetailView.postType = meme.postType;
+                    postDetailView.postPermalink = meme.permalink;
+                    
+                    postDetailView.commentsModel = []; // Clear previous comments
+                    postDetailView.open();
+                    
+                    memeAPI.fetchComments(meme.subreddit, meme.id);
+                }
             }
             
             onBookmarkToggled: {
@@ -349,68 +372,57 @@ ApplicationWindow {
         }
     }
 
+    // Post detail view for comments
+    PostDetailView {
+        id: postDetailView
+        darkMode: root.darkMode
+        
+        onImageClicked: {
+            console.log("Main: Image clicked in comments view, opening fullscreen");
+            root.dialogImageSource = url;
+            fullscreenViewer.imageSource = url;
+            fullscreenViewer.currentIndex = -1;
+            fullscreenViewer.totalCount = 1;
+            fullscreenViewer.open();
+        }
+    }
+
+    Connections {
+        target: memeAPI
+        onCommentsLoaded: {
+            console.log("Main: Comments loaded, count:", comments.length);
+            postDetailView.commentsModel = comments;
+        }
+        onCommentsLoadingStarted: {
+            postDetailView.isLoadingComments = true;
+        }
+        onCommentsLoadingFinished: {
+            postDetailView.isLoadingComments = false;
+        }
+    }
+
     // Settings dialog
-    Dialog {
+    SettingsDialog {
         id: settingsDialog
-        x: (root.width - width) / 2
-        y: (root.height - height) / 2
-        width: Math.min(root.width * 0.9, units.gu(40))
-        height: Math.min(root.height * 0.8, units.gu(50))
-        modal: true
-        focus: true
-        title: "Settings"
-
-        ColumnLayout {
-            anchors.fill: parent
-            spacing: units.gu(2)
-
-            Label {
-                text: "Application Settings"
-                font.weight: Font.Medium
-                Layout.fillWidth: true
-            }
-
-            Rectangle {
-                Layout.fillWidth: true
-                height: units.dp(1)
-                color: theme.palette.normal.base
-            }
-
-            RowLayout {
-                Layout.fillWidth: true
-                Label {
-                    text: "Dark Mode"
-                    Layout.fillWidth: true
-                }
-                CheckBox {
-                    checked: root.darkMode
-                    onClicked: {
-                        root.darkMode = checked;
-                        theme.name = root.darkMode ? "Ubuntu.Components.Themes.SuruDark" : "Ubuntu.Components.Themes.Ambiance";
-                    }
-                }
-            }
-
-            Label {
-                text: "Current Subreddit: r/" + root.selectedSubreddit
-                Layout.fillWidth: true
-                wrapMode: Text.WordWrap
-            }
-
-            Label {
-                text: "Total Memes Loaded: " + memeGrid.count
-                Layout.fillWidth: true
-            }
-
-            Item {
-                Layout.fillHeight: true
-            }
-
-            Button {
-                text: "Close"
-                Layout.alignment: Qt.AlignCenter
-                onClicked: settingsDialog.close()
-            }
+        darkMode: root.darkMode
+        currentSubreddit: root.selectedSubreddit
+        totalMemesLoaded: memeGrid.count
+        
+        onDarkModeToggled: {
+            root.darkMode = enabled;
+            theme.name = root.darkMode ? "Ubuntu.Components.Themes.SuruDark" : "Ubuntu.Components.Themes.Ambiance";
+        }
+        
+        onClearBookmarksRequested: {
+            console.log("Main: Clearing all bookmarks from settings");
+            databaseManager.clearAllBookmarks();
+            loadBookmarks();
+        }
+        
+        onClearCacheRequested: {
+            console.log("Main: Clearing cache and reloading from settings");
+            refreshMemes();
+            settingsDialog.close();
         }
     }
 

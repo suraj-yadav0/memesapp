@@ -28,419 +28,630 @@ QC2.Dialog {
     property int totalMemesLoaded: 0
     property string appVersion: "1.0.0"
     
+    // Theme colors
+    readonly property color bgColor: darkMode ? "#0F0F0F" : "#F5F5F5"
+    readonly property color cardColor: darkMode ? "#1A1A1B" : "#FFFFFF"
+    readonly property color textColor: darkMode ? "#D7DADC" : "#1A1A1B"
+    readonly property color subtextColor: darkMode ? "#818384" : "#787C7E"
+    readonly property color accentColor: "#FF4500"
+    readonly property color dividerColor: darkMode ? "#343536" : "#EDEFF1"
+    
     // Signals
     signal darkModeToggled(bool enabled)
     signal clearBookmarksRequested()
     signal clearCacheRequested()
     
-    // Dialog Geometry
-    x: Math.round((parent.width - width) / 2)
-    y: Math.round((parent.height - height) / 2)
-    width: Math.min(parent.width * 0.95, units.gu(50))
-    height: Math.min(parent.height * 0.9, units.gu(75))
+    // Dialog Geometry - Full screen style
+    x: 0
+    y: 0
+    width: parent.width
+    height: parent.height
     
     modal: true
     focus: true
-    title: "Settings"
+    padding: 0
+    margins: 0
+    
+    // No default header/footer
+    header: null
+    footer: null
     
     // Custom Background
     background: Rectangle {
-        color: theme.palette.normal.background
-        radius: units.gu(1.5)
-        border.color: theme.palette.normal.base
-        border.width: units.dp(1)
-        clip: true
-    }
-    
-    // Custom Header
-    header: Item {
-        width: parent.width
-        height: units.gu(7)
-        
-        Label {
-            anchors.centerIn: parent
-            text: "Settings"
-            font.pixelSize: units.gu(2.2)
-            font.weight: Font.DemiBold
-            color: theme.palette.normal.foregroundText
-        }
-        
-        Rectangle {
-            anchors.bottom: parent.bottom
-            width: parent.width
-            height: units.dp(1)
-            color: theme.palette.normal.base
-            opacity: 0.5
-        }
+        color: settingsDialog.bgColor
     }
 
     // Main Content
-    contentItem: ColumnLayout {
-        spacing: 0
+    contentItem: Item {
+        anchors.fill: parent
         
-        // Scrollable Settings Area
-        QC2.ScrollView {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            clip: true
-            QC2.ScrollBar.vertical.policy: QC2.ScrollBar.AsNeeded
+        // Custom Header
+        Rectangle {
+            id: headerBar
+            width: parent.width
+            height: units.gu(7)
+            color: settingsDialog.cardColor
+            z: 10
             
-            ColumnLayout {
+            // Shadow
+            Rectangle {
+                anchors.top: parent.bottom
                 width: parent.width
-                spacing: units.gu(2.5)
-                
-                // Top Spacer
-                Item { height: units.gu(0.5); Layout.fillWidth: true }
-
-                // --- Appearance Section ---
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    Layout.leftMargin: units.gu(2)
-                    Layout.rightMargin: units.gu(2)
-                    spacing: units.gu(1)
-                    
-                    Label {
-                        text: "APPEARANCE"
-                        font.pixelSize: units.gu(1.4)
-                        font.weight: Font.Bold
-                        color: theme.palette.normal.foregroundText
-                        opacity: 0.7
-                    }
-                    
-                    Rectangle {
-                        Layout.fillWidth: true
-                        implicitHeight: appearanceRow.implicitHeight + units.gu(3)
-                        color: theme.palette.normal.base
-                        radius: units.gu(1)
-                        
-                        RowLayout {
-                            id: appearanceRow
-                            anchors.left: parent.left
-                            anchors.right: parent.right
-                            anchors.verticalCenter: parent.verticalCenter
-                            anchors.margins: units.gu(1.5)
-                            spacing: units.gu(2)
-                            
-                            Icon {
-                                name: "night-mode"
-                                width: units.gu(3)
-                                height: units.gu(3)
-                                color: theme.palette.normal.foregroundText
-                            }
-                            
-                            ColumnLayout {
-                                Layout.fillWidth: true
-                                spacing: units.gu(0.2)
-                                
-                                Label {
-                                    text: "Dark Mode"
-                                    font.weight: Font.Medium
-                                    color: theme.palette.normal.foregroundText
-                                    font.pixelSize: units.gu(1.8)
-                                }
-                                Label {
-                                    text: "Switch between light and dark themes"
-                                    font.pixelSize: units.gu(1.3)
-                                    color: theme.palette.normal.foregroundText
-                                    opacity: 0.6
-                                    wrapMode: Text.WordWrap
-                                    Layout.fillWidth: true
-                                }
-                            }
-                            
-                            QC2.Switch {
-                                checked: settingsDialog.darkMode
-                                onClicked: settingsDialog.darkModeToggled(checked)
-                            }
-                        }
-                    }
+                height: units.gu(0.5)
+                gradient: Gradient {
+                    GradientStop { position: 0.0; color: settingsDialog.darkMode ? "#40000000" : "#20000000" }
+                    GradientStop { position: 1.0; color: "transparent" }
                 }
-
-                // --- Content Info Section ---
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    Layout.leftMargin: units.gu(2)
-                    Layout.rightMargin: units.gu(2)
-                    spacing: units.gu(1)
-                    
-                    Label {
-                        text: "CONTENT"
-                        font.pixelSize: units.gu(1.4)
-                        font.weight: Font.Bold
-                        color: theme.palette.normal.foregroundText
-                        opacity: 0.7
-                    }
-                    
-                    Rectangle {
-                        Layout.fillWidth: true
-                        implicitHeight: contentCol.implicitHeight + units.gu(3)
-                        color: theme.palette.normal.base
-                        radius: units.gu(1)
-                        
-                        ColumnLayout {
-                            id: contentCol
-                            anchors.left: parent.left
-                            anchors.right: parent.right
-                            anchors.verticalCenter: parent.verticalCenter
-                            anchors.margins: units.gu(1.5)
-                            spacing: units.gu(1.5)
-                            
-                            RowLayout {
-                                Layout.fillWidth: true
-                                Icon {
-                                    name: "view-list-symbolic"
-                                    width: units.gu(2.5)
-                                    height: units.gu(2.5)
-                                    color: theme.palette.normal.foregroundText
-                                    opacity: 0.7
-                                }
-                                Label {
-                                    text: "Current Subreddit"
-                                    Layout.fillWidth: true
-                                    color: theme.palette.normal.foregroundText
-                                    font.pixelSize: units.gu(1.6)
-                                }
-                                Label {
-                                    text: "r/" + settingsDialog.currentSubreddit
-                                    font.weight: Font.DemiBold
-                                    color: theme.palette.normal.foregroundText
-                                    font.pixelSize: units.gu(1.6)
-                                }
-                            }
-                            
-                            Rectangle {
-                                Layout.fillWidth: true
-                                height: units.dp(1)
-                                color: theme.palette.disabled.base
-                                opacity: 0.2
-                            }
-                            
-                            RowLayout {
-                                Layout.fillWidth: true
-                                Icon {
-                                    name: "image-x-generic-symbolic"
-                                    width: units.gu(2.5)
-                                    height: units.gu(2.5)
-                                    color: theme.palette.normal.foregroundText
-                                    opacity: 0.7
-                                }
-                                Label {
-                                    text: "Memes Loaded"
-                                    Layout.fillWidth: true
-                                    color: theme.palette.normal.foregroundText
-                                    font.pixelSize: units.gu(1.6)
-                                }
-                                Label {
-                                    text: settingsDialog.totalMemesLoaded.toString()
-                                    font.weight: Font.DemiBold
-                                    color: theme.palette.normal.foregroundText
-                                    font.pixelSize: units.gu(1.6)
-                                }
-                            }
-                        }
-                    }
+            }
+            
+            // Back button
+            Rectangle {
+                id: backButton
+                width: units.gu(5)
+                height: units.gu(5)
+                anchors.left: parent.left
+                anchors.leftMargin: units.gu(1)
+                anchors.verticalCenter: parent.verticalCenter
+                color: backMouseArea.pressed ? settingsDialog.dividerColor : "transparent"
+                radius: width / 2
+                
+                Icon {
+                    anchors.centerIn: parent
+                    width: units.gu(2.5)
+                    height: units.gu(2.5)
+                    name: "back"
+                    color: settingsDialog.textColor
                 }
                 
-                // --- Data Management Section ---
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    Layout.leftMargin: units.gu(2)
-                    Layout.rightMargin: units.gu(2)
-                    spacing: units.gu(1)
-                    
-                    Label {
-                        text: "DATA MANAGEMENT"
-                        font.pixelSize: units.gu(1.4)
-                        font.weight: Font.Bold
-                        color: theme.palette.normal.foregroundText
-                        opacity: 0.7
-                    }
-                    
-                    Rectangle {
-                        Layout.fillWidth: true
-                        implicitHeight: dataCol.implicitHeight + units.gu(3)
-                        color: theme.palette.normal.base
-                        radius: units.gu(1)
-                        
-                        ColumnLayout {
-                            id: dataCol
-                            anchors.left: parent.left
-                            anchors.right: parent.right
-                            anchors.verticalCenter: parent.verticalCenter
-                            anchors.margins: units.gu(1.5)
-                            spacing: units.gu(1.5)
-                            
-                            QC2.Button {
-                                Layout.fillWidth: true
-                                Layout.preferredHeight: units.gu(5)
-                                
-                                contentItem: RowLayout {
-                                    spacing: units.gu(1)
-                                    Icon {
-                                        name: "delete"
-                                        color: "#E74C3C" // Red color
-                                        Layout.alignment: Qt.AlignVCenter
-                                    }
-                                    Label {
-                                        text: "Clear All Bookmarks"
-                                        color: "#E74C3C"
-                                        font.weight: Font.Medium
-                                        Layout.alignment: Qt.AlignVCenter
-                                    }
-                                    Item { Layout.fillWidth: true }
-                                }
-                                
-                                background: Rectangle {
-                                    color: parent.down ? Qt.rgba(0.9, 0.3, 0.3, 0.1) : "transparent"
-                                    border.color: "#E74C3C"
-                                    border.width: units.dp(1)
-                                    radius: units.gu(0.5)
-                                }
-                                
-                                onClicked: settingsDialog.clearBookmarksRequested()
-                            }
-                            
-                            QC2.Button {
-                                Layout.fillWidth: true
-                                Layout.preferredHeight: units.gu(5)
-                                
-                                contentItem: RowLayout {
-                                    spacing: units.gu(1)
-                                    Icon {
-                                        name: "reload"
-                                        color: theme.palette.normal.foregroundText
-                                        Layout.alignment: Qt.AlignVCenter
-                                    }
-                                    Label {
-                                        text: "Clear Cache & Reload"
-                                        color: theme.palette.normal.foregroundText
-                                        font.weight: Font.Medium
-                                        Layout.alignment: Qt.AlignVCenter
-                                    }
-                                    Item { Layout.fillWidth: true }
-                                }
-                                
-                                background: Rectangle {
-                                    color: parent.down ? Qt.rgba(0.5, 0.5, 0.5, 0.1) : "transparent"
-                                    border.color: theme.palette.normal.foregroundText
-                                    border.width: units.dp(1)
-                                    opacity: 0.5
-                                    radius: units.gu(0.5)
-                                }
-                                
-                                onClicked: settingsDialog.clearCacheRequested()
-                            }
-                        }
-                    }
+                MouseArea {
+                    id: backMouseArea
+                    anchors.fill: parent
+                    onClicked: settingsDialog.close()
                 }
-
-                // --- About Section ---
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    Layout.leftMargin: units.gu(2)
-                    Layout.rightMargin: units.gu(2)
-                    spacing: units.gu(1)
-                    
-                    Label {
-                        text: "ABOUT"
-                        font.pixelSize: units.gu(1.4)
-                        font.weight: Font.Bold
-                        color: theme.palette.normal.foregroundText
-                        opacity: 0.7
-                    }
-                    
-                    Rectangle {
-                        Layout.fillWidth: true
-                        implicitHeight: aboutCol.implicitHeight + units.gu(4)
-                        color: theme.palette.normal.base
-                        radius: units.gu(1)
-                        
-                        ColumnLayout {
-                            id: aboutCol
-                            anchors.left: parent.left
-                            anchors.right: parent.right
-                            anchors.verticalCenter: parent.verticalCenter
-                            anchors.margins: units.gu(2)
-                            spacing: units.gu(1.5)
-                            
-                            Image {
-                                source: "../images/meme.png"
-                                Layout.alignment: Qt.AlignHCenter
-                                Layout.preferredWidth: units.gu(10)
-                                Layout.preferredHeight: units.gu(10)
-                                fillMode: Image.PreserveAspectFit
-                            }
-                            
-                            ColumnLayout {
-                                Layout.alignment: Qt.AlignHCenter
-                                spacing: units.gu(0.5)
-                                
-                                Label {
-                                    text: "MemeStream"
-                                    font.pixelSize: units.gu(2.5)
-                                    font.weight: Font.Bold
-                                    Layout.alignment: Qt.AlignHCenter
-                                    color: theme.palette.normal.foregroundText
-                                }
-                                
-                                Label {
-                                    text: "Version " + settingsDialog.appVersion
-                                    font.pixelSize: units.gu(1.4)
-                                    Layout.alignment: Qt.AlignHCenter
-                                    color: theme.palette.normal.foregroundText
-                                    opacity: 0.6
-                                }
-                                
-                                Label {
-                                    text: "A native Reddit meme viewer for Ubuntu Touch"
-                                    font.pixelSize: units.gu(1.4)
-                                    Layout.alignment: Qt.AlignHCenter
-                                    color: theme.palette.normal.foregroundText
-                                    opacity: 0.8
-                                    Layout.topMargin: units.gu(1)
-                                }
-                                
-                                Label {
-                                    text: "© 2025 Suraj Yadav"
-                                    font.pixelSize: units.gu(1.2)
-                                    Layout.alignment: Qt.AlignHCenter
-                                    color: theme.palette.normal.foregroundText
-                                    opacity: 0.5
-                                    Layout.topMargin: units.gu(0.5)
-                                }
-                            }
-                        }
-                    }
-                }
-                
-                // Bottom Spacer
-                Item { height: units.gu(2); Layout.fillWidth: true }
+            }
+            
+            // Title
+            Label {
+                anchors.centerIn: parent
+                text: "Settings"
+                font.pixelSize: units.gu(2.2)
+                font.weight: Font.DemiBold
+                color: settingsDialog.textColor
             }
         }
         
-        // Footer
-        Item {
-            Layout.fillWidth: true
-            Layout.preferredHeight: units.gu(9)
+        // Scrollable Content
+        Flickable {
+            id: settingsFlickable
+            anchors.top: headerBar.bottom
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            contentHeight: mainColumn.height + units.gu(4)
+            clip: true
+            boundsBehavior: Flickable.StopAtBounds
             
-            Rectangle {
-                anchors.top: parent.top
+            Column {
+                id: mainColumn
                 width: parent.width
-                height: units.dp(1)
-                color: theme.palette.normal.base
-                opacity: 0.5
+                spacing: units.gu(2)
+                topPadding: units.gu(2)
+                
+                // ═══════════════════════════════════════════
+                // APPEARANCE SECTION
+                // ═══════════════════════════════════════════
+                Column {
+                    width: parent.width
+                    spacing: units.gu(0.5)
+                    
+                    // Section Header
+                    Item {
+                        width: parent.width
+                        height: units.gu(2.5)
+                        
+                        Label {
+                            anchors.left: parent.left
+                            anchors.leftMargin: units.gu(2)
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: "Appearance"
+                            font.pixelSize: units.gu(1.5)
+                            font.weight: Font.DemiBold
+                            color: settingsDialog.accentColor
+                        }
+                    }
+                    
+                    // Dark Mode Card
+                    Rectangle {
+                        width: parent.width
+                        height: units.gu(8)
+                        color: settingsDialog.cardColor
+                        
+                        Row {
+                            anchors.fill: parent
+                            anchors.leftMargin: units.gu(2)
+                            anchors.rightMargin: units.gu(2)
+                            spacing: units.gu(1.5)
+                            
+                            // Icon container
+                            Rectangle {
+                                width: units.gu(5)
+                                height: units.gu(5)
+                                anchors.verticalCenter: parent.verticalCenter
+                                radius: units.gu(1)
+                                color: settingsDialog.darkMode ? "#2D2D2E" : "#F0F0F0"
+                                
+                                Icon {
+                                    anchors.centerIn: parent
+                                    width: units.gu(2.8)
+                                    height: units.gu(2.8)
+                                    name: "night-mode"
+                                    color: settingsDialog.accentColor
+                                }
+                            }
+                            
+                            // Text
+                            Column {
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: parent.width - units.gu(16)
+                                spacing: units.gu(0.3)
+                                
+                                Label {
+                                    text: "Dark Mode"
+                                    font.pixelSize: units.gu(1.9)
+                                    font.weight: Font.Medium
+                                    color: settingsDialog.textColor
+                                }
+                                
+                                Label {
+                                    text: settingsDialog.darkMode ? "Currently using dark theme" : "Currently using light theme"
+                                    font.pixelSize: units.gu(1.4)
+                                    color: settingsDialog.subtextColor
+                                }
+                            }
+                            
+                            // Toggle
+                            Item {
+                                width: units.gu(6)
+                                height: parent.height
+                                anchors.verticalCenter: parent.verticalCenter
+                                
+                                Rectangle {
+                                    id: toggleBg
+                                    width: units.gu(5.5)
+                                    height: units.gu(3)
+                                    anchors.centerIn: parent
+                                    radius: height / 2
+                                    color: settingsDialog.darkMode ? settingsDialog.accentColor : "#767676"
+                                    
+                                    Behavior on color { ColorAnimation { duration: 150 } }
+                                    
+                                    Rectangle {
+                                        id: toggleKnob
+                                        width: units.gu(2.4)
+                                        height: units.gu(2.4)
+                                        radius: height / 2
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        x: settingsDialog.darkMode ? parent.width - width - units.gu(0.3) : units.gu(0.3)
+                                        color: "white"
+                                        
+                                        Behavior on x { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+                                    }
+                                    
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        onClicked: settingsDialog.darkModeToggled(!settingsDialog.darkMode)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                // ═══════════════════════════════════════════
+                // STATISTICS SECTION
+                // ═══════════════════════════════════════════
+                Column {
+                    width: parent.width
+                    spacing: units.gu(0.5)
+                    
+                    // Section Header
+                    Item {
+                        width: parent.width
+                        height: units.gu(2.5)
+                        
+                        Label {
+                            anchors.left: parent.left
+                            anchors.leftMargin: units.gu(2)
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: "Statistics"
+                            font.pixelSize: units.gu(1.5)
+                            font.weight: Font.DemiBold
+                            color: settingsDialog.accentColor
+                        }
+                    }
+                    
+                    // Stats Card
+                    Rectangle {
+                        width: parent.width
+                        height: statsRow.height + units.gu(3)
+                        color: settingsDialog.cardColor
+                        
+                        Row {
+                            id: statsRow
+                            anchors.centerIn: parent
+                            width: parent.width - units.gu(4)
+                            spacing: units.gu(1)
+                            
+                            // Current Subreddit Stat
+                            Rectangle {
+                                width: (parent.width - units.gu(1)) / 2
+                                height: units.gu(9)
+                                radius: units.gu(1.2)
+                                color: settingsDialog.darkMode ? "#2D2D2E" : "#F8F8F8"
+                                border.width: 1
+                                border.color: settingsDialog.dividerColor
+                                
+                                Column {
+                                    anchors.centerIn: parent
+                                    spacing: units.gu(0.5)
+                                    
+                                    Icon {
+                                        anchors.horizontalCenter: parent.horizontalCenter
+                                        width: units.gu(3)
+                                        height: units.gu(3)
+                                        name: "stock_website"
+                                        color: "#0079D3"
+                                    }
+                                    
+                                    Label {
+                                        anchors.horizontalCenter: parent.horizontalCenter
+                                        text: "r/" + (settingsDialog.currentSubreddit || "multi")
+                                        font.pixelSize: units.gu(1.5)
+                                        font.weight: Font.DemiBold
+                                        color: settingsDialog.textColor
+                                        elide: Text.ElideRight
+                                        width: Math.min(implicitWidth, units.gu(15))
+                                        horizontalAlignment: Text.AlignHCenter
+                                    }
+                                    
+                                    Label {
+                                        anchors.horizontalCenter: parent.horizontalCenter
+                                        text: "Current Feed"
+                                        font.pixelSize: units.gu(1.2)
+                                        color: settingsDialog.subtextColor
+                                    }
+                                }
+                            }
+                            
+                            // Memes Loaded Stat
+                            Rectangle {
+                                width: (parent.width - units.gu(1)) / 2
+                                height: units.gu(9)
+                                radius: units.gu(1.2)
+                                color: settingsDialog.darkMode ? "#2D2D2E" : "#F8F8F8"
+                                border.width: 1
+                                border.color: settingsDialog.dividerColor
+                                
+                                Column {
+                                    anchors.centerIn: parent
+                                    spacing: units.gu(0.5)
+                                    
+                                    Icon {
+                                        anchors.horizontalCenter: parent.horizontalCenter
+                                        width: units.gu(3)
+                                        height: units.gu(3)
+                                        name: "view-grid-symbolic"
+                                        color: "#46D160"
+                                    }
+                                    
+                                    Label {
+                                        anchors.horizontalCenter: parent.horizontalCenter
+                                        text: settingsDialog.totalMemesLoaded.toString()
+                                        font.pixelSize: units.gu(2)
+                                        font.weight: Font.Bold
+                                        color: settingsDialog.textColor
+                                    }
+                                    
+                                    Label {
+                                        anchors.horizontalCenter: parent.horizontalCenter
+                                        text: "Posts Loaded"
+                                        font.pixelSize: units.gu(1.2)
+                                        color: settingsDialog.subtextColor
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                // ═══════════════════════════════════════════
+                // DATA MANAGEMENT SECTION
+                // ═══════════════════════════════════════════
+                Column {
+                    width: parent.width
+                    spacing: units.gu(0.5)
+                    
+                    // Section Header
+                    Item {
+                        width: parent.width
+                        height: units.gu(2.5)
+                        
+                        Label {
+                            anchors.left: parent.left
+                            anchors.leftMargin: units.gu(2)
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: "Data Management"
+                            font.pixelSize: units.gu(1.5)
+                            font.weight: Font.DemiBold
+                            color: settingsDialog.accentColor
+                        }
+                    }
+                    
+                    // Actions Card
+                    Rectangle {
+                        width: parent.width
+                        height: actionsColumn.height
+                        color: settingsDialog.cardColor
+                        
+                        Column {
+                            id: actionsColumn
+                            width: parent.width
+                            
+                            // Clear Bookmarks
+                            Rectangle {
+                                width: parent.width
+                                height: units.gu(7)
+                                color: clearBookmarksArea.pressed ? settingsDialog.dividerColor : "transparent"
+                                
+                                Row {
+                                    anchors.fill: parent
+                                    anchors.leftMargin: units.gu(2)
+                                    anchors.rightMargin: units.gu(2)
+                                    spacing: units.gu(1.5)
+                                    
+                                    Rectangle {
+                                        width: units.gu(5)
+                                        height: units.gu(5)
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        radius: units.gu(1)
+                                        color: "#FFE5E5"
+                                        
+                                        Icon {
+                                            anchors.centerIn: parent
+                                            width: units.gu(2.5)
+                                            height: units.gu(2.5)
+                                            name: "delete"
+                                            color: "#E53935"
+                                        }
+                                    }
+                                    
+                                    Column {
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        spacing: units.gu(0.2)
+                                        
+                                        Label {
+                                            text: "Clear Bookmarks"
+                                            font.pixelSize: units.gu(1.8)
+                                            font.weight: Font.Medium
+                                            color: "#E53935"
+                                        }
+                                        
+                                        Label {
+                                            text: "Remove all saved posts"
+                                            font.pixelSize: units.gu(1.4)
+                                            color: settingsDialog.subtextColor
+                                        }
+                                    }
+                                }
+                                
+                                MouseArea {
+                                    id: clearBookmarksArea
+                                    anchors.fill: parent
+                                    onClicked: settingsDialog.clearBookmarksRequested()
+                                }
+                            }
+                            
+                            // Divider
+                            Rectangle {
+                                width: parent.width - units.gu(9)
+                                height: 1
+                                anchors.right: parent.right
+                                color: settingsDialog.dividerColor
+                            }
+                            
+                            // Clear Cache
+                            Rectangle {
+                                width: parent.width
+                                height: units.gu(7)
+                                color: clearCacheArea.pressed ? settingsDialog.dividerColor : "transparent"
+                                
+                                Row {
+                                    anchors.fill: parent
+                                    anchors.leftMargin: units.gu(2)
+                                    anchors.rightMargin: units.gu(2)
+                                    spacing: units.gu(1.5)
+                                    
+                                    Rectangle {
+                                        width: units.gu(5)
+                                        height: units.gu(5)
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        radius: units.gu(1)
+                                        color: settingsDialog.darkMode ? "#2D2D2E" : "#F0F0F0"
+                                        
+                                        Icon {
+                                            anchors.centerIn: parent
+                                            width: units.gu(2.5)
+                                            height: units.gu(2.5)
+                                            name: "reload"
+                                            color: settingsDialog.textColor
+                                        }
+                                    }
+                                    
+                                    Column {
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        spacing: units.gu(0.2)
+                                        
+                                        Label {
+                                            text: "Refresh Content"
+                                            font.pixelSize: units.gu(1.8)
+                                            font.weight: Font.Medium
+                                            color: settingsDialog.textColor
+                                        }
+                                        
+                                        Label {
+                                            text: "Clear cache and reload feed"
+                                            font.pixelSize: units.gu(1.4)
+                                            color: settingsDialog.subtextColor
+                                        }
+                                    }
+                                }
+                                
+                                MouseArea {
+                                    id: clearCacheArea
+                                    anchors.fill: parent
+                                    onClicked: settingsDialog.clearCacheRequested()
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                // ═══════════════════════════════════════════
+                // ABOUT SECTION
+                // ═══════════════════════════════════════════
+                Column {
+                    width: parent.width
+                    spacing: units.gu(0.5)
+                    
+                    // Section Header
+                    Item {
+                        width: parent.width
+                        height: units.gu(2.5)
+                        
+                        Label {
+                            anchors.left: parent.left
+                            anchors.leftMargin: units.gu(2)
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: "About"
+                            font.pixelSize: units.gu(1.5)
+                            font.weight: Font.DemiBold
+                            color: settingsDialog.accentColor
+                        }
+                    }
+                    
+                    // About Card
+                    Rectangle {
+                        width: parent.width
+                        height: aboutColumn.height + units.gu(4)
+                        color: settingsDialog.cardColor
+                        
+                        Column {
+                            id: aboutColumn
+                            width: parent.width
+                            anchors.centerIn: parent
+                            spacing: units.gu(1.5)
+                            
+                            // App Icon
+                            Rectangle {
+                                width: units.gu(12)
+                                height: units.gu(12)
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                radius: units.gu(2.5)
+                                color: settingsDialog.accentColor
+                                
+                                Image {
+                                    source: "../images/meme.png"
+                                    anchors.centerIn: parent
+                                    width: units.gu(8)
+                                    height: units.gu(8)
+                                    fillMode: Image.PreserveAspectFit
+                                }
+                            }
+                            
+                            // App Name
+                            Label {
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                text: "MemeStream"
+                                font.pixelSize: units.gu(2.8)
+                                font.weight: Font.Bold
+                                color: settingsDialog.textColor
+                            }
+                            
+                            // Version Badge
+                            Rectangle {
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                width: versionLabel.width + units.gu(2)
+                                height: units.gu(2.8)
+                                radius: height / 2
+                                color: settingsDialog.accentColor
+                                
+                                Label {
+                                    id: versionLabel
+                                    anchors.centerIn: parent
+                                    text: "v" + settingsDialog.appVersion
+                                    font.pixelSize: units.gu(1.3)
+                                    font.weight: Font.Medium
+                                    color: "white"
+                                }
+                            }
+                            
+                            // Description
+                            Label {
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                width: parent.width - units.gu(6)
+                                text: "A native Reddit meme viewer\nfor Ubuntu Touch"
+                                font.pixelSize: units.gu(1.5)
+                                color: settingsDialog.subtextColor
+                                horizontalAlignment: Text.AlignHCenter
+                                wrapMode: Text.WordWrap
+                            }
+                            
+                            // Divider
+                            Rectangle {
+                                width: units.gu(8)
+                                height: 2
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                color: settingsDialog.dividerColor
+                                radius: 1
+                            }
+                            
+                            // Copyright
+                            Label {
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                text: "Made with ❤️ by Suraj Yadav"
+                                font.pixelSize: units.gu(1.4)
+                                color: settingsDialog.subtextColor
+                            }
+                            
+                            Label {
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                text: "© 2025 • Open Source"
+                                font.pixelSize: units.gu(1.2)
+                                color: settingsDialog.subtextColor
+                                opacity: 0.7
+                            }
+                        }
+                    }
+                }
+                
+                // Bottom padding
+                Item { width: 1; height: units.gu(2) }
             }
+        }
+        
+        // Scroll indicator
+        Rectangle {
+            width: units.gu(0.5)
+            height: settingsFlickable.height * (settingsFlickable.height / settingsFlickable.contentHeight)
+            anchors.right: parent.right
+            anchors.rightMargin: units.gu(0.3)
+            y: headerBar.height + (settingsFlickable.contentY / settingsFlickable.contentHeight) * settingsFlickable.height
+            radius: width / 2
+            color: settingsDialog.subtextColor
+            opacity: settingsFlickable.moving ? 0.8 : 0
+            visible: settingsFlickable.contentHeight > settingsFlickable.height
             
-            QC2.Button {
-                anchors.centerIn: parent
-                width: units.gu(20)
-                height: units.gu(5)
-                
-                text: "Close"
-                font.weight: Font.Medium
-                
-                onClicked: settingsDialog.close()
-            }
+            Behavior on opacity { NumberAnimation { duration: 200 } }
         }
     }
 }

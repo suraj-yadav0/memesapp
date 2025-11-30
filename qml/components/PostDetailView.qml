@@ -501,12 +501,17 @@ Dialog {
                             }
                         }
 
+                        // Spacer after thread lines
+                        Item {
+                            width: units.gu(0.5)
+                            height: 1
+                        }
+
                         // Comment content - positioned after the thread lines
                         Column {
                             id: commentColumn
-                            width: commentRow.width - ((modelData.depth || 0) * units.gu(2)) - units.gu(1)
+                            width: commentRow.width - ((modelData.depth || 0) * units.gu(2)) - units.gu(1.5)
                             spacing: units.gu(0.5)
-                            leftPadding: units.gu(0.5)
 
                             // Author row
                             Row {

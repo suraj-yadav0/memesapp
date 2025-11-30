@@ -204,6 +204,7 @@ ApplicationWindow {
             isMultiSubredditMode: root.isMultiSubredditMode
             subredditSources: root.subredditSources
             bookmarkStatus: root.bookmarkStatus
+            darkMode: root.darkMode
             
             onMemeClicked: {
                 console.log("Main: Opening fullscreen viewer for meme:", index);

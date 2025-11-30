@@ -23,7 +23,7 @@ Item {
 
     // Adaptive height based on content type
     width: parent ? parent.width : 0
-    height: calculateHeight()
+    height: contentColumn.height + units.gu(1.5) // Dynamic height based on actual content
 
     // Properties
     property bool darkMode: false
@@ -59,35 +59,6 @@ Item {
     signal bookmarkToggled(var meme, bool bookmark)
     signal backRequested()
 
-    // Calculate adaptive height based on content
-    function calculateHeight() {
-        var headerHeight = units.gu(5);  // Metadata row
-        var titleHeight = titleLabel.height + units.gu(2);
-        var bottomBarHeight = units.gu(6);
-        var contentHeight = 0;
-        
-        if (postType === "image" && memeImage !== "") {
-            // For images: adapt to image aspect ratio
-            if (memeImageLoader.status === Image.Ready) {
-                var aspectRatio = memeImageLoader.sourceSize.width / Math.max(memeImageLoader.sourceSize.height, 1);
-                var imageHeight = (width / Math.max(aspectRatio, 0.5));
-                // Clamp between reasonable bounds
-                contentHeight = Math.max(units.gu(20), Math.min(imageHeight, units.gu(60)));
-            } else {
-                contentHeight = units.gu(30); // Default while loading
-            }
-        } else if (postType === "text" && selftext !== "") {
-            // For text: show collapsed or expanded
-            if (isTextExpanded) {
-                contentHeight = Math.min(fullTextLabel.contentHeight + units.gu(4), units.gu(80));
-            } else {
-                contentHeight = Math.min(collapsedTextLabel.contentHeight + units.gu(6), maxCollapsedHeight + units.gu(4));
-            }
-        }
-        
-        return headerHeight + titleHeight + contentHeight + bottomBarHeight + units.gu(1);
-    }
-
     // Main card container
     UbuntuShape {
         id: cardBackground
@@ -107,8 +78,8 @@ Item {
 
         Column {
             id: contentColumn
-            anchors.fill: parent
-            anchors.margins: units.gu(0.5)
+            width: parent.width - units.gu(1)
+            anchors.horizontalCenter: parent.horizontalCenter
             spacing: 0
 
             // Post metadata (subreddit, author, timestamp)
@@ -403,13 +374,6 @@ Item {
                     asynchronous: true
                     cache: true
                     visible: status === Image.Ready
-
-                    onStatusChanged: {
-                        if (status === Image.Ready) {
-                            // Trigger height recalculation
-                            memeDelegate.height = memeDelegate.calculateHeight();
-                        }
-                    }
 
                     MouseArea {
                         anchors.fill: parent

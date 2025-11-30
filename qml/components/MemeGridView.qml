@@ -24,13 +24,14 @@ Item {
     id: memeGridView
     
     // Properties
-    property alias count: gridView.count
+    property alias count: listView.count
     property bool isLoading: false
     property string loadingText: "Loading..."
     property string errorMessage: ""
     property bool isMultiSubredditMode: false
     property var subredditSources: ({})
     property var bookmarkStatus: ({}) // Maps meme IDs to bookmark status
+    property bool darkMode: false
     
     // Signals
     signal memeClicked(int index, string imageUrl)
@@ -40,24 +41,32 @@ Item {
     signal bookmarkToggled(var meme, bool bookmark)
     signal backRequested() // New signal for back button
     
-    // GridView
-    GridView {
-        id: gridView
+    // Background
+    Rectangle {
         anchors.fill: parent
-        anchors.margins: units.gu(2)
+        color: memeGridView.darkMode ? "#030303" : "#DAE0E6"
+    }
+    
+    // ListView for dynamic heights (Reddit-style feed)
+    ListView {
+        id: listView
+        anchors.fill: parent
+        anchors.topMargin: units.gu(0.5)
+        anchors.bottomMargin: units.gu(0.5)
         
-        cellWidth: width <= units.gu(80) ? width : width / 3
-        cellHeight: cellWidth * 1.5
-      
+        spacing: units.gu(1) // Gap between posts
+        clip: true
+        cacheBuffer: units.gu(100) // Cache items for smoother scrolling
+        
         model: MemeModel {
             id: memeModel
         }
         
         delegate: MemeDelegate {
-
+            width: listView.width
+            // Height is now calculated dynamically by MemeDelegate itself
             
-            width: gridView.cellWidth - units.gu(0.5)
-            height: gridView.cellHeight - units.gu(0.5)
+            darkMode: memeGridView.darkMode
             
             property var memeData: memeModel.get(index)
             isMultiSubredditMode: memeGridView.isMultiSubredditMode
@@ -101,7 +110,7 @@ Item {
             }
             
             // Load more when near bottom
-            var nearBottom = (contentY + height) >= (contentHeight - units.gu(10));
+            var nearBottom = (contentY + height) >= (contentHeight - units.gu(20));
             if (nearBottom && !memeGridView.isLoading && count > 0) {
                 console.log("MemeGridView: Near bottom, loading more memes");
                 memeGridView.loadMore();
@@ -112,8 +121,8 @@ Item {
             id: refreshTimer
             interval: 1000 // Minimum refresh duration
             onTriggered: {
-                gridView.refreshing = false;
-                gridView.contentY = 0; // Reset position
+                listView.refreshing = false;
+                listView.contentY = 0; // Reset position
             }
         }
         
@@ -122,11 +131,11 @@ Item {
             anchors.centerIn: parent
             width: emptyColumn.width + units.gu(4)
             height: emptyColumn.height + units.gu(4)
-            color: theme.palette.normal.background
+            color: memeGridView.darkMode ? "#1A1A1B" : "#FFFFFF"
             radius: units.gu(1)
-            border.color: theme.palette.normal.base
+            border.color: memeGridView.darkMode ? "#343536" : "#EDEFF1"
             border.width: units.dp(1)
-            visible: !memeGridView.isLoading && gridView.count === 0 && !memeGridView.errorMessage
+            visible: !memeGridView.isLoading && listView.count === 0 && !memeGridView.errorMessage
             
             Column {
                 id: emptyColumn
@@ -138,19 +147,20 @@ Item {
                     width: units.gu(6)
                     height: units.gu(6)
                     anchors.horizontalCenter: parent.horizontalCenter
-                    color: theme.palette.normal.backgroundText
+                    color: memeGridView.darkMode ? "#818384" : "#878A8C"
                 }
                 
                 Label {
                     text: "No memes found"
                     anchors.horizontalCenter: parent.horizontalCenter
                     font.weight: Font.Medium
+                    color: memeGridView.darkMode ? "#D7DADC" : "#1A1A1B"
                 }
                 
                 Label {
                     text: "Try selecting a different subreddit or check your connection"
                     anchors.horizontalCenter: parent.horizontalCenter
-                    color: theme.palette.normal.backgroundSecondaryText
+                    color: memeGridView.darkMode ? "#818384" : "#787C7E"
                     wrapMode: Text.WordWrap
                     width: units.gu(30)
                     horizontalAlignment: Text.AlignHCenter
@@ -163,7 +173,7 @@ Item {
             anchors.centerIn: parent
             width: errorColumn.width + units.gu(4)
             height: errorColumn.height + units.gu(4)
-            color: theme.palette.normal.background
+            color: memeGridView.darkMode ? "#1A1A1B" : "#FFFFFF"
             radius: units.gu(1)
             border.color: "#E74C3C"
             border.width: units.dp(2)
@@ -192,7 +202,7 @@ Item {
                 Label {
                     text: memeGridView.errorMessage
                     anchors.horizontalCenter: parent.horizontalCenter
-                    color: theme.palette.normal.backgroundSecondaryText
+                    color: memeGridView.darkMode ? "#818384" : "#787C7E"
                     wrapMode: Text.WordWrap
                     width: units.gu(35)
                     horizontalAlignment: Text.AlignHCenter
@@ -218,12 +228,12 @@ Item {
             anchors.horizontalCenter: parent.horizontalCenter
             width: refreshRow.width + units.gu(2)
             height: units.gu(4)
-            color: theme.palette.normal.background
+            color: memeGridView.darkMode ? "#1A1A1B" : "#FFFFFF"
             radius: height / 2
-            border.color: theme.palette.normal.base
+            border.color: memeGridView.darkMode ? "#343536" : "#EDEFF1"
             border.width: units.dp(1)
-            visible: gridView.contentY < -units.gu(2)
-            opacity: Math.min(1.0, Math.abs(gridView.contentY) / gridView.refreshThreshold)
+            visible: listView.contentY < -units.gu(2)
+            opacity: Math.min(1.0, Math.abs(listView.contentY) / listView.refreshThreshold)
             
             Row {
                 id: refreshRow
@@ -231,7 +241,7 @@ Item {
                 spacing: units.gu(1)
                 
                 ActivityIndicator {
-                    running: gridView.refreshing
+                    running: listView.refreshing
                     visible: running
                     anchors.verticalCenter: parent.verticalCenter
                 }
@@ -241,15 +251,17 @@ Item {
                     width: units.gu(2)
                     height: units.gu(2)
                     anchors.verticalCenter: parent.verticalCenter
-                    visible: !gridView.refreshing
-                    rotation: gridView.refreshing ? 0 : Math.abs(gridView.contentY) * 2
+                    visible: !listView.refreshing
+                    rotation: listView.refreshing ? 0 : Math.abs(listView.contentY) * 2
+                    color: memeGridView.darkMode ? "#D7DADC" : "#1A1A1B"
                 }
                 
                 Label {
-                    text: gridView.refreshing ? "Refreshing..." : 
-                          Math.abs(gridView.contentY) > gridView.refreshThreshold ? "Release to refresh" : "Pull to refresh"
+                    text: listView.refreshing ? "Refreshing..." : 
+                          Math.abs(listView.contentY) > listView.refreshThreshold ? "Release to refresh" : "Pull to refresh"
                     anchors.verticalCenter: parent.verticalCenter
                     font.pixelSize: units.gu(1.2)
+                    color: memeGridView.darkMode ? "#D7DADC" : "#1A1A1B"
                 }
             }
         }
@@ -258,9 +270,9 @@ Item {
     // Loading overlay
     Rectangle {
         anchors.fill: parent
-        color: theme.palette.normal.background
-        opacity: 0.9
-        visible: memeGridView.isLoading && gridView.count === 0
+        color: memeGridView.darkMode ? "#030303" : "#DAE0E6"
+        opacity: 0.95
+        visible: memeGridView.isLoading && listView.count === 0
         
         Column {
             anchors.centerIn: parent
@@ -275,6 +287,7 @@ Item {
                 text: memeGridView.loadingText
                 anchors.horizontalCenter: parent.horizontalCenter
                 font.weight: Font.Medium
+                color: memeGridView.darkMode ? "#D7DADC" : "#1A1A1B"
             }
         }
     }
@@ -286,11 +299,11 @@ Item {
         anchors.bottomMargin: units.gu(1)
         width: loadMoreRow.width + units.gu(2)
         height: units.gu(4)
-        color: theme.palette.normal.background
+        color: memeGridView.darkMode ? "#1A1A1B" : "#FFFFFF"
         radius: height / 2
-        border.color: theme.palette.normal.base
+        border.color: memeGridView.darkMode ? "#343536" : "#EDEFF1"
         border.width: units.dp(1)
-        visible: memeGridView.isLoading && gridView.count > 0
+        visible: memeGridView.isLoading && listView.count > 0
         
         Row {
             id: loadMoreRow
@@ -306,6 +319,7 @@ Item {
                 text: "Loading more..."
                 anchors.verticalCenter: parent.verticalCenter
                 font.pixelSize: units.gu(1.2)
+                color: memeGridView.darkMode ? "#D7DADC" : "#1A1A1B"
             }
         }
     }
@@ -326,7 +340,7 @@ Item {
     }
     
     function scrollToTop() {
-        gridView.positionViewAtBeginning();
+        listView.positionViewAtBeginning();
     }
     
     function setError(message) {

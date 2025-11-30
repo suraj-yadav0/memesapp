@@ -46,10 +46,9 @@ Item {
     // Bookmark properties
     property bool isBookmarked: false
     
-    // Text expansion state
-    property bool isTextExpanded: false
-    property int collapsedTextLines: 4
-    property int maxCollapsedHeight: units.gu(12)
+    // Text preview settings
+    property int collapsedTextLines: 5
+    property int maxCollapsedHeight: units.gu(15)
 
     // Signals
     signal shareRequested(string url, string title)
@@ -214,12 +213,8 @@ Item {
                 width: parent.width
                 height: {
                     if (memeDelegate.postType === "text" && memeDelegate.selftext !== "") {
-                        if (memeDelegate.isTextExpanded) {
-                            return Math.min(fullTextLabel.contentHeight + units.gu(4), units.gu(75));
-                        } else {
-                            var needsExpansion = fullTextLabel.contentHeight > maxCollapsedHeight;
-                            return Math.min(collapsedTextLabel.contentHeight, maxCollapsedHeight) + (needsExpansion ? units.gu(4) : units.gu(1));
-                        }
+                        var needsExpansion = fullTextLabel.contentHeight > maxCollapsedHeight;
+                        return Math.min(collapsedTextLabel.contentHeight, maxCollapsedHeight) + (needsExpansion ? units.gu(5) : units.gu(2));
                     }
                     return 0;
                 }
@@ -233,6 +228,14 @@ Item {
                     anchors.rightMargin: units.gu(1)
                     color: memeDelegate.darkMode ? "#272729" : "#F6F7F8"
                     radius: units.gu(0.8)
+                    
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: {
+                            // Open comments/post detail page to read full text
+                            memeDelegate.commentClicked(memeDelegate.memeId, memeDelegate.memeSubreddit);
+                        }
+                    }
                 }
 
                 // Hidden label to measure full text height
@@ -246,7 +249,7 @@ Item {
                     visible: false
                 }
 
-                // Collapsed text view
+                // Collapsed text view (always shows preview)
                 Label {
                     id: collapsedTextLabel
                     anchors.top: parent.top
@@ -259,54 +262,27 @@ Item {
                     fontSize: "medium"
                     color: memeDelegate.darkMode ? "#D7DADC" : "#1A1A1B"
                     wrapMode: Text.Wrap
-                    maximumLineCount: memeDelegate.isTextExpanded ? 999 : memeDelegate.collapsedTextLines
-                    elide: memeDelegate.isTextExpanded ? Text.ElideNone : Text.ElideRight
+                    maximumLineCount: memeDelegate.collapsedTextLines
+                    elide: Text.ElideRight
                     lineHeight: 1.3
-                }
-
-                // Scrollable expanded text
-                Flickable {
-                    id: textFlickable
-                    anchors.top: parent.top
-                    anchors.topMargin: units.gu(1)
-                    anchors.left: parent.left
-                    anchors.leftMargin: units.gu(2)
-                    anchors.right: parent.right
-                    anchors.rightMargin: units.gu(2)
-                    anchors.bottom: readMoreButton.visible ? readMoreButton.top : parent.bottom
-                    anchors.bottomMargin: units.gu(1)
-                    contentHeight: expandedTextLabel.height
-                    clip: true
-                    visible: memeDelegate.isTextExpanded
-                    interactive: memeDelegate.isTextExpanded
-
-                    Label {
-                        id: expandedTextLabel
-                        width: textFlickable.width
-                        text: memeDelegate.selftext
-                        fontSize: "medium"
-                        color: memeDelegate.darkMode ? "#D7DADC" : "#1A1A1B"
-                        wrapMode: Text.Wrap
-                        lineHeight: 1.3
-                    }
                 }
 
                 // Gradient fade for collapsed text
                 Rectangle {
-                    anchors.bottom: readMoreButton.top
+                    anchors.bottom: readMoreButton.visible ? readMoreButton.top : parent.bottom
                     anchors.left: parent.left
                     anchors.right: parent.right
                     anchors.leftMargin: units.gu(1)
                     anchors.rightMargin: units.gu(1)
                     height: units.gu(3)
-                    visible: !memeDelegate.isTextExpanded && fullTextLabel.contentHeight > maxCollapsedHeight
+                    visible: fullTextLabel.contentHeight > maxCollapsedHeight
                     gradient: Gradient {
                         GradientStop { position: 0.0; color: "transparent" }
                         GradientStop { position: 1.0; color: memeDelegate.darkMode ? "#272729" : "#F6F7F8" }
                     }
                 }
 
-                // Read More / Show Less button
+                // Read More button - opens comments page
                 Rectangle {
                     id: readMoreButton
                     anchors.bottom: parent.bottom
@@ -321,7 +297,7 @@ Item {
                     Label {
                         id: readMoreLabel
                         anchors.centerIn: parent
-                        text: memeDelegate.isTextExpanded ? "Show Less" : "Read More"
+                        text: "Read More"
                         fontSize: "small"
                         font.bold: true
                         color: "#0079D3"
@@ -331,7 +307,8 @@ Item {
                         anchors.fill: parent
                         cursorShape: Qt.PointingHandCursor
                         onClicked: {
-                            memeDelegate.isTextExpanded = !memeDelegate.isTextExpanded;
+                            // Open comments/post detail page to read full text
+                            memeDelegate.commentClicked(memeDelegate.memeId, memeDelegate.memeSubreddit);
                         }
                         hoverEnabled: true
                         onEntered: parent.color = memeDelegate.darkMode ? "#444444" : "#E0E0E0"

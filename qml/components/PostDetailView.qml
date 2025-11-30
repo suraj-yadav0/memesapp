@@ -154,7 +154,14 @@ Dialog {
                 // Post Content (Image or Text)
                 Item {
                     width: parent.width
-                    height: postDetailView.postType === "image" ? (width * 0.75) : (selfTextLabel.height + units.gu(2))
+                    height: {
+                        if (postDetailView.postType === "image" && postDetailView.postImage !== "") {
+                            return width * 0.75;
+                        } else if (postDetailView.postType === "text" && postDetailView.postSelfText !== "") {
+                            return selfTextLabel.contentHeight + units.gu(3);
+                        }
+                        return 0;
+                    }
                     visible: postDetailView.postImage !== "" || postDetailView.postSelfText !== ""
                     
                     // Image Content
@@ -170,15 +177,24 @@ Dialog {
                         }
                     }
                     
-                    // Text Content
-                    Label {
-                        id: selfTextLabel
+                    // Text Content - Full scrollable text
+                    Rectangle {
                         anchors.fill: parent
                         anchors.margins: units.gu(1)
-                        text: postDetailView.postSelfText
-                        wrapMode: Text.Wrap
-                        visible: postDetailView.postType === "text"
-                        color: theme.palette.normal.foregroundText
+                        color: theme.palette.normal.base
+                        radius: units.gu(1)
+                        visible: postDetailView.postType === "text" && postDetailView.postSelfText !== ""
+                        
+                        Label {
+                            id: selfTextLabel
+                            width: parent.width - units.gu(2)
+                            anchors.centerIn: parent
+                            text: postDetailView.postSelfText
+                            wrapMode: Text.Wrap
+                            color: theme.palette.normal.foregroundText
+                            lineHeight: 1.4
+                            font.pixelSize: units.gu(1.8)
+                        }
                     }
                 }
                 

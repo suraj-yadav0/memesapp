@@ -106,15 +106,19 @@ QtObject {
                             var isImage = isImagePost(post);
                             var isText = isTextPost(post);
                             var isGallery = isGalleryPost(post);
+                            var isVideo = isVideoPost(post);
                             
-                            if (isImage || isText || isGallery) {
+                            if (isImage || isText || isGallery || isVideo) {
                                 var galleryImages = isGallery ? getGalleryImages(post) : [];
+                                var videoUrl = isVideo ? getVideoUrl(post) : "";
+                                
                                 var meme = {
                                     id: post.id,
                                     title: post.title,
-                                    image: isImage ? post.url : (isGallery && galleryImages.length > 0 ? galleryImages[0] : ""),
+                                    image: isImage ? post.url : (isGallery && galleryImages.length > 0 ? galleryImages[0] : (isVideo ? (post.thumbnail !== "default" ? post.thumbnail : "") : "")),
                                     images: galleryImages,
-                                    postType: isGallery ? "gallery" : (isImage ? "image" : "text"),
+                                    video: videoUrl,
+                                    postType: isVideo ? "video" : (isGallery ? "gallery" : (isImage ? "image" : "text")),
                                     selftext: isText ? post.selftext : "",
                                     selftext_html: isText ? (post.selftext_html || "") : "",
                                     upvotes: post.ups || 0,
@@ -227,6 +231,55 @@ QtObject {
         return images;
     }
 
+    function isVideoPost(post) {
+        if (!post) return false;
+        
+        // Check for Reddit Video
+        if (post.is_video && post.media && post.media.reddit_video) {
+            return true;
+        }
+        
+        // Check for preview video (GIFs often come as MP4s here)
+        if (post.preview && post.preview.reddit_video_preview && post.preview.reddit_video_preview.is_gif) {
+            return true;
+        }
+        
+        // Check URL for .gifv or .mp4
+        if (post.url && (post.url.endsWith(".gifv") || post.url.endsWith(".mp4"))) {
+            return true;
+        }
+        
+        return false;
+    }
+
+    function getVideoUrl(post) {
+        if (!post) return "";
+        
+        // Reddit Video (Dash/HLS/Fallback)
+        if (post.is_video && post.media && post.media.reddit_video) {
+            // Prefer HLS or Dash if available, otherwise fallback
+            // Note: QtMultimedia might prefer fallback MP4
+            return post.media.reddit_video.fallback_url || "";
+        }
+        
+        // Preview Video (GIFs as MP4)
+        if (post.preview && post.preview.reddit_video_preview) {
+            return post.preview.reddit_video_preview.fallback_url || "";
+        }
+        
+        // Direct URL
+        if (post.url && (post.url.endsWith(".mp4"))) {
+            return post.url;
+        }
+        
+        // Convert .gifv to .mp4 for Imgur
+        if (post.url && post.url.endsWith(".gifv")) {
+            return post.url.replace(".gifv", ".mp4");
+        }
+        
+        return "";
+    }
+
     function cancelCurrentRequest() {
         if (currentXhr) {
             currentXhr.abort();
@@ -325,15 +378,19 @@ QtObject {
                             var isImage = isImagePost(post);
                             var isText = isTextPost(post);
                             var isGallery = isGalleryPost(post);
+                            var isVideo = isVideoPost(post);
                             
-                            if (isImage || isText || isGallery) {
+                            if (isImage || isText || isGallery || isVideo) {
                                 var galleryImages = isGallery ? getGalleryImages(post) : [];
+                                var videoUrl = isVideo ? getVideoUrl(post) : "";
+                                
                                 var meme = {
                                     id: post.id,
                                     title: post.title,
-                                    image: isImage ? post.url : (isGallery && galleryImages.length > 0 ? galleryImages[0] : ""),
+                                    image: isImage ? post.url : (isGallery && galleryImages.length > 0 ? galleryImages[0] : (isVideo ? (post.thumbnail !== "default" ? post.thumbnail : "") : "")),
                                     images: galleryImages,
-                                    postType: isGallery ? "gallery" : (isImage ? "image" : "text"),
+                                    video: videoUrl,
+                                    postType: isVideo ? "video" : (isGallery ? "gallery" : (isImage ? "image" : "text")),
                                     selftext: isText ? post.selftext : "",
                                     upvotes: post.ups,
                                     comments: post.num_comments,

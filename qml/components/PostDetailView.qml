@@ -18,6 +18,7 @@ import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.3
 import Lomiri.Components 1.3
+import QtMultimedia 5.12
 
 Dialog {
     id: postDetailView
@@ -34,6 +35,7 @@ Dialog {
     property string postTitle: ""
     property string postImage: ""
     property var postImages: []
+    property string postVideo: ""
     property string postAuthor: ""
     property string postSubreddit: ""
     property int postUpvotes: 0
@@ -235,7 +237,7 @@ Dialog {
                             lineHeight: 1.2
                         }
 
-                        // Post Content (Image, Gallery or Text)
+                        // Post Content (Image, Gallery, Video or Text)
                         Item {
                             width: parent.width
                             height: {
@@ -247,12 +249,16 @@ Dialog {
                                     return units.gu(30);
                                 } else if (postDetailView.postType === "gallery" && postDetailView.postImages.length > 0) {
                                     return units.gu(40); // Fixed height for gallery
+                                } else if (postDetailView.postType === "video" && postDetailView.postVideo !== "") {
+                                    return units.gu(40); // Fixed height for video
                                 } else if (postDetailView.postType === "text" && postDetailView.postSelfText !== "") {
                                     return selfTextLabel.contentHeight + units.gu(3);
                                 }
                                 return 0;
                             }
-                            visible: postDetailView.postImage !== "" || postDetailView.postSelfText !== "" || (postDetailView.postType === "gallery" && postDetailView.postImages.length > 0)
+                            visible: postDetailView.postImage !== "" || postDetailView.postSelfText !== "" || 
+                                     (postDetailView.postType === "gallery" && postDetailView.postImages.length > 0) ||
+                                     (postDetailView.postType === "video" && postDetailView.postVideo !== "")
 
                             // Image Content
                             Rectangle {
@@ -349,6 +355,75 @@ Dialog {
                                         fontSize: "small"
                                         font.bold: true
                                     }
+                                }
+                            }
+
+                            // Video Content
+                            Rectangle {
+                                anchors.fill: parent
+                                color: postDetailView.darkMode ? "#0D0D0D" : "#F8F9FA"
+                                visible: postDetailView.postType === "video" && postDetailView.postVideo !== ""
+
+                                Video {
+                                    id: detailVideoPlayer
+                                    anchors.fill: parent
+                                    source: postDetailView.postType === "video" ? postDetailView.postVideo : ""
+                                    autoLoad: true
+                                    autoPlay: true
+                                    fillMode: VideoOutput.PreserveAspectFit
+                                    muted: false
+                                    loops: MediaPlayer.Infinite
+
+                                    onErrorChanged: {
+                                        if (error !== MediaPlayer.NoError) {
+                                            console.error("Detail Video playback error:", errorString);
+                                        }
+                                    }
+                                    
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        onClicked: {
+                                            if (detailVideoPlayer.playbackState === MediaPlayer.PlayingState) {
+                                                detailVideoPlayer.pause();
+                                            } else {
+                                                detailVideoPlayer.play();
+                                            }
+                                        }
+                                    }
+                                }
+                                
+                                // Play button overlay
+                                Rectangle {
+                                    anchors.centerIn: parent
+                                    width: units.gu(6)
+                                    height: units.gu(6)
+                                    radius: width / 2
+                                    color: "#80000000"
+                                    visible: detailVideoPlayer.playbackState !== MediaPlayer.PlayingState
+                                    
+                                    Icon {
+                                        anchors.centerIn: parent
+                                        name: "media-playback-start"
+                                        width: units.gu(3)
+                                        height: units.gu(3)
+                                        color: "white"
+                                    }
+                                    
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        onClicked: detailVideoPlayer.play()
+                                    }
+                                }
+
+                                // Error message
+                                Label {
+                                    anchors.centerIn: parent
+                                    text: "Video Error"
+                                    color: "red"
+                                    visible: detailVideoPlayer.error !== MediaPlayer.NoError
+                                    font.bold: true
+                                    style: Text.Outline
+                                    styleColor: "black"
                                 }
                             }
 

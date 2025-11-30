@@ -17,6 +17,7 @@
 import Lomiri.Components 1.3
 import QtQuick 2.12
 import Ubuntu.Components 1.3
+import QtMultimedia 5.12
 
 Item {
     id: memeDelegate
@@ -30,6 +31,7 @@ Item {
     property string memeTitle: model.title || "Untitled"
     property string memeImage: model.image || ""
     property var memeImages: model.images || []
+    property string memeVideo: model.video || ""
     property string postType: model.postType || "image"
     property string selftext: model.selftext || ""
     property int memeUpvotes: model.upvotes || 0
@@ -318,7 +320,7 @@ Item {
                 }
             }
 
-            // Image/Gallery container - Adaptive sizing
+            // Image/Gallery/Video container - Adaptive sizing
             Item {
                 id: imageContainer
                 width: parent.width
@@ -333,11 +335,14 @@ Item {
                         return units.gu(25); // Default placeholder height
                     } else if (memeDelegate.postType === "gallery" && memeDelegate.memeImages.length > 0) {
                         return units.gu(40); // Fixed height for gallery
+                    } else if (memeDelegate.postType === "video" && memeDelegate.memeVideo !== "") {
+                        return units.gu(35); // Fixed height for video preview
                     }
                     return 0;
                 }
                 visible: (memeDelegate.postType === "image" && memeDelegate.memeImage !== "") || 
-                         (memeDelegate.postType === "gallery" && memeDelegate.memeImages.length > 0)
+                         (memeDelegate.postType === "gallery" && memeDelegate.memeImages.length > 0) ||
+                         (memeDelegate.postType === "video" && memeDelegate.memeVideo !== "")
                 clip: true
 
                 Rectangle {
@@ -422,10 +427,109 @@ Item {
                     Label {
                         id: pageIndicatorLabel
                         anchors.centerIn: parent
-                        text: (galleryView.currentIndex + 1) + "/" + memeDelegate.memeImages.length
+                        text: (galleryView.currentIndex + 1) + "/" + (memeDelegate.memeImages ? memeDelegate.memeImages.length : 0)
                         color: "white"
                         fontSize: "small"
                         font.bold: true
+                    }
+                }
+
+                // Video Player
+                Item {
+                    anchors.fill: parent
+                    visible: memeDelegate.postType === "video"
+                    
+                    Video {
+                        id: videoPlayer
+                        anchors.fill: parent
+                        source: memeDelegate.postType === "video" ? memeDelegate.memeVideo : ""
+                        autoLoad: false
+                        autoPlay: false
+                        fillMode: VideoOutput.PreserveAspectFit
+                        muted: true
+                        loops: MediaPlayer.Infinite
+                        
+                        onStatusChanged: {
+                            if (status === MediaPlayer.EndOfMedia) {
+                                play(); // Loop
+                            }
+                        }
+
+                        onErrorChanged: {
+                            if (error !== MediaPlayer.NoError) {
+                                console.error("Video playback error:", errorString);
+                            }
+                        }
+                        
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: {
+                                if (videoPlayer.playbackState === MediaPlayer.PlayingState) {
+                                    videoPlayer.pause();
+                                } else {
+                                    videoPlayer.play();
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Play button overlay
+                    Rectangle {
+                        anchors.centerIn: parent
+                        width: units.gu(6)
+                        height: units.gu(6)
+                        radius: width / 2
+                        color: "#80000000"
+                        visible: videoPlayer.playbackState !== MediaPlayer.PlayingState
+                        
+                        Icon {
+                            anchors.centerIn: parent
+                            name: "media-playback-start"
+                            width: units.gu(3)
+                            height: units.gu(3)
+                            color: "white"
+                        }
+                        
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: videoPlayer.play()
+                        }
+                    }
+                    
+                    // Mute toggle
+                    Rectangle {
+                        anchors.bottom: parent.bottom
+                        anchors.right: parent.right
+                        anchors.margins: units.gu(1)
+                        width: units.gu(4)
+                        height: units.gu(4)
+                        radius: width / 2
+                        color: "#80000000"
+                        visible: videoPlayer.playbackState === MediaPlayer.PlayingState
+                        
+                        Icon {
+                            anchors.centerIn: parent
+                            name: videoPlayer.muted ? "audio-volume-muted" : "audio-volume-high"
+                            width: units.gu(2)
+                            height: units.gu(2)
+                            color: "white"
+                        }
+                        
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: videoPlayer.muted = !videoPlayer.muted
+                        }
+                    }
+
+                    // Error message
+                    Label {
+                        anchors.centerIn: parent
+                        text: "Video Error"
+                        color: "red"
+                        visible: videoPlayer.error !== MediaPlayer.NoError
+                        font.bold: true
+                        style: Text.Outline
+                        styleColor: "black"
                     }
                 }
 
@@ -457,7 +561,8 @@ Item {
                 Rectangle {
                     anchors.fill: parent
                     color: memeDelegate.darkMode ? "#1A1A1A" : "#F5F5F5"
-                    visible: memeDelegate.postType === "image" && memeImageLoader.status === Image.Error
+                    visible: (memeDelegate.postType === "image" && memeImageLoader.status === Image.Error) ||
+                             (memeDelegate.postType === "video" && videoPlayer.status === MediaPlayer.InvalidMedia)
 
                     Column {
                         anchors.centerIn: parent
@@ -473,7 +578,7 @@ Item {
 
                         Label {
                             anchors.horizontalCenter: parent.horizontalCenter
-                            text: "Failed to load image"
+                            text: "Failed to load content"
                             color: memeDelegate.darkMode ? "#818384" : "#787C7E"
                             fontSize: "small"
                         }
@@ -497,8 +602,13 @@ Item {
                             MouseArea {
                                 anchors.fill: parent
                                 onClicked: {
-                                    memeImageLoader.source = "";
-                                    memeImageLoader.source = memeDelegate.memeImage;
+                                    if (memeDelegate.postType === "image") {
+                                        memeImageLoader.source = "";
+                                        memeImageLoader.source = memeDelegate.memeImage;
+                                    } else if (memeDelegate.postType === "video") {
+                                        videoPlayer.source = "";
+                                        videoPlayer.source = memeDelegate.memeVideo;
+                                    }
                                 }
                             }
                         }

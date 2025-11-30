@@ -43,6 +43,7 @@ ListModel {
             title: meme.title || "Untitled",
             image: meme.image || "",
             images: meme.images || [],
+            video: meme.video || "",
             postType: meme.postType || "image",
             selftext: meme.selftext || "",
             upvotes: meme.upvotes || 0,

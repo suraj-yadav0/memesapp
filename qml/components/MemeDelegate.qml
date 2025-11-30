@@ -366,9 +366,13 @@ Item {
                     color: memeDelegate.darkMode ? "#1A1A1A" : "#F0F0F0"
                     visible: memeImageLoader.status === Image.Loading
 
-                    ActivityIndicator {
+                    RedditLoadingAnimation {
                         anchors.centerIn: parent
                         running: memeImageLoader.status === Image.Loading
+                        width: units.gu(6)
+                        height: units.gu(6)
+                        accentColor: "#FF4500"
+                        darkMode: memeDelegate.darkMode
                     }
 
                     Label {

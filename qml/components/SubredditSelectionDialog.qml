@@ -15,138 +15,414 @@
  */
 
 import QtQuick 2.12
-import QtQuick.Controls 2.12
+import QtQuick.Controls 2.12 as QC2
 import QtQuick.Layouts 1.3
 import Lomiri.Components 1.3
 
-Dialog {
+QC2.Dialog {
     id: subredditSelectionDialog
-    modal: true
-    focus: true
-    standardButtons: Dialog.Ok | Dialog.Cancel
-
-    width: Math.min(parent.width * 0.9, units.gu(50))
-    x: (parent.width - width) / 2
-    y: (parent.height - height) / 2
-
+    
     // Properties
     property var categoryNames: []
     property var extendedCategoryMap: ({})
     property bool useCustomSubreddit: false
     property string selectedSubreddit: ""
+    property bool darkMode: false
+    
+    // Theme colors
+    readonly property color bgColor: darkMode ? "#0F0F0F" : "#F5F5F5"
+    readonly property color cardColor: darkMode ? "#1A1A1B" : "#FFFFFF"
+    readonly property color textColor: darkMode ? "#D7DADC" : "#1A1A1B"
+    readonly property color subtextColor: darkMode ? "#818384" : "#787C7E"
+    readonly property color accentColor: "#FF4500"
+    readonly property color dividerColor: darkMode ? "#343536" : "#EDEFF1"
+    readonly property color inputBgColor: darkMode ? "#272729" : "#F6F7F8"
     
     // Signals
     signal subredditSelected(string subreddit, bool isCustom)
     signal addToCollection(string subredditName)
 
+    // Dialog settings
+    x: 0
+    y: 0
+    width: parent.width
+    height: parent.height
+    modal: true
+    focus: true
+    padding: 0
+    margins: 0
+    
+    header: null
+    footer: null
+    
     background: Rectangle {
-        color: theme.palette.normal.background
-        radius: units.gu(1)
+        color: subredditSelectionDialog.bgColor
     }
-
-    ColumnLayout {
+    
+    contentItem: Item {
         anchors.fill: parent
-        spacing: units.gu(2)
-
-        // Mode Selection
-        GroupBox {
-            title: "Selection Mode"
-            Layout.fillWidth: true
-
-            background: Rectangle {
-                color: theme.palette.normal.background
-                radius: 4
-            }
-
-            label: Text {
-                text: "Selection Mode"
-                color: theme.palette.normal.backgroundText
-                font.bold: true
-            }
-
-            ColumnLayout {
-                anchors.fill: parent
-                spacing: units.gu(1)
-
-                RadioButton {
-                    id: dialogCategoryModeRadio
-                    text: "Popular Categories"
-                    checked: !subredditSelectionDialog.useCustomSubreddit
-
-                    contentItem: Text {
-                        text: dialogCategoryModeRadio.text
-                        color: theme.palette.normal.backgroundText
-                        leftPadding: dialogCategoryModeRadio.indicator.width + dialogCategoryModeRadio.spacing
-                    }
+        
+        // Header
+        Rectangle {
+            id: headerBar
+            width: parent.width
+            height: units.gu(7)
+            color: subredditSelectionDialog.cardColor
+            z: 10
+            
+            // Shadow
+            Rectangle {
+                anchors.top: parent.bottom
+                width: parent.width
+                height: units.gu(0.5)
+                gradient: Gradient {
+                    GradientStop { position: 0.0; color: subredditSelectionDialog.darkMode ? "#40000000" : "#20000000" }
+                    GradientStop { position: 1.0; color: "transparent" }
                 }
-
-                RadioButton {
-                    id: dialogCustomModeRadio
-                    text: "Custom Subreddit"
-                    checked: subredditSelectionDialog.useCustomSubreddit
-
-                    contentItem: Text {
-                        text: dialogCustomModeRadio.text
-                        color: theme.palette.normal.backgroundText
-                        leftPadding: dialogCustomModeRadio.indicator.width + dialogCustomModeRadio.spacing
-                    }
+            }
+            
+            // Back/Close button
+            Rectangle {
+                width: units.gu(5)
+                height: units.gu(5)
+                anchors.left: parent.left
+                anchors.leftMargin: units.gu(1)
+                anchors.verticalCenter: parent.verticalCenter
+                color: backMouseArea.pressed ? subredditSelectionDialog.dividerColor : "transparent"
+                radius: width / 2
+                
+                Icon {
+                    anchors.centerIn: parent
+                    width: units.gu(2.5)
+                    height: units.gu(2.5)
+                    name: "back" 
+                    color: subredditSelectionDialog.textColor
                 }
+                
+                MouseArea {
+                    id: backMouseArea
+                    anchors.fill: parent
+                    onClicked: subredditSelectionDialog.close()
+                }
+            }
+            
+            // Title
+            Label {
+                anchors.centerIn: parent
+                text: "Select Subreddit"
+                font.pixelSize: units.gu(2.2)
+                font.weight: Font.DemiBold
+                color: subredditSelectionDialog.textColor
             }
         }
-
-        // Category Selector
-        GroupBox {
-            title: "Choose Category"
-            Layout.fillWidth: true
-            visible: dialogCategoryModeRadio.checked
-
-            background: Rectangle {
-                color: theme.palette.normal.background
-                radius: 4
-            }
-
-            label: Text {
-                text: "Choose Category"
-                color: theme.palette.normal.backgroundText
-                font.bold: true
-            }
-
-            ColumnLayout {
+        
+        // Tab Bar
+        Rectangle {
+            id: tabBar
+            anchors.top: headerBar.bottom
+            width: parent.width
+            height: units.gu(6)
+            color: subredditSelectionDialog.cardColor
+            
+            Row {
                 anchors.fill: parent
-                spacing: units.gu(1)
-
-                Text {
-                    text: "Select a meme category:"
-                    Layout.fillWidth: true
-                    color: theme.palette.normal.backgroundText
+                
+                // Categories Tab
+                Rectangle {
+                    width: parent.width / 2
+                    height: parent.height
+                    color: "transparent"
+                    
+                    Label {
+                        anchors.centerIn: parent
+                        text: "Categories"
+                        font.pixelSize: units.gu(1.7)
+                        font.weight: tabStack.currentIndex === 0 ? Font.DemiBold : Font.Normal
+                        color: tabStack.currentIndex === 0 ? subredditSelectionDialog.accentColor : subredditSelectionDialog.subtextColor
+                    }
+                    
+                    Rectangle {
+                        anchors.bottom: parent.bottom
+                        width: parent.width - units.gu(4)
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        height: units.gu(0.4)
+                        radius: height / 2
+                        color: subredditSelectionDialog.accentColor
+                        visible: tabStack.currentIndex === 0
+                    }
+                    
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: tabStack.currentIndex = 0
+                    }
                 }
-
-                ComboBox {
-                    id: dialogCategoryCombo
-                    model: subredditSelectionDialog.categoryNames
-                    Layout.fillWidth: true
-
-                    background: Rectangle {
-                        color: theme.palette.normal.background
-                        border.color: theme.palette.normal.base
-                        border.width: 1
-                        radius: 4
+                
+                // Custom Tab
+                Rectangle {
+                    width: parent.width / 2
+                    height: parent.height
+                    color: "transparent"
+                    
+                    Label {
+                        anchors.centerIn: parent
+                        text: "Custom"
+                        font.pixelSize: units.gu(1.7)
+                        font.weight: tabStack.currentIndex === 1 ? Font.DemiBold : Font.Normal
+                        color: tabStack.currentIndex === 1 ? subredditSelectionDialog.accentColor : subredditSelectionDialog.subtextColor
                     }
-
-                    contentItem: Text {
-                        text: dialogCategoryCombo.displayText
-                        color: theme.palette.normal.fieldText
-                        leftPadding: units.gu(1)
-                        rightPadding: units.gu(3)
-                        verticalAlignment: Text.AlignVCenter
+                    
+                    Rectangle {
+                        anchors.bottom: parent.bottom
+                        width: parent.width - units.gu(4)
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        height: units.gu(0.4)
+                        radius: height / 2
+                        color: subredditSelectionDialog.accentColor
+                        visible: tabStack.currentIndex === 1
                     }
-
-                    Component.onCompleted: {
-                        if (!subredditSelectionDialog.useCustomSubreddit) {
-                            for (var i = 0; i < subredditSelectionDialog.categoryNames.length; i++) {
-                                if (subredditSelectionDialog.extendedCategoryMap[subredditSelectionDialog.categoryNames[i]] === subredditSelectionDialog.selectedSubreddit) {
-                                    currentIndex = i;
-                                    break;
+                    
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: tabStack.currentIndex = 1
+                    }
+                }
+            }
+            
+            Rectangle {
+                anchors.bottom: parent.bottom
+                width: parent.width
+                height: 1
+                color: subredditSelectionDialog.dividerColor
+            }
+        }
+        
+        // Content
+        StackLayout {
+            id: tabStack
+            anchors.top: tabBar.bottom
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            currentIndex: 0
+            
+            // Categories List
+            ListView {
+                id: categoriesList
+                clip: true
+                model: subredditSelectionDialog.categoryNames
+                
+                delegate: Rectangle {
+                    width: categoriesList.width
+                    height: units.gu(7)
+                    color: categoryMouseArea.pressed ? subredditSelectionDialog.dividerColor : subredditSelectionDialog.cardColor
+                    
+                    Row {
+                        anchors.fill: parent
+                        anchors.leftMargin: units.gu(2)
+                        anchors.rightMargin: units.gu(2)
+                        spacing: units.gu(2)
+                        
+                        // Icon/Avatar placeholder
+                        Rectangle {
+                            width: units.gu(4.5)
+                            height: units.gu(4.5)
+                            radius: width / 2
+                            anchors.verticalCenter: parent.verticalCenter
+                            color: {
+                                var colors = ["#FF4500", "#0079D3", "#46D160", "#FF6B6B", "#9B59B6", "#3498DB"];
+                                var index = modelData.charCodeAt(0) % colors.length;
+                                return colors[index];
+                            }
+                            
+                            Label {
+                                anchors.centerIn: parent
+                                text: modelData.charAt(0).toUpperCase()
+                                font.pixelSize: units.gu(2)
+                                font.weight: Font.Bold
+                                color: "white"
+                            }
+                        }
+                        
+                        Column {
+                            anchors.verticalCenter: parent.verticalCenter
+                            spacing: units.gu(0.2)
+                            
+                            Label {
+                                text: modelData
+                                font.pixelSize: units.gu(1.7)
+                                font.weight: Font.Medium
+                                color: subredditSelectionDialog.textColor
+                            }
+                            
+                            Label {
+                                text: "r/" + subredditSelectionDialog.extendedCategoryMap[modelData]
+                                font.pixelSize: units.gu(1.4)
+                                color: subredditSelectionDialog.subtextColor
+                            }
+                        }
+                    }
+                    
+                    // Selected indicator
+                    Icon {
+                        anchors.right: parent.right
+                        anchors.rightMargin: units.gu(2)
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: units.gu(2.5)
+                        height: units.gu(2.5)
+                        name: "tick"
+                        color: subredditSelectionDialog.accentColor
+                        visible: subredditSelectionDialog.extendedCategoryMap[modelData] === subredditSelectionDialog.selectedSubreddit && !subredditSelectionDialog.useCustomSubreddit
+                    }
+                    
+                    Rectangle {
+                        anchors.bottom: parent.bottom
+                        anchors.left: parent.left
+                        anchors.leftMargin: units.gu(8.5)
+                        anchors.right: parent.right
+                        height: 1
+                        color: subredditSelectionDialog.dividerColor
+                    }
+                    
+                    MouseArea {
+                        id: categoryMouseArea
+                        anchors.fill: parent
+                        onClicked: {
+                            var subreddit = subredditSelectionDialog.extendedCategoryMap[modelData];
+                            subredditSelectionDialog.subredditSelected(subreddit, false);
+                            subredditSelectionDialog.close();
+                        }
+                    }
+                }
+            }
+            
+            // Custom Input
+            Item {
+                
+                Column {
+                    anchors.centerIn: parent
+                    width: Math.min(parent.width * 0.8, units.gu(40))
+                    spacing: units.gu(3)
+                    
+                    // Icon
+                    Icon {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        width: units.gu(8)
+                        height: units.gu(8)
+                        name: "edit"
+                        color: subredditSelectionDialog.accentColor
+                    }
+                    
+                    Label {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        text: "Enter Subreddit Name"
+                        font.pixelSize: units.gu(2.2)
+                        font.weight: Font.DemiBold
+                        color: subredditSelectionDialog.textColor
+                    }
+                    
+                    // Input Field
+                    Rectangle {
+                        width: parent.width
+                        height: units.gu(6)
+                        radius: units.gu(1)
+                        color: subredditSelectionDialog.inputBgColor
+                        border.width: customInput.activeFocus ? 2 : 0
+                        border.color: subredditSelectionDialog.accentColor
+                        
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.margins: units.gu(1.5)
+                            spacing: units.gu(1)
+                            
+                            Label {
+                                text: "r/"
+                                font.pixelSize: units.gu(1.8)
+                                color: subredditSelectionDialog.subtextColor
+                                font.weight: Font.Bold
+                            }
+                            
+                            TextInput {
+                                id: customInput
+                                Layout.fillWidth: true
+                                Layout.fillHeight: true
+                                font.pixelSize: units.gu(1.8)
+                                color: subredditSelectionDialog.textColor
+                                verticalAlignment: TextInput.AlignVCenter
+                                selectByMouse: true
+                                
+                                onTextChanged: {
+                                    var cleanText = text.replace(/[^a-zA-Z0-9_]/g, '');
+                                    if (cleanText !== text) {
+                                        text = cleanText;
+                                    }
+                                }
+                                
+                                Keys.onReturnPressed: goButtonRect.enabled ? goButtonArea.clicked(null) : null
+                                Keys.onEnterPressed: goButtonRect.enabled ? goButtonArea.clicked(null) : null
+                            }
+                        }
+                    }
+                    
+                    // Buttons
+                    Row {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        spacing: units.gu(2)
+                        
+                        // Add to Collection Button
+                        Rectangle {
+                            width: units.gu(6)
+                            height: units.gu(6)
+                            radius: width / 2
+                            color: addToCollectionArea.pressed ? subredditSelectionDialog.dividerColor : subredditSelectionDialog.inputBgColor
+                            
+                            Icon {
+                                anchors.centerIn: parent
+                                width: units.gu(3)
+                                height: units.gu(3)
+                                name: "add"
+                                color: subredditSelectionDialog.textColor
+                            }
+                            
+                            MouseArea {
+                                id: addToCollectionArea
+                                anchors.fill: parent
+                                onClicked: {
+                                    var text = customInput.text.trim();
+                                    if (text.length > 0) {
+                                        subredditSelectionDialog.addToCollection(text);
+                                        // Show feedback?
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // Go Button
+                        Rectangle {
+                            id: goButtonRect
+                            width: units.gu(16)
+                            height: units.gu(6)
+                            radius: units.gu(3)
+                            color: goButtonArea.pressed ? "#C23D00" : subredditSelectionDialog.accentColor
+                            opacity: customInput.text.trim().length > 0 ? 1.0 : 0.5
+                            enabled: customInput.text.trim().length > 0
+                            
+                            Label {
+                                anchors.centerIn: parent
+                                text: "Go"
+                                font.pixelSize: units.gu(1.8)
+                                font.weight: Font.Bold
+                                color: "white"
+                            }
+                            
+                            MouseArea {
+                                id: goButtonArea
+                                anchors.fill: parent
+                                onClicked: {
+                                    var text = customInput.text.trim();
+                                    if (text.length > 0) {
+                                        subredditSelectionDialog.subredditSelected(text, true);
+                                        subredditSelectionDialog.close();
+                                    }
                                 }
                             }
                         }
@@ -154,137 +430,15 @@ Dialog {
                 }
             }
         }
-
-        // Custom subreddit input
-        GroupBox {
-            title: "Enter Custom Subreddit"
-            Layout.fillWidth: true
-            visible: dialogCustomModeRadio.checked
-
-            background: Rectangle {
-                color: theme.palette.normal.background
-                radius: 4
-            }
-
-            label: Text {
-                text: "Enter Custom Subreddit"
-                color: theme.palette.normal.backgroundText
-                font.bold: true
-            }
-
-            ColumnLayout {
-                anchors.fill: parent
-                spacing: units.gu(1)
-
-                Text {
-                    text: "Enter subreddit name (without 'r/'):"
-                    Layout.fillWidth: true
-                    color: theme.palette.normal.backgroundText
-                }
-
-                TextField {
-                    id: dialogCustomSubredditField
-                    Layout.fillWidth: true
-                    placeholderText: "e.g., memes, funny, programming"
-                    text: subredditSelectionDialog.useCustomSubreddit ? subredditSelectionDialog.selectedSubreddit : ""
-
-                    Rectangle {
-                        color: theme.palette.normal.background
-                        border.color: theme.palette.normal.base
-                        border.width: 1
-                        radius: 4
-                    }
-
-                    color: theme.palette.normal.fieldText
-
-                    onTextChanged: {
-                        if (text.toLowerCase().startsWith("r/")) {
-                            text = text.substring(2);
-                        }
-                        var cleanText = text.replace(/[^a-zA-Z0-9_]/g, '');
-                        if (cleanText !== text) {
-                            text = cleanText;
-                        }
-                    }
-
-                    Keys.onReturnPressed: subredditSelectionDialog.accept()
-                    Keys.onEnterPressed: subredditSelectionDialog.accept()
-                }
-                
-                // Add to Collection button
-                Row {
-                    Layout.fillWidth: true
-                    spacing: units.gu(1)
-                    
-                    Button {
-                        text: "Add to My Collection"
-                        enabled: dialogCustomSubredditField.text.trim() !== ""
-                        
-                        onClicked: {
-                            var subredditName = dialogCustomSubredditField.text.trim().toLowerCase();
-                            if (subredditName !== "") {
-                                subredditSelectionDialog.addToCollection(subredditName);
-                            }
-                        }
-                    }
-                    
-                    Text {
-                        text: "Save for future use"
-                        font.pixelSize: units.gu(1.1)
-                        color: theme.palette.normal.backgroundSecondaryText
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-                }
-
-                Text {
-                    text: "Note: Make sure the subreddit exists and contains images"
-                    font.pixelSize: units.gu(1.2)
-                    color: theme.palette.normal.backgroundSecondaryText
-                    Layout.fillWidth: true
-                    wrapMode: Text.WordWrap
-                }
-            }
-        }
     }
-
-    onAccepted: {
-        var newSubreddit = "";
-        var newUseCustom = dialogCustomModeRadio.checked;
-
-        if (newUseCustom) {
-            var customText = dialogCustomSubredditField.text.trim().toLowerCase();
-            if (customText !== "") {
-                newSubreddit = customText;
-            } else {
-                return; // Don't close if invalid
-            }
-        } else {
-            if (dialogCategoryCombo.currentIndex >= 0 && dialogCategoryCombo.currentText) {
-                var categoryName = dialogCategoryCombo.currentText;
-                newSubreddit = subredditSelectionDialog.extendedCategoryMap[categoryName];
-            }
-        }
-
-        if (newSubreddit) {
-            console.log("SubredditSelectionDialog: Selected subreddit:", newSubreddit, "Custom:", newUseCustom);
-            subredditSelectionDialog.subredditSelected(newSubreddit, newUseCustom);
-        }
-    }
-
+    
     onOpened: {
-        dialogCategoryModeRadio.checked = !subredditSelectionDialog.useCustomSubreddit;
-        dialogCustomModeRadio.checked = subredditSelectionDialog.useCustomSubreddit;
-
-        if (subredditSelectionDialog.useCustomSubreddit) {
-            dialogCustomSubredditField.text = subredditSelectionDialog.selectedSubreddit;
-            dialogCustomSubredditField.forceActiveFocus();
+        if (useCustomSubreddit) {
+            tabStack.currentIndex = 1;
+            customInput.text = selectedSubreddit;
         } else {
-            for (var i = 0; i < subredditSelectionDialog.categoryNames.length; i++) {
-                if (subredditSelectionDialog.extendedCategoryMap[subredditSelectionDialog.categoryNames[i]] === subredditSelectionDialog.selectedSubreddit) {
-                    dialogCategoryCombo.currentIndex = i;
-                    break;
-                }
-            }
+            tabStack.currentIndex = 0;
+            customInput.text = "";
         }
     }
 }

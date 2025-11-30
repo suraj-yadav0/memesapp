@@ -38,6 +38,7 @@ Dialog {
     property int postUpvotes: 0
     property int postCommentCount: 0
     property string postSelfText: ""
+    property string postSelfTextHtml: ""
     property string postType: "image"
     property string postPermalink: ""
     
@@ -272,10 +273,14 @@ Dialog {
                                     }
                                 }
 
-                                ActivityIndicator {
+                                RedditLoadingAnimation {
                                     anchors.centerIn: parent
                                     running: postImageLoader.status === Image.Loading
                                     visible: running
+                                    width: units.gu(6)
+                                    height: units.gu(6)
+                                    accentColor: "#FF4500"
+                                    darkMode: postDetailView.darkMode
                                 }
                             }
 
@@ -294,11 +299,13 @@ Dialog {
                                     anchors.leftMargin: units.gu(1)
                                     anchors.top: parent.top
                                     anchors.topMargin: units.gu(1)
-                                    text: postDetailView.postSelfText
+                                    text: postDetailView.postSelfTextHtml ? unescapeHtml(postDetailView.postSelfTextHtml) : postDetailView.postSelfText
+                                    textFormat: postDetailView.postSelfTextHtml ? Text.RichText : Text.AutoText
                                     wrapMode: Text.Wrap
                                     color: postDetailView.darkMode ? "#D7DADC" : "#1A1A1B"
                                     lineHeight: 1.5
                                     font.pixelSize: units.gu(1.8)
+                                    onLinkActivated: Qt.openUrlExternally(link)
                                 }
                             }
                         }
@@ -444,9 +451,13 @@ Dialog {
                     anchors.centerIn: parent
                     spacing: units.gu(1)
 
-                    ActivityIndicator {
+                    RedditLoadingAnimation {
                         running: postDetailView.isLoadingComments
                         anchors.horizontalCenter: parent.horizontalCenter
+                        width: units.gu(4)
+                        height: units.gu(4)
+                        accentColor: "#FF4500"
+                        darkMode: postDetailView.darkMode
                     }
 
                     Label {
@@ -702,5 +713,13 @@ Dialog {
 
     onClosed: {
         postDetailView.commentsModel = []
+    }
+
+    function unescapeHtml(safe) {
+        return safe.replace(/&amp;/g, '&')
+            .replace(/&lt;/g, '<')
+            .replace(/&gt;/g, '>')
+            .replace(/&quot;/g, '"')
+            .replace(/&#039;/g, "'");
     }
 }

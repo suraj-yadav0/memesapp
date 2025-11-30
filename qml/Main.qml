@@ -46,7 +46,16 @@ MainView {
     property bool useCustomSubreddit: false
     property string dialogImageSource: ""
     property int currentMemeIndex: -1
-    property bool isDesktopMode: true
+    
+    // Layout mode detection
+    property bool isDesktopMode: width > units.gu(100)  // Three columns
+    property bool isTabletMode: width > units.gu(60) && width <= units.gu(100)  // Two columns
+    property bool isMobileMode: width <= units.gu(60)  // Single column
+    
+    // Panel visibility
+    property bool sidebarVisible: isDesktopMode
+    property bool detailPanelVisible: false
+    property var currentDetailMeme: null
     
     // Multi-subreddit properties
     property bool isMultiSubredditMode: false
@@ -176,176 +185,587 @@ MainView {
         property alias darkMode: root.darkMode
     }
 
-    // Main layout with AdaptivePageLayout for convergence
-    AdaptivePageLayout {
-        id: adaptiveLayout
+    // ========== REDDIT-STYLE THREE-COLUMN LAYOUT ==========
+    // Column 1: Subreddit Sidebar (left)
+    // Column 2: Posts Feed (center)  
+    // Column 3: Comments/Detail Panel (right)
+    
+    Row {
+        id: mainLayout
         anchors.fill: parent
         
-        // Define layouts for different screen sizes
-        layouts: [
-            // Two-column layout for wide screens (desktop/tablet landscape)
-            PageColumnsLayout {
-                when: width > units.gu(80)
-                PageColumn {
-                    minimumWidth: units.gu(40)
-                    maximumWidth: units.gu(50)
-                    preferredWidth: units.gu(45)
-                }
-                PageColumn {
-                    fillWidth: true
-                }
-            },
-            // Single column for narrow screens (phone)
-            PageColumnsLayout {
-                when: true
-                PageColumn {
-                    fillWidth: true
-                    minimumWidth: units.gu(30)
-                }
-            }
-        ]
-        
-        // Primary page - Feed page
-        primaryPage: feedPage
-        
-        Page {
-            id: feedPage
+        // ===== COLUMN 1: SUBREDDIT SIDEBAR =====
+        Rectangle {
+            id: sidebarColumn
+            width: root.isDesktopMode ? units.gu(28) : 0
+            height: parent.height
+            color: root.cardColor
+            visible: root.isDesktopMode
             
-            // Background
+            // Sidebar divider
             Rectangle {
-                anchors.fill: parent
-                color: root.bgColor
-                z: -1
+                anchors.right: parent.right
+                width: 1
+                height: parent.height
+                color: root.dividerColor
             }
             
-            header: PageHeader {
-                id: feedHeader
-                title: root.isMultiSubredditMode ? "Multi-Feed" : ("r/" + root.selectedSubreddit)
-                
-                StyleHints {
-                    backgroundColor: root.cardColor
-                    foregroundColor: root.textColor
-                }
-                
-                leadingActionBar.actions: [
-                    Action {
-                        iconName: "navigation-menu"
-                        text: "Subreddits"
-                        onTriggered: subredditDialog.open()
-                    }
-                ]
-                
-                trailingActionBar.actions: [
-                    Action {
-                        iconName: "reload"
-                        text: "Refresh"
-                        onTriggered: refreshMemes()
-                    },
-                    Action {
-                        iconName: "bookmark"
-                        text: "Bookmarks"
-                        onTriggered: {
-                            loadBookmarks();
-                            bookmarksDialog.open();
-                        }
-                    },
-                    Action {
-                        iconName: "settings"
-                        text: "Settings"
-                        onTriggered: settingsDialog.open()
-                    }
-                ]
-                
-                // Loading indicator
-                ActivityIndicator {
-                    anchors.right: parent.right
-                    anchors.rightMargin: units.gu(1)
-                    anchors.verticalCenter: parent.verticalCenter
-                    running: memeGrid.isLoading
-                    visible: running
-                }
-            }
-            
-            // Meme grid view
-            MemeGridView {
-                id: memeGrid
+            Column {
                 anchors.fill: parent
-                isMultiSubredditMode: root.isMultiSubredditMode
-                subredditSources: root.subredditSources
-                bookmarkStatus: root.bookmarkStatus
-                darkMode: root.darkMode
                 
-                onMemeClicked: {
-                    console.log("Main: Opening fullscreen viewer for meme:", index);
-                    root.currentMemeIndex = index;
-                    root.dialogImageSource = imageUrl;
-                    fullscreenViewer.imageSource = imageUrl;
-                    fullscreenViewer.currentIndex = index;
-                    fullscreenViewer.totalCount = memeGrid.count;
-                    fullscreenViewer.open();
-                }
-
-                onCommentClicked: {
-                    console.log("Main: Opening comments for meme index:", index);
-                    var meme = memeGrid.getMemeAt(index);
-                    if (meme) {
-                        // On wide screens, show in second column
-                        if (adaptiveLayout.columns > 1) {
-                            detailPage.loadMeme(meme);
-                            adaptiveLayout.addPageToNextColumn(feedPage, detailPage);
-                            memeAPI.fetchComments(meme.subreddit, meme.id);
-                        } else {
-                            // On narrow screens, use dialog
-                            postDetailView.postId = meme.id;
-                            postDetailView.postTitle = meme.title;
-                            postDetailView.postImage = meme.image;
-                            postDetailView.postAuthor = meme.author;
-                            postDetailView.postSubreddit = meme.subreddit;
-                            postDetailView.postUpvotes = meme.upvotes;
-                            postDetailView.postCommentCount = meme.comments;
-                            postDetailView.postSelfText = meme.selftext;
-                            postDetailView.postType = meme.postType;
-                            postDetailView.postPermalink = meme.permalink;
+                // Sidebar Header
+                Rectangle {
+                    width: parent.width
+                    height: units.gu(7)
+                    color: root.accentColor
+                    
+                    Row {
+                        anchors.centerIn: parent
+                        spacing: units.gu(1)
+                        
+                        // App icon placeholder
+                        Rectangle {
+                            width: units.gu(4)
+                            height: units.gu(4)
+                            radius: units.gu(2)
+                            color: "white"
                             
-                            postDetailView.commentsModel = [];
-                            postDetailView.open();
+                            Label {
+                                anchors.centerIn: parent
+                                text: "📱"
+                                font.pixelSize: units.gu(2)
+                            }
+                        }
+                        
+                        Label {
+                            text: "MemesApp"
+                            font.pixelSize: units.gu(2.2)
+                            font.weight: Font.Bold
+                            color: "white"
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                    }
+                }
+                
+                // Quick Actions
+                Rectangle {
+                    width: parent.width
+                    height: units.gu(6)
+                    color: root.bgColor
+                    
+                    Row {
+                        anchors.centerIn: parent
+                        spacing: units.gu(1.5)
+                        
+                        // Home/Multi-feed button
+                        Rectangle {
+                            width: units.gu(5)
+                            height: units.gu(5)
+                            radius: units.gu(1)
+                            color: root.isMultiSubredditMode ? root.accentColor : root.cardColor
                             
-                            memeAPI.fetchComments(meme.subreddit, meme.id);
+                            Label {
+                                anchors.centerIn: parent
+                                text: "🏠"
+                                font.pixelSize: units.gu(2.5)
+                            }
+                            
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: {
+                                    root.useDefaultMultiFeed = true;
+                                    loadDefaultMultiFeed();
+                                }
+                            }
+                        }
+                        
+                        // Multi-Feed Selector button
+                        Rectangle {
+                            width: units.gu(5)
+                            height: units.gu(5)
+                            radius: units.gu(1)
+                            color: root.cardColor
+                            
+                            Label {
+                                anchors.centerIn: parent
+                                text: "📋"
+                                font.pixelSize: units.gu(2.5)
+                            }
+                            
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: multiSubredditDialog.open()
+                            }
+                        }
+                        
+                        // Bookmarks button
+                        Rectangle {
+                            width: units.gu(5)
+                            height: units.gu(5)
+                            radius: units.gu(1)
+                            color: root.cardColor
+                            
+                            Label {
+                                anchors.centerIn: parent
+                                text: "⭐"
+                                font.pixelSize: units.gu(2.5)
+                            }
+                            
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: {
+                                    loadBookmarks();
+                                    bookmarksDialog.open();
+                                }
+                            }
+                        }
+                        
+                        // Settings button
+                        Rectangle {
+                            width: units.gu(5)
+                            height: units.gu(5)
+                            radius: units.gu(1)
+                            color: root.cardColor
+                            
+                            Label {
+                                anchors.centerIn: parent
+                                text: "⚙️"
+                                font.pixelSize: units.gu(2.5)
+                            }
+                            
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: settingsDialog.open()
+                            }
                         }
                     }
                 }
                 
-                onBookmarkToggled: {
-                    console.log("Main: Bookmark toggled for meme:", meme.title, "bookmark:", bookmark);
-                    if (bookmark) {
-                        if (databaseManager.bookmarkMeme(meme)) {
-                            updateBookmarkStatus(meme.id, true);
-                        }
-                    } else {
-                        if (databaseManager.unbookmarkMeme(meme.id)) {
-                            updateBookmarkStatus(meme.id, false);
-                        }
+                // Section header
+                Rectangle {
+                    width: parent.width
+                    height: units.gu(4)
+                    color: "transparent"
+                    
+                    Label {
+                        anchors.left: parent.left
+                        anchors.leftMargin: units.gu(1.5)
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: "SUBREDDITS"
+                        font.pixelSize: units.gu(1.3)
+                        font.weight: Font.Medium
+                        color: root.subtextColor
                     }
                 }
                 
-                onLoadMore: {
-                    if (!isLoading) {
-                        console.log("Main: Loading more memes");
-                        loadMoreMemes();
+                // Subreddit List
+                ListView {
+                    id: sidebarSubredditList
+                    width: parent.width
+                    height: parent.height - units.gu(17)
+                    clip: true
+                    model: root.categoryNames
+                    
+                    delegate: Rectangle {
+                        width: sidebarSubredditList.width
+                        height: modelData.indexOf("---") === 0 ? units.gu(3) : units.gu(5)
+                        color: {
+                            if (modelData.indexOf("---") === 0) return "transparent";
+                            var subredditName = root.extendedCategoryMap[modelData] || modelData;
+                            if (subredditName === root.selectedSubreddit && !root.isMultiSubredditMode) {
+                                return Qt.rgba(root.accentColor.r, root.accentColor.g, root.accentColor.b, 0.2);
+                            }
+                            return mouseArea.containsMouse ? Qt.rgba(root.textColor.r, root.textColor.g, root.textColor.b, 0.05) : "transparent";
+                        }
+                        
+                        // Separator styling
+                        Label {
+                            visible: modelData.indexOf("---") === 0
+                            anchors.left: parent.left
+                            anchors.leftMargin: units.gu(1.5)
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: modelData.replace(/---/g, "").trim()
+                            font.pixelSize: units.gu(1.2)
+                            font.weight: Font.Medium
+                            color: root.subtextColor
+                        }
+                        
+                        // Subreddit item
+                        Row {
+                            visible: modelData.indexOf("---") !== 0
+                            anchors.left: parent.left
+                            anchors.leftMargin: units.gu(1.5)
+                            anchors.verticalCenter: parent.verticalCenter
+                            spacing: units.gu(1.2)
+                            
+                            // Subreddit avatar
+                            Rectangle {
+                                width: units.gu(3.5)
+                                height: units.gu(3.5)
+                                radius: units.gu(1.75)
+                                color: {
+                                    var colors = ["#FF4500", "#0079D3", "#46D160", "#FFD700", "#9B59B6", "#00CEC9", "#E17055", "#74B9FF"];
+                                    var cleanName = modelData.replace("⭐ ", "");
+                                    var hash = 0;
+                                    for (var i = 0; i < cleanName.length; i++) {
+                                        hash = cleanName.charCodeAt(i) + ((hash << 5) - hash);
+                                    }
+                                    return colors[Math.abs(hash) % colors.length];
+                                }
+                                
+                                Label {
+                                    anchors.centerIn: parent
+                                    text: {
+                                        var cleanName = modelData.replace("⭐ ", "");
+                                        return cleanName.charAt(0).toUpperCase();
+                                    }
+                                    font.pixelSize: units.gu(1.8)
+                                    font.weight: Font.Bold
+                                    color: "white"
+                                }
+                            }
+                            
+                            Column {
+                                anchors.verticalCenter: parent.verticalCenter
+                                spacing: units.gu(0.2)
+                                
+                                Label {
+                                    text: modelData
+                                    font.pixelSize: units.gu(1.6)
+                                    color: root.textColor
+                                    elide: Text.ElideRight
+                                    width: units.gu(18)
+                                }
+                                
+                                Label {
+                                    text: "r/" + (root.extendedCategoryMap[modelData] || modelData)
+                                    font.pixelSize: units.gu(1.2)
+                                    color: root.subtextColor
+                                    elide: Text.ElideRight
+                                    width: units.gu(18)
+                                    visible: modelData !== (root.extendedCategoryMap[modelData] || modelData)
+                                }
+                            }
+                        }
+                        
+                        // Selection indicator
+                        Rectangle {
+                            visible: {
+                                if (modelData.indexOf("---") === 0) return false;
+                                var subredditName = root.extendedCategoryMap[modelData] || modelData;
+                                return subredditName === root.selectedSubreddit && !root.isMultiSubredditMode;
+                            }
+                            anchors.left: parent.left
+                            width: units.gu(0.4)
+                            height: parent.height
+                            color: root.accentColor
+                        }
+                        
+                        MouseArea {
+                            id: mouseArea
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            enabled: modelData.indexOf("---") !== 0
+                            onClicked: {
+                                var subredditName = root.extendedCategoryMap[modelData] || modelData;
+                                root.selectedSubreddit = subredditName;
+                                root.isMultiSubredditMode = false;
+                                root.useDefaultMultiFeed = false;
+                                root.detailPanelVisible = false;
+                                refreshMemes();
+                            }
+                        }
                     }
-                }
-                
-                onRefreshRequested: {
-                    console.log("Main: Pull to refresh triggered");
-                    refreshMemes();
                 }
             }
         }
         
-        // Detail page for comments (shown in second column on wide screens)
-        Page {
-            id: detailPage
-            visible: false
+        // ===== COLUMN 2: POSTS FEED =====
+        Rectangle {
+            id: feedColumn
+            width: {
+                if (root.isDesktopMode) {
+                    return root.detailPanelVisible ? parent.width - units.gu(28) - units.gu(45) : parent.width - units.gu(28);
+                } else if (root.isTabletMode) {
+                    return root.detailPanelVisible ? parent.width - units.gu(40) : parent.width;
+                } else {
+                    return parent.width;
+                }
+            }
+            height: parent.height
+            color: root.bgColor
+            
+            // Feed divider (right side)
+            Rectangle {
+                anchors.right: parent.right
+                width: 1
+                height: parent.height
+                color: root.dividerColor
+                visible: root.detailPanelVisible
+            }
+            
+            Column {
+                anchors.fill: parent
+                
+                // Feed Header
+                Rectangle {
+                    id: feedHeader
+                    width: parent.width
+                    height: units.gu(7)
+                    color: root.cardColor
+                    
+                    Row {
+                        anchors.left: parent.left
+                        anchors.leftMargin: units.gu(1.5)
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: units.gu(1.5)
+                        
+                        // Menu button (mobile only)
+                        Rectangle {
+                            visible: !root.isDesktopMode
+                            width: units.gu(4)
+                            height: units.gu(4)
+                            radius: units.gu(0.5)
+                            color: menuMouseArea.pressed ? root.dividerColor : "transparent"
+                            
+                            Label {
+                                anchors.centerIn: parent
+                                text: "☰"
+                                font.pixelSize: units.gu(2.5)
+                                color: root.textColor
+                            }
+                            
+                            MouseArea {
+                                id: menuMouseArea
+                                anchors.fill: parent
+                                onClicked: subredditDialog.open()
+                            }
+                        }
+                        
+                        Column {
+                            anchors.verticalCenter: parent.verticalCenter
+                            
+                            Label {
+                                text: root.isMultiSubredditMode ? "Multi-Feed" : ("r/" + root.selectedSubreddit)
+                                font.pixelSize: units.gu(2.2)
+                                font.weight: Font.Bold
+                                color: root.textColor
+                            }
+                            
+                            Label {
+                                visible: root.isMultiSubredditMode
+                                text: root.selectedSubreddits.length + " subreddits combined"
+                                font.pixelSize: units.gu(1.4)
+                                color: root.subtextColor
+                            }
+                        }
+                    }
+                    
+                    Row {
+                        anchors.right: parent.right
+                        anchors.rightMargin: units.gu(1.5)
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: units.gu(1)
+                        
+                        // Loading indicator
+                        ActivityIndicator {
+                            running: memeGrid.isLoading
+                            visible: running
+                        }
+                        
+                        // Refresh button
+                        Rectangle {
+                            width: units.gu(4)
+                            height: units.gu(4)
+                            radius: units.gu(0.5)
+                            color: refreshMouseArea.pressed ? root.dividerColor : "transparent"
+                            
+                            Label {
+                                anchors.centerIn: parent
+                                text: "🔄"
+                                font.pixelSize: units.gu(2)
+                            }
+                            
+                            MouseArea {
+                                id: refreshMouseArea
+                                anchors.fill: parent
+                                onClicked: refreshMemes()
+                            }
+                        }
+                        
+                        // Multi-Feed Selector button (mobile only)
+                        Rectangle {
+                            visible: !root.isDesktopMode
+                            width: units.gu(4)
+                            height: units.gu(4)
+                            radius: units.gu(0.5)
+                            color: multiFeedMouseArea.pressed ? root.dividerColor : "transparent"
+                            
+                            Label {
+                                anchors.centerIn: parent
+                                text: "📋"
+                                font.pixelSize: units.gu(2)
+                            }
+                            
+                            MouseArea {
+                                id: multiFeedMouseArea
+                                anchors.fill: parent
+                                onClicked: multiSubredditDialog.open()
+                            }
+                        }
+                        
+                        // Bookmarks button (mobile only)
+                        Rectangle {
+                            visible: !root.isDesktopMode
+                            width: units.gu(4)
+                            height: units.gu(4)
+                            radius: units.gu(0.5)
+                            color: bookmarkMouseArea.pressed ? root.dividerColor : "transparent"
+                            
+                            Label {
+                                anchors.centerIn: parent
+                                text: "⭐"
+                                font.pixelSize: units.gu(2)
+                            }
+                            
+                            MouseArea {
+                                id: bookmarkMouseArea
+                                anchors.fill: parent
+                                onClicked: {
+                                    loadBookmarks();
+                                    bookmarksDialog.open();
+                                }
+                            }
+                        }
+                        
+                        // Settings button (mobile only)
+                        Rectangle {
+                            visible: !root.isDesktopMode
+                            width: units.gu(4)
+                            height: units.gu(4)
+                            radius: units.gu(0.5)
+                            color: settingsMouseArea.pressed ? root.dividerColor : "transparent"
+                            
+                            Label {
+                                anchors.centerIn: parent
+                                text: "⚙️"
+                                font.pixelSize: units.gu(2)
+                            }
+                            
+                            MouseArea {
+                                id: settingsMouseArea
+                                anchors.fill: parent
+                                onClicked: settingsDialog.open()
+                            }
+                        }
+                    }
+                    
+                    // Bottom border
+                    Rectangle {
+                        anchors.bottom: parent.bottom
+                        width: parent.width
+                        height: 1
+                        color: root.dividerColor
+                    }
+                }
+                
+                // Meme Grid View
+                MemeGridView {
+                    id: memeGrid
+                    width: parent.width
+                    height: parent.height - feedHeader.height
+                    isMultiSubredditMode: root.isMultiSubredditMode
+                    subredditSources: root.subredditSources
+                    bookmarkStatus: root.bookmarkStatus
+                    darkMode: root.darkMode
+                    
+                    onMemeClicked: {
+                        console.log("Main: Opening fullscreen viewer for meme:", index);
+                        root.currentMemeIndex = index;
+                        root.dialogImageSource = imageUrl;
+                        fullscreenViewer.imageSource = imageUrl;
+                        fullscreenViewer.currentIndex = index;
+                        fullscreenViewer.totalCount = memeGrid.count;
+                        fullscreenViewer.open();
+                    }
+
+                    onCommentClicked: {
+                        console.log("Main: Opening comments for meme index:", index);
+                        var meme = memeGrid.getMemeAt(index);
+                        if (meme) {
+                            root.currentDetailMeme = meme;
+                            
+                            // On desktop/tablet, show in detail panel
+                            if (root.isDesktopMode || root.isTabletMode) {
+                                detailPanel.loadMeme(meme);
+                                root.detailPanelVisible = true;
+                                memeAPI.fetchComments(meme.subreddit, meme.id);
+                            } else {
+                                // On mobile, use dialog
+                                postDetailView.postId = meme.id;
+                                postDetailView.postTitle = meme.title;
+                                postDetailView.postImage = meme.image;
+                                postDetailView.postAuthor = meme.author;
+                                postDetailView.postSubreddit = meme.subreddit;
+                                postDetailView.postUpvotes = meme.upvotes;
+                                postDetailView.postCommentCount = meme.comments;
+                                postDetailView.postSelfText = meme.selftext;
+                                postDetailView.postType = meme.postType;
+                                postDetailView.postPermalink = meme.permalink;
+                                
+                                postDetailView.commentsModel = [];
+                                postDetailView.open();
+                                
+                                memeAPI.fetchComments(meme.subreddit, meme.id);
+                            }
+                        }
+                    }
+                    
+                    onBookmarkToggled: {
+                        console.log("Main: Bookmark toggled for meme:", meme.title, "bookmark:", bookmark);
+                        if (bookmark) {
+                            if (databaseManager.bookmarkMeme(meme)) {
+                                updateBookmarkStatus(meme.id, true);
+                            }
+                        } else {
+                            if (databaseManager.unbookmarkMeme(meme.id)) {
+                                updateBookmarkStatus(meme.id, false);
+                            }
+                        }
+                    }
+                    
+                    onLoadMore: {
+                        if (!isLoading) {
+                            console.log("Main: Loading more memes");
+                            loadMoreMemes();
+                        }
+                    }
+                    
+                    onRefreshRequested: {
+                        console.log("Main: Pull to refresh triggered");
+                        refreshMemes();
+                    }
+                }
+            }
+        }
+        
+        // ===== COLUMN 3: DETAIL/COMMENTS PANEL =====
+        Rectangle {
+            id: detailPanel
+            width: {
+                if (!root.detailPanelVisible) return 0;
+                if (root.isDesktopMode) return units.gu(45);
+                if (root.isTabletMode) return units.gu(40);
+                return 0;
+            }
+            height: parent.height
+            color: root.cardColor
+            visible: root.detailPanelVisible && (root.isDesktopMode || root.isTabletMode)
+            clip: true
+            
+            Behavior on width {
+                NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
+            }
             
             property string postId: ""
             property string postTitle: ""
@@ -375,207 +795,326 @@ MainView {
                 isLoadingComments = true;
             }
             
-            // Background
-            Rectangle {
+            Column {
                 anchors.fill: parent
-                color: root.bgColor
-                z: -1
-            }
-            
-            header: PageHeader {
-                title: detailPage.postTitle
-                subtitle: "r/" + detailPage.postSubreddit
                 
-                StyleHints {
-                    backgroundColor: root.cardColor
-                    foregroundColor: root.textColor
-                }
-                
-                leadingActionBar.actions: [
-                    Action {
-                        iconName: "back"
-                        text: "Back"
-                        visible: adaptiveLayout.columns === 1
-                        onTriggered: adaptiveLayout.removePages(detailPage)
-                    }
-                ]
-            }
-            
-            // Detail content
-            Flickable {
-                anchors.fill: parent
-                contentHeight: detailColumn.height
-                clip: true
-                
-                Column {
-                    id: detailColumn
+                // Detail Panel Header
+                Rectangle {
                     width: parent.width
-                    spacing: units.gu(1)
+                    height: units.gu(7)
+                    color: root.bgColor
                     
-                    // Post image if exists
-                    Image {
-                        width: parent.width
-                        height: detailPage.postImage ? Math.min(width * 0.75, units.gu(40)) : 0
-                        source: detailPage.postImage
-                        fillMode: Image.PreserveAspectFit
-                        visible: detailPage.postImage !== ""
+                    Row {
+                        anchors.left: parent.left
+                        anchors.leftMargin: units.gu(1.5)
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: units.gu(1)
                         
-                        MouseArea {
-                            anchors.fill: parent
-                            onClicked: {
-                                fullscreenViewer.imageSource = detailPage.postImage;
-                                fullscreenViewer.currentIndex = -1;
-                                fullscreenViewer.totalCount = 1;
-                                fullscreenViewer.open();
+                        // Close button
+                        Rectangle {
+                            width: units.gu(4)
+                            height: units.gu(4)
+                            radius: units.gu(0.5)
+                            color: closeMouseArea.pressed ? root.dividerColor : "transparent"
+                            
+                            Label {
+                                anchors.centerIn: parent
+                                text: "✕"
+                                font.pixelSize: units.gu(2)
+                                color: root.textColor
+                            }
+                            
+                            MouseArea {
+                                id: closeMouseArea
+                                anchors.fill: parent
+                                onClicked: root.detailPanelVisible = false
                             }
                         }
-                    }
-                    
-                    // Post info
-                    Rectangle {
-                        width: parent.width
-                        height: infoColumn.height + units.gu(2)
-                        color: root.cardColor
                         
                         Column {
-                            id: infoColumn
-                            anchors.left: parent.left
-                            anchors.right: parent.right
-                            anchors.top: parent.top
-                            anchors.margins: units.gu(1.5)
-                            spacing: units.gu(1)
-                            
-                            // Title
-                            Label {
-                                width: parent.width
-                                text: detailPage.postTitle
-                                font.pixelSize: units.gu(2)
-                                font.weight: Font.Medium
-                                color: root.textColor
-                                wrapMode: Text.WordWrap
-                            }
-                            
-                            // Meta info
-                            Row {
-                                spacing: units.gu(2)
-                                
-                                Label {
-                                    text: "u/" + detailPage.postAuthor
-                                    font.pixelSize: units.gu(1.5)
-                                    color: root.accentColor
-                                }
-                                
-                                Label {
-                                    text: "↑ " + detailPage.postUpvotes
-                                    font.pixelSize: units.gu(1.5)
-                                    color: root.subtextColor
-                                }
-                                
-                                Label {
-                                    text: "💬 " + detailPage.postCommentCount
-                                    font.pixelSize: units.gu(1.5)
-                                    color: root.subtextColor
-                                }
-                            }
-                            
-                            // Self text if exists
-                            Label {
-                                width: parent.width
-                                text: detailPage.postSelfText
-                                font.pixelSize: units.gu(1.7)
-                                color: root.textColor
-                                wrapMode: Text.WordWrap
-                                visible: detailPage.postSelfText !== ""
-                            }
-                        }
-                    }
-                    
-                    // Comments section header
-                    Rectangle {
-                        width: parent.width
-                        height: units.gu(5)
-                        color: root.cardColor
-                        
-                        Row {
                             anchors.verticalCenter: parent.verticalCenter
-                            anchors.left: parent.left
-                            anchors.leftMargin: units.gu(1.5)
-                            spacing: units.gu(1)
                             
                             Label {
-                                text: "Comments"
-                                font.pixelSize: units.gu(1.8)
-                                font.weight: Font.Medium
+                                text: "Post Details"
+                                font.pixelSize: units.gu(2)
+                                font.weight: Font.Bold
                                 color: root.textColor
                             }
                             
-                            ActivityIndicator {
-                                running: detailPage.isLoadingComments
-                                visible: running
+                            Label {
+                                text: "r/" + detailPanel.postSubreddit
+                                font.pixelSize: units.gu(1.4)
+                                color: root.accentColor
                             }
                         }
                     }
                     
-                    // Comments list
-                    Repeater {
-                        model: detailPage.commentsModel
+                    // Loading indicator
+                    ActivityIndicator {
+                        anchors.right: parent.right
+                        anchors.rightMargin: units.gu(1.5)
+                        anchors.verticalCenter: parent.verticalCenter
+                        running: detailPanel.isLoadingComments
+                        visible: running
+                    }
+                    
+                    // Bottom border
+                    Rectangle {
+                        anchors.bottom: parent.bottom
+                        width: parent.width
+                        height: 1
+                        color: root.dividerColor
+                    }
+                }
+                
+                // Scrollable content
+                Flickable {
+                    width: parent.width
+                    height: parent.height - units.gu(7)
+                    contentHeight: detailContentColumn.height
+                    clip: true
+                    
+                    Column {
+                        id: detailContentColumn
+                        width: parent.width
+                        spacing: units.gu(1)
                         
-                        delegate: Rectangle {
-                            width: detailColumn.width
-                            height: commentCol.height + units.gu(2)
-                            color: root.cardColor
+                        // Post image
+                        Image {
+                            width: parent.width
+                            height: detailPanel.postImage ? Math.min(width * 0.6, units.gu(35)) : 0
+                            source: detailPanel.postImage
+                            fillMode: Image.PreserveAspectFit
+                            visible: detailPanel.postImage !== ""
+                            
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: {
+                                    fullscreenViewer.imageSource = detailPanel.postImage;
+                                    fullscreenViewer.currentIndex = -1;
+                                    fullscreenViewer.totalCount = 1;
+                                    fullscreenViewer.open();
+                                }
+                            }
+                        }
+                        
+                        // Post info card
+                        Rectangle {
+                            width: parent.width
+                            height: postInfoColumn.height + units.gu(3)
+                            color: root.bgColor
                             
                             Column {
-                                id: commentCol
+                                id: postInfoColumn
                                 anchors.left: parent.left
                                 anchors.right: parent.right
                                 anchors.top: parent.top
                                 anchors.margins: units.gu(1.5)
-                                anchors.leftMargin: units.gu(1.5) + (modelData.depth || 0) * units.gu(2)
-                                spacing: units.gu(0.5)
+                                spacing: units.gu(1)
                                 
-                                Row {
-                                    spacing: units.gu(1)
-                                    
-                                    Label {
-                                        text: modelData.author || "[deleted]"
-                                        font.pixelSize: units.gu(1.4)
-                                        font.weight: Font.Medium
-                                        color: root.accentColor
-                                    }
-                                    
-                                    Label {
-                                        text: "• " + (modelData.score || 0) + " pts"
-                                        font.pixelSize: units.gu(1.3)
-                                        color: root.subtextColor
-                                    }
-                                }
-                                
+                                // Title
                                 Label {
                                     width: parent.width
-                                    text: modelData.body || ""
-                                    font.pixelSize: units.gu(1.6)
+                                    text: detailPanel.postTitle
+                                    font.pixelSize: units.gu(2)
+                                    font.weight: Font.Medium
                                     color: root.textColor
                                     wrapMode: Text.WordWrap
                                 }
-                            }
-                            
-                            // Thread line
-                            Rectangle {
-                                visible: (modelData.depth || 0) > 0
-                                width: units.gu(0.3)
-                                height: parent.height
-                                x: units.gu(1) + ((modelData.depth || 1) - 1) * units.gu(2)
-                                color: {
-                                    var colors = ["#FF4500", "#0079D3", "#46D160", "#FFD700", "#9B59B6"];
-                                    return colors[((modelData.depth || 1) - 1) % colors.length];
+                                
+                                // Meta info row
+                                Row {
+                                    spacing: units.gu(1.5)
+                                    
+                                    // Author
+                                    Rectangle {
+                                        height: units.gu(3)
+                                        width: authorLabel.width + units.gu(1.5)
+                                        radius: units.gu(0.5)
+                                        color: Qt.rgba(root.accentColor.r, root.accentColor.g, root.accentColor.b, 0.15)
+                                        
+                                        Label {
+                                            id: authorLabel
+                                            anchors.centerIn: parent
+                                            text: "u/" + detailPanel.postAuthor
+                                            font.pixelSize: units.gu(1.4)
+                                            color: root.accentColor
+                                        }
+                                    }
+                                    
+                                    // Upvotes
+                                    Row {
+                                        spacing: units.gu(0.5)
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        
+                                        Label {
+                                            text: "↑"
+                                            font.pixelSize: units.gu(1.6)
+                                            color: "#FF4500"
+                                        }
+                                        Label {
+                                            text: detailPanel.postUpvotes
+                                            font.pixelSize: units.gu(1.4)
+                                            color: root.subtextColor
+                                        }
+                                    }
+                                    
+                                    // Comments count
+                                    Row {
+                                        spacing: units.gu(0.5)
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        
+                                        Label {
+                                            text: "💬"
+                                            font.pixelSize: units.gu(1.4)
+                                        }
+                                        Label {
+                                            text: detailPanel.postCommentCount
+                                            font.pixelSize: units.gu(1.4)
+                                            color: root.subtextColor
+                                        }
+                                    }
+                                }
+                                
+                                // Self text
+                                Label {
+                                    width: parent.width
+                                    text: detailPanel.postSelfText
+                                    font.pixelSize: units.gu(1.6)
+                                    color: root.textColor
+                                    wrapMode: Text.WordWrap
+                                    visible: detailPanel.postSelfText !== ""
                                 }
                             }
                         }
+                        
+                        // Comments header
+                        Rectangle {
+                            width: parent.width
+                            height: units.gu(5)
+                            color: root.bgColor
+                            
+                            Row {
+                                anchors.left: parent.left
+                                anchors.leftMargin: units.gu(1.5)
+                                anchors.verticalCenter: parent.verticalCenter
+                                spacing: units.gu(1)
+                                
+                                Label {
+                                    text: "💬 Comments"
+                                    font.pixelSize: units.gu(1.8)
+                                    font.weight: Font.Medium
+                                    color: root.textColor
+                                }
+                                
+                                Label {
+                                    text: "(" + detailPanel.commentsModel.length + ")"
+                                    font.pixelSize: units.gu(1.5)
+                                    color: root.subtextColor
+                                    visible: !detailPanel.isLoadingComments
+                                }
+                                
+                                ActivityIndicator {
+                                    running: detailPanel.isLoadingComments
+                                    visible: running
+                                }
+                            }
+                        }
+                        
+                        // Comments list
+                        Repeater {
+                            model: detailPanel.commentsModel
+                            
+                            delegate: Rectangle {
+                                width: detailContentColumn.width
+                                height: commentColumn.height + units.gu(2)
+                                color: index % 2 === 0 ? root.bgColor : Qt.rgba(root.cardColor.r, root.cardColor.g, root.cardColor.b, 0.5)
+                                
+                                // Thread indicator line
+                                Rectangle {
+                                    visible: (modelData.depth || 0) > 0
+                                    x: units.gu(1) + ((modelData.depth || 1) - 1) * units.gu(1.5)
+                                    width: units.gu(0.3)
+                                    height: parent.height
+                                    color: {
+                                        var colors = ["#FF4500", "#0079D3", "#46D160", "#FFD700", "#9B59B6", "#00CEC9"];
+                                        return colors[((modelData.depth || 1) - 1) % colors.length];
+                                    }
+                                }
+                                
+                                Column {
+                                    id: commentColumn
+                                    anchors.left: parent.left
+                                    anchors.right: parent.right
+                                    anchors.top: parent.top
+                                    anchors.margins: units.gu(1)
+                                    anchors.leftMargin: units.gu(1.5) + (modelData.depth || 0) * units.gu(1.5)
+                                    spacing: units.gu(0.5)
+                                    
+                                    // Comment header
+                                    Row {
+                                        spacing: units.gu(1)
+                                        
+                                        Label {
+                                            text: modelData.author || "[deleted]"
+                                            font.pixelSize: units.gu(1.4)
+                                            font.weight: Font.Medium
+                                            color: root.accentColor
+                                        }
+                                        
+                                        Label {
+                                            text: "•"
+                                            font.pixelSize: units.gu(1.3)
+                                            color: root.subtextColor
+                                        }
+                                        
+                                        Label {
+                                            text: (modelData.score || 0) + " pts"
+                                            font.pixelSize: units.gu(1.3)
+                                            color: root.subtextColor
+                                        }
+                                    }
+                                    
+                                    // Comment body
+                                    Label {
+                                        width: parent.width
+                                        text: modelData.body || ""
+                                        font.pixelSize: units.gu(1.5)
+                                        color: root.textColor
+                                        wrapMode: Text.WordWrap
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // Empty state
+                        Item {
+                            visible: !detailPanel.isLoadingComments && detailPanel.commentsModel.length === 0
+                            width: parent.width
+                            height: units.gu(15)
+                            
+                            Column {
+                                anchors.centerIn: parent
+                                spacing: units.gu(1)
+                                
+                                Label {
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    text: "💬"
+                                    font.pixelSize: units.gu(4)
+                                }
+                                
+                                Label {
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    text: "No comments yet"
+                                    font.pixelSize: units.gu(1.6)
+                                    color: root.subtextColor
+                                }
+                            }
+                        }
+                        
+                        // Bottom padding
+                        Item { width: 1; height: units.gu(4) }
                     }
-                    
-                    // Bottom padding
-                    Item { width: 1; height: units.gu(4) }
                 }
             }
         }
@@ -708,16 +1247,16 @@ MainView {
         onCommentsLoaded: {
             console.log("Main: Comments loaded, count:", comments.length);
             postDetailView.commentsModel = comments;
-            detailPage.commentsModel = comments;
-            detailPage.isLoadingComments = false;
+            detailPanel.commentsModel = comments;
+            detailPanel.isLoadingComments = false;
         }
         onCommentsLoadingStarted: {
             postDetailView.isLoadingComments = true;
-            detailPage.isLoadingComments = true;
+            detailPanel.isLoadingComments = true;
         }
         onCommentsLoadingFinished: {
             postDetailView.isLoadingComments = false;
-            detailPage.isLoadingComments = false;
+            detailPanel.isLoadingComments = false;
         }
     }
 

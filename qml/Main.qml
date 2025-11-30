@@ -26,7 +26,7 @@ import "services"
 MainView {
     id: root
     objectName: "mainView"
-    applicationName: "memesapp.surajyadav"
+    applicationName: "memesapp"
     automaticOrientation: true
     
     width: units.gu(45)
@@ -658,9 +658,13 @@ MainView {
                         spacing: units.gu(1)
                         
                         // Loading indicator
-                        ActivityIndicator {
+                        RedditLoadingAnimation {
                             running: memeGrid.isLoading
                             visible: running
+                            width: units.gu(3)
+                            height: units.gu(3)
+                            accentColor: "#FF4500"
+                            darkMode: root.darkMode
                         }
                         
                         // Refresh button
@@ -949,12 +953,16 @@ MainView {
                     }
                     
                     // Loading indicator
-                    ActivityIndicator {
+                    RedditLoadingAnimation {
                         anchors.right: parent.right
                         anchors.rightMargin: units.gu(1.5)
                         anchors.verticalCenter: parent.verticalCenter
                         running: detailPanel.isLoadingComments
                         visible: running
+                        width: units.gu(3)
+                        height: units.gu(3)
+                        accentColor: "#FF4500"
+                        darkMode: root.darkMode
                     }
                     
                     // Bottom border
@@ -1113,9 +1121,13 @@ MainView {
                                     visible: !detailPanel.isLoadingComments
                                 }
                                 
-                                ActivityIndicator {
+                                RedditLoadingAnimation {
                                     running: detailPanel.isLoadingComments
                                     visible: running
+                                    width: units.gu(2.5)
+                                    height: units.gu(2.5)
+                                    accentColor: "#FF4500"
+                                    darkMode: root.darkMode
                                 }
                             }
                         }

@@ -272,10 +272,14 @@ Dialog {
                                     }
                                 }
 
-                                ActivityIndicator {
+                                RedditLoadingAnimation {
                                     anchors.centerIn: parent
                                     running: postImageLoader.status === Image.Loading
                                     visible: running
+                                    width: units.gu(6)
+                                    height: units.gu(6)
+                                    accentColor: "#FF4500"
+                                    darkMode: postDetailView.darkMode
                                 }
                             }
 
@@ -444,9 +448,13 @@ Dialog {
                     anchors.centerIn: parent
                     spacing: units.gu(1)
 
-                    ActivityIndicator {
+                    RedditLoadingAnimation {
                         running: postDetailView.isLoadingComments
                         anchors.horizontalCenter: parent.horizontalCenter
+                        width: units.gu(4)
+                        height: units.gu(4)
+                        accentColor: "#FF4500"
+                        darkMode: postDetailView.darkMode
                     }
 
                     Label {

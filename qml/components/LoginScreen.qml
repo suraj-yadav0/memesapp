@@ -366,11 +366,12 @@ Rectangle {
                             anchors.centerIn: parent
                             spacing: units.gu(1)
                             
-                            ActivityIndicator {
+                            RedditLoadingAnimation {
                                 running: isLoading
                                 visible: isLoading
                                 width: units.gu(2.5)
                                 height: units.gu(2.5)
+                                accentColor: "white"
                             }
                             
                             Label {

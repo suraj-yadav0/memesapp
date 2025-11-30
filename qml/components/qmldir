@@ -9,3 +9,7 @@ FullscreenImageViewer 1.0 FullscreenImageViewer.qml
 MemeGridView 1.0 MemeGridView.qml
 AppHeader 1.0 AppHeader.qml
 LoginScreen 1.0 LoginScreen.qml
+RedditLoadingAnimation 1.0 RedditLoadingAnimation.qml
+PostDetailView 1.0 PostDetailView.qml
+CustomButton 1.0 CustomButton.qml
+SettingsDialog 1.0 SettingsDialog.qml

@@ -122,9 +122,12 @@ PageHeader {
         color: "transparent"
         visible: appHeader.isLoading
         
-        ActivityIndicator {
+        RedditLoadingAnimation {
             anchors.centerIn: parent
             running: appHeader.isLoading
+            width: units.gu(3)
+            height: units.gu(3)
+            accentColor: "white"
         }
     }
 }

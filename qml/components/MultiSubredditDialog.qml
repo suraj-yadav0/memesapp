@@ -66,17 +66,19 @@ Dialog {
         // Selected subreddits display
         RowLayout {
             Layout.fillWidth: true
+            spacing: units.gu(1)
 
-spacing: units.gu(5)
             Label {
                 text: "Selected (" + selectedSubreddits.length + "):"
                 font.weight: Font.Medium
             }
 
+            Item {
+                Layout.fillWidth: true
+            }
+
             CustomButton {
                 text: "Clear All"
-                anchors.right: parent.right
-              
                 visible: selectedSubreddits.length > 0
                 onClicked: {
                     selectedSubreddits = [];

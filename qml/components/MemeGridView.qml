@@ -278,9 +278,13 @@ Item {
             anchors.centerIn: parent
             spacing: units.gu(2)
             
-            ActivityIndicator {
+            RedditLoadingAnimation {
                 running: parent.parent.visible
                 anchors.horizontalCenter: parent.horizontalCenter
+                width: units.gu(8)
+                height: units.gu(8)
+                accentColor: "#FF4500"
+                darkMode: memeGridView.darkMode
             }
             
             Label {
@@ -310,9 +314,13 @@ Item {
             anchors.centerIn: parent
             spacing: units.gu(1)
             
-            ActivityIndicator {
+            RedditLoadingAnimation {
                 running: parent.parent.visible
                 anchors.verticalCenter: parent.verticalCenter
+                width: units.gu(3)
+                height: units.gu(3)
+                accentColor: "#FF4500"
+                darkMode: memeGridView.darkMode
             }
             
             Label {

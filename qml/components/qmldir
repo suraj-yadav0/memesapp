@@ -8,3 +8,4 @@ DefaultSubredditsDialog 1.0 DefaultSubredditsDialog.qml
 FullscreenImageViewer 1.0 FullscreenImageViewer.qml
 MemeGridView 1.0 MemeGridView.qml
 AppHeader 1.0 AppHeader.qml
+LoginScreen 1.0 LoginScreen.qml

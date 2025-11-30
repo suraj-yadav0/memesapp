@@ -93,6 +93,7 @@ QtObject {
                                     image: isImage ? post.url : "",
                                     postType: isImage ? "image" : "text",
                                     selftext: isText ? post.selftext : "",
+                                    selftext_html: isText ? (post.selftext_html || "") : "",
                                     upvotes: post.ups || 0,
                                     comments: post.num_comments || 0,
                                     subreddit: post.subreddit,

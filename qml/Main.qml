@@ -263,6 +263,14 @@ MainView {
         console.log("Main: User logged out")
     }
 
+    function unescapeHtml(safe) {
+        return safe.replace(/&amp;/g, '&')
+            .replace(/&lt;/g, '<')
+            .replace(/&gt;/g, '>')
+            .replace(/&quot;/g, '"')
+            .replace(/&#039;/g, "'");
+    }
+
     // ========== REDDIT-STYLE THREE-COLUMN LAYOUT ==========
     // Column 1: Subreddit Sidebar (left)
     // Column 2: Posts Feed (center)  
@@ -812,6 +820,7 @@ MainView {
                                 postDetailView.postUpvotes = meme.upvotes;
                                 postDetailView.postCommentCount = meme.comments;
                                 postDetailView.postSelfText = meme.selftext;
+                                postDetailView.postSelfTextHtml = meme.selftext_html || "";
                                 postDetailView.postType = meme.postType;
                                 postDetailView.postPermalink = meme.permalink;
                                 
@@ -877,6 +886,7 @@ MainView {
             property int postUpvotes: 0
             property int postCommentCount: 0
             property string postSelfText: ""
+            property string postSelfTextHtml: ""
             property string postType: ""
             property string postPermalink: ""
             property var commentsModel: []
@@ -891,6 +901,7 @@ MainView {
                 postUpvotes = meme.upvotes || 0;
                 postCommentCount = meme.comments || 0;
                 postSelfText = meme.selftext || "";
+                postSelfTextHtml = meme.selftext_html || "";
                 postType = meme.postType || "";
                 postPermalink = meme.permalink || "";
                 commentsModel = [];
@@ -1086,11 +1097,13 @@ MainView {
                                 // Self text
                                 Label {
                                     width: parent.width
-                                    text: detailPanel.postSelfText
+                                    text: detailPanel.postSelfTextHtml ? unescapeHtml(detailPanel.postSelfTextHtml) : detailPanel.postSelfText
+                                    textFormat: detailPanel.postSelfTextHtml ? Text.RichText : Text.AutoText
                                     font.pixelSize: units.gu(1.6)
                                     color: root.textColor
                                     wrapMode: Text.WordWrap
                                     visible: detailPanel.postSelfText !== ""
+                                    onLinkActivated: Qt.openUrlExternally(link)
                                 }
                             }
                         }

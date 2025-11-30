@@ -34,6 +34,8 @@ QtObject {
     property bool isLoading: false
     property string userAgent: "UbuntuTouchMemeApp/1.0"
     property int defaultLimit: 50
+    property string afterToken: ""
+    property var subredditAfterTokens: ({})
 
     // Private properties
     property var currentXhr: null
@@ -41,7 +43,7 @@ QtObject {
     property int completedRequests: 0
     property int totalRequests: 0
 
-    function fetchMemes(subreddit, limit) {
+    function fetchMemes(subreddit, limit, loadMore) {
         if (isLoading) {
             console.log("MemeAPI: Already loading, skipping fetch");
             return;
@@ -50,8 +52,13 @@ QtObject {
         // Set default values
         subreddit = subreddit || "memes";
         limit = limit || defaultLimit;
+        loadMore = loadMore || false;
 
-        console.log("MemeAPI: Starting to fetch memes for subreddit:", subreddit);
+        if (!loadMore) {
+            afterToken = "";
+        }
+
+        console.log("MemeAPI: Starting to fetch memes for subreddit:", subreddit, "LoadMore:", loadMore);
 
         // Cancel any existing request
         if (currentXhr) {
@@ -63,6 +70,10 @@ QtObject {
 
         currentXhr = new XMLHttpRequest();
         var url = "https://www.reddit.com/r/" + subreddit + "/hot.json?limit=" + limit;
+        
+        if (loadMore && afterToken !== "") {
+            url += "&after=" + afterToken;
+        }
 
         currentXhr.open("GET", url, true);
         currentXhr.setRequestHeader("User-Agent", userAgent);
@@ -76,6 +87,15 @@ QtObject {
                     try {
                         var json = JSON.parse(currentXhr.responseText);
                         var posts = json.data.children;
+                        
+                        // Update after token for next page
+                        if (json.data && json.data.after) {
+                            afterToken = json.data.after;
+                            console.log("MemeAPI: Updated after token:", afterToken);
+                        } else {
+                            afterToken = "";
+                        }
+
                         console.log("MemeAPI: Received", posts.length, "posts from Reddit");
 
                         var memes = [];
@@ -194,7 +214,7 @@ QtObject {
         memeAPI.totalRequests = 0;
     }
 
-    function fetchMultipleSubreddits(subreddits, limitPerSubreddit) {
+    function fetchMultipleSubreddits(subreddits, limitPerSubreddit, loadMore) {
         if (isLoading) {
             console.log("MemeAPI: Already loading, skipping multi-subreddit fetch");
             return;
@@ -205,8 +225,13 @@ QtObject {
             error("No subreddits selected");
             return;
         }
+        
+        loadMore = loadMore || false;
+        if (!loadMore) {
+            subredditAfterTokens = {};
+        }
 
-        console.log("MemeAPI: Starting multi-subreddit fetch for:", subreddits.length, "subreddits");
+        console.log("MemeAPI: Starting multi-subreddit fetch for:", subreddits.length, "subreddits", "LoadMore:", loadMore);
 
         isLoading = true;
         loadingStarted();
@@ -222,15 +247,21 @@ QtObject {
 
         // Fetch from each subreddit
         for (var i = 0; i < subreddits.length; i++) {
-            fetchSingleSubredditForMulti(subreddits[i], limit, allMemes, subredditSources);
+            fetchSingleSubredditForMulti(subreddits[i], limit, allMemes, subredditSources, loadMore);
         }
     }
 
-    function fetchSingleSubredditForMulti(subreddit, limit, allMemes, subredditSources) {
+    function fetchSingleSubredditForMulti(subreddit, limit, allMemes, subredditSources, loadMore) {
         var xhr = new XMLHttpRequest();
         memeAPI.activeRequests.push(xhr);
 
         var url = "https://www.reddit.com/r/" + subreddit + ".json?limit=" + limit;
+        
+        // Use stored after token if loading more
+        if (loadMore && subredditAfterTokens[subreddit]) {
+            url += "&after=" + subredditAfterTokens[subreddit];
+        }
+        
         console.log("MemeAPI: Fetching from subreddit:", subreddit, "URL:", url);
 
         xhr.onreadystatechange = function () {
@@ -244,6 +275,13 @@ QtObject {
                     try {
                         var response = JSON.parse(xhr.responseText);
                         var posts = response.data.children;
+                        
+                        // Store after token for this subreddit
+                        if (response.data && response.data.after) {
+                            subredditAfterTokens[subreddit] = response.data.after;
+                        } else {
+                            delete subredditAfterTokens[subreddit];
+                        }
                         
                         console.log("MemeAPI: Processing", posts.length, "posts from r/" + subreddit);
 

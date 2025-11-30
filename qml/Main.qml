@@ -1454,11 +1454,11 @@ MainView {
         // Maintain multi-feed mode if active, otherwise load single subreddit
         if (root.isMultiSubredditMode && root.selectedSubreddits.length > 0) {
             console.log("Main: Refreshing multi-feed with", root.selectedSubreddits.length, "subreddits");
-            memeAPI.fetchMultipleSubreddits(root.selectedSubreddits);
+            memeAPI.fetchMultipleSubreddits(root.selectedSubreddits, undefined, false);
         } else {
             console.log("Main: Refreshing single subreddit:", root.selectedSubreddit);
             root.isMultiSubredditMode = false;
-            memeAPI.fetchMemes(root.selectedSubreddit);
+            memeAPI.fetchMemes(root.selectedSubreddit, undefined, false);
         }
     }
 
@@ -1466,9 +1466,9 @@ MainView {
         console.log("Main: Loading more memes");
         memeGrid.isLoading = true;
         if (root.isMultiSubredditMode) {
-            memeAPI.fetchMultipleSubreddits(root.selectedSubreddits);
+            memeAPI.fetchMultipleSubreddits(root.selectedSubreddits, undefined, true);
         } else {
-            memeAPI.fetchMemes(root.selectedSubreddit); // MemeAPI handles pagination internally
+            memeAPI.fetchMemes(root.selectedSubreddit, undefined, true);
         }
     }
     
@@ -1477,7 +1477,7 @@ MainView {
         memeGrid.clearMemes();
         memeGrid.clearError();
         memeGrid.isLoading = true;
-        memeAPI.fetchMultipleSubreddits(root.selectedSubreddits);
+        memeAPI.fetchMultipleSubreddits(root.selectedSubreddits, undefined, false);
     }
     
     function loadDefaultMultiFeed() {

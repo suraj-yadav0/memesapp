@@ -98,31 +98,12 @@ Item {
         }
         
         // Pull to refresh and load more
-        property bool refreshing: false
-        property real refreshThreshold: units.gu(8)
-        
         onContentYChanged: {
-            // Pull to refresh
-            if (contentY < -refreshThreshold && !refreshing && !memeGridView.isLoading) {
-                refreshing = true;
-                memeGridView.refreshRequested();
-                refreshTimer.start();
-            }
-            
             // Load more when near bottom
             var nearBottom = (contentY + height) >= (contentHeight - units.gu(20));
             if (nearBottom && !memeGridView.isLoading && count > 0) {
                 console.log("MemeGridView: Near bottom, loading more memes");
                 memeGridView.loadMore();
-            }
-        }
-        
-        Timer {
-            id: refreshTimer
-            interval: 1000 // Minimum refresh duration
-            onTriggered: {
-                listView.refreshing = false;
-                listView.contentY = 0; // Reset position
             }
         }
         
@@ -220,51 +201,7 @@ Item {
             }
         }
         
-        // Pull to refresh indicator
-        Rectangle {
-            id: refreshIndicator
-            anchors.top: parent.top
-            anchors.topMargin: -height - units.gu(1)
-            anchors.horizontalCenter: parent.horizontalCenter
-            width: refreshRow.width + units.gu(2)
-            height: units.gu(4)
-            color: memeGridView.darkMode ? "#1A1A1B" : "#FFFFFF"
-            radius: height / 2
-            border.color: memeGridView.darkMode ? "#343536" : "#EDEFF1"
-            border.width: units.dp(1)
-            visible: listView.contentY < -units.gu(2)
-            opacity: Math.min(1.0, Math.abs(listView.contentY) / listView.refreshThreshold)
-            
-            Row {
-                id: refreshRow
-                anchors.centerIn: parent
-                spacing: units.gu(1)
-                
-                ActivityIndicator {
-                    running: listView.refreshing
-                    visible: running
-                    anchors.verticalCenter: parent.verticalCenter
-                }
-                
-                Icon {
-                    name: "reload"
-                    width: units.gu(2)
-                    height: units.gu(2)
-                    anchors.verticalCenter: parent.verticalCenter
-                    visible: !listView.refreshing
-                    rotation: listView.refreshing ? 0 : Math.abs(listView.contentY) * 2
-                    color: memeGridView.darkMode ? "#D7DADC" : "#1A1A1B"
-                }
-                
-                Label {
-                    text: listView.refreshing ? "Refreshing..." : 
-                          Math.abs(listView.contentY) > listView.refreshThreshold ? "Release to refresh" : "Pull to refresh"
-                    anchors.verticalCenter: parent.verticalCenter
-                    font.pixelSize: units.gu(1.2)
-                    color: memeGridView.darkMode ? "#D7DADC" : "#1A1A1B"
-                }
-            }
-        }
+        // Pull to refresh indicator (Removed)
     }
     
     // Loading overlay

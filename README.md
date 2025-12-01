@@ -1,6 +1,6 @@
-# MemeStream 🎭
+# Reddit Client for Ubuntu Touch 🎭
 
-A fun and intuitive memes app for Ubuntu Touch that brings the best of Reddit's meme communities to your mobile device.
+A fun and intuitive Reddit client for Ubuntu Touch that brings the best of Reddit's communities to your mobile device.
 
 ![Version](https://img.shields.io/badge/version-1.0.0-blue)
 ![Platform](https://img.shields.io/badge/platform-Ubuntu%20Touch-orange)
@@ -8,20 +8,20 @@ A fun and intuitive memes app for Ubuntu Touch that brings the best of Reddit's 
 
 ## Features ✨
 
-### 🎯 **Curated Categories**
+### 🎯 **Curated Subreddits**
 - **General Memes** (r/memes) - Classic internet humor
 - **Dank Memes** (r/dankmemes) - Cutting-edge meme culture
 - **Wholesome Memes** (r/wholesomememes) - Feel-good content
 - **Programming Humor** (r/ProgrammerHumor) - Developer jokes
 - **Gaming Memes** (r/gaming) - Video game humor
 - **Anime Memes** (r/AnimeMemes) - Anime and manga jokes
-- And more specialized categories!
+- And more specialized communities!
 
 ### 🔧 **Smart Interface**
 - **Dark/Light Mode** - Adaptive theming for comfortable viewing
-- **Custom Subreddit Support** - Explore and save any meme subreddit
+- **Custom Subreddit Support** - Explore and save any subreddit
 - **Fullscreen Image Viewer** - Immersive viewing with zoom and swipe navigation
-- **Touch Gestures** - Swipe left/right to navigate between memes
+- **Touch Gestures** - Swipe left/right to navigate between posts
 - **Zoom Functionality** - Pinch to zoom, mouse wheel, and zoom controls
 - **Local Database** - Save custom subreddits with favorites and usage tracking
 - **Pull-to-Refresh** - Easy content updates with gesture support
@@ -73,11 +73,11 @@ memesapp/
 │   │   ├── AppHeader.qml                # Application header with actions
 │   │   ├── FullscreenImageViewer.qml    # Image viewer with zoom/swipe
 │   │   ├── ManageSubredditsDialog.qml   # Custom subreddit management
-│   │   ├── MemeDelegate.qml             # Individual meme display
+│   │   ├── MemeDelegate.qml             # Individual post display
 │   │   ├── MemeGridView.qml             # Grid layout with pull-to-refresh
 │   │   └── SubredditSelectionDialog.qml # Subreddit selection interface
 │   ├── models/                          # Data layer
-│   │   ├── MemeModel.qml                # Meme data structure
+│   │   ├── MemeModel.qml                # Post data structure
 │   │   └── MemeAPI.qml                  # Reddit API interface
 │   └── services/                        # Service layer
 │       └── DatabaseManager.qml          # SQLite database operations
@@ -90,34 +90,36 @@ memesapp/
 
 ### Key Components
 
-- **MemeAPI**: Handles Reddit API communication and data processing
-- **MemeModel**: Manages meme data and state with ListModel
-- **DatabaseManager**: SQLite integration for custom subreddit storage
-- **FullscreenImageViewer**: Advanced image viewer with zoom, pan, and swipe navigation
-- **MemeGridView**: Responsive grid layout with pull-to-refresh and infinite scroll
-- **SubredditSelectionDialog**: Unified interface for subreddit selection and custom input
-- **ManageSubredditsDialog**: Complete CRUD interface for saved subreddits
-- **AppHeader**: Centralized navigation with settings and refresh actions
+- **MemeAPI** (`qml/MemeAPI.qml`): Handles Reddit API communication and data processing
+- **MemeModel** (`qml/MemeModel.qml`): Manages post data and state with ListModel
+- **DatabaseManager** (`qml/services/DatabaseManager.qml`): SQLite integration for custom subreddit storage
+- **FullscreenImageViewer** (`qml/components/FullscreenImageViewer.qml`): Advanced image viewer with zoom, pan, and swipe navigation
+- **MemeGridView** (`qml/components/MemeGridView.qml`): Responsive grid layout for posts with pull-to-refresh and infinite scroll
+- **SubredditSelectionDialog** (`qml/components/SubredditSelectionDialog.qml`): Unified interface for subreddit selection and custom input
+- **ManageSubredditsDialog** (`qml/components/ManageSubredditsDialog.qml`): Complete CRUD interface for saved subreddits
+- **AppHeader** (`qml/components/AppHeader.qml`): Centralized navigation with settings and refresh actions
+
+> Note: Many component file names (e.g., `Meme*` prefixes) are legacy from this app's original focus on memes; they remain unchanged for now and implement generic Reddit post functionality.
 
 ## Usage 📖
 
 ### Getting Started
-1. Launch MemeStream from your app drawer
-2. Browse memes from the default "r/memes" subreddit
-3. Tap the settings icon to choose different categories or enter custom subreddits
+1. Launch the Reddit Client from your app drawer
+2. Browse posts from the default "r/memes" subreddit
+3. Tap the settings icon to choose different subreddits or enter custom subreddits
 4. Toggle between light and dark modes using the theme button
 
 ### Navigation
-- **Scroll** through the meme feed vertically or use pull-to-refresh
+- **Scroll** through the post feed vertically or use pull-to-refresh
 - **Tap images** to view in fullscreen mode with zoom capabilities
-- **Swipe left/right** or use arrow keys to navigate between memes in fullscreen
+- **Swipe left/right** or use arrow keys to navigate between posts in fullscreen
 - **Pinch to zoom** or use mouse wheel for image scaling
 - **Pan** around zoomed images with touch or mouse
 - **Tap close button** (✕) or press Escape to exit fullscreen view
 
 ### Customization
 - **Theme Toggle**: Switch between light and dark modes in settings
-- **Category Selection**: Choose from 25+ predefined meme categories
+ - **Subreddit Selection**: Choose from 25+ predefined subreddits
 - **Custom Subreddits**: Enter and save any subreddit name to your collection
 - **Subreddit Management**: Add favorites, track usage, and organize saved subreddits
 - **Database Storage**: Custom subreddits persist locally with SQLite
@@ -140,8 +142,8 @@ The app follows a clean component-based architecture:
 ```qml
 // Example: Using a reusable component
 MemeGridView {
-    onMemeClicked: fullscreenViewer.open()
-    onLoadMore: api.fetchMoreMemes()
+   onPostClicked: fullscreenViewer.open()
+   onLoadMore: api.fetchMorePosts()
 }
 
 // Example: Database integration
@@ -151,7 +153,7 @@ DatabaseManager {
 ```
 
 ### API Integration
-MemeStream fetches content from Reddit's public JSON API:
+This client fetches content from Reddit's public JSON API:
 - **Endpoint**: `https://www.reddit.com/r/{subreddit}.json`
 - **Rate Limiting**: Respectful API usage with appropriate delays
 - **Error Handling**: Graceful fallbacks for network issues
@@ -182,23 +184,21 @@ Contributions are welcome! Here's how you can help:
 - Test on both desktop and device
 
 ## Troubleshooting 🔍
-
 ### Common Issues
 
-**App won't load memes:**
+**App won't load posts:**
 - Check your internet connection
 - Try switching to a different subreddit
 - Ensure the subreddit name is spelled correctly
 
 **Images not displaying:**
 - Some subreddits may have text-only posts
-- Try categories known for images like "memes" or "funny"
+- Try communities known for images (e.g., `memes`, `funny`)
 
 **Custom subreddit not working:**
 - Verify the subreddit exists and is public
-- Check that it contains image posts
-- Remove any "r/" prefix from the input
-
+- Check that it contains media posts (images or links)
+- Remove any `r/` prefix from the input
 ### Debug Mode
 To enable verbose logging and component debugging:
 ```bash
@@ -225,16 +225,16 @@ The modular design makes debugging easier:
 - [x] **Custom Subreddit Storage**: Persistent favorites and usage tracking
 
 ### 🚀 **Upcoming Features**
-- [ ] **Offline Mode**: Cache memes for offline viewing
-- [ ] **Search Functionality**: Search within loaded memes by title/content
+- [ ] **Offline Mode**: Cache posts for offline viewing
+- [ ] **Search Functionality**: Search within loaded posts by title/content
 - [ ] **Multiple Feeds**: View multiple subreddits simultaneously in tabs
-- [ ] **Comment Viewing**: Read Reddit comments for memes
-- [ ] **Enhanced Favorites**: Local meme bookmarking with tags
+- [ ] **Comment Viewing**: Read Reddit comments for posts
+- [ ] **Enhanced Favorites**: Local post bookmarking with tags
 - [ ] **Improved Sharing**: Direct integration with system sharing
 - [ ] **Export/Import**: Backup and sync custom subreddit collections
 
 ### ⚡ **Performance & UX Improvements**
-- [ ] **Image Caching**: Faster loading of previously viewed memes
+- [ ] **Image Caching**: Faster loading of previously viewed media (images and videos)
 - [ ] **Lazy Loading**: Load images on demand for better memory usage
 - [ ] **Memory Optimization**: Better resource management and cleanup
 - [ ] **Keyboard Shortcuts**: Desktop-friendly navigation
@@ -242,11 +242,11 @@ The modular design makes debugging easier:
 
 ## Privacy & Data 🔒
 
-- **No User Data Collection**: MemeStream doesn't collect personal information
+- **No User Data Collection**: This client doesn't collect personal information
 - **Reddit Public API**: Only accesses publicly available content
 - **No Authentication**: No need to log into Reddit
 - **Local Storage**: Preferences stored locally on your device
-- **Network Usage**: Only for fetching meme content
+- **Network Usage**: Only for fetching post content
 
 ## Support 💬
 
@@ -275,7 +275,7 @@ We love hearing from users! Share your thoughts on:
 
 ### v1.0.0 (2025)
 - 🎉 Initial release with modular architecture
-- ✨ 25+ predefined meme categories
+- ✨ 25+ predefined subreddits
 - 🎨 Dark/Light theme support
 - 📱 Custom subreddit input with database storage
 - 🖼️ Advanced fullscreen viewer with zoom and swipe navigation
@@ -301,4 +301,4 @@ You should have received a copy of the GNU General Public License along with thi
 
 **Made with ❤️ for Ubuntu Touch**
 
-*MemeStream - Bringing Reddit's best memes to your Ubuntu Touch device*
+*Reddit Client - Bringing Reddit's best content to your Ubuntu Touch device*

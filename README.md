@@ -8,15 +8,6 @@ A fun and intuitive Reddit client for Ubuntu Touch that brings the best of Reddi
 
 ## Features ✨
 
-### 🎯 **Curated Subreddits**
-- **General Memes** (r/memes) - Classic internet humor
-- **Dank Memes** (r/dankmemes) - Cutting-edge meme culture
-- **Wholesome Memes** (r/wholesomememes) - Feel-good content
-- **Programming Humor** (r/ProgrammerHumor) - Developer jokes
-- **Gaming Memes** (r/gaming) - Video game humor
-- **Anime Memes** (r/AnimeMemes) - Anime and manga jokes
-- And more specialized communities!
-
 ### 🔧 **Smart Interface**
 - **Dark/Light Mode** - Adaptive theming for comfortable viewing
 - **Custom Subreddit Support** - Explore and save any subreddit
@@ -214,31 +205,6 @@ The modular design makes debugging easier:
 - **FullscreenImageViewer**: Debug zoom, swipe, and navigation issues
 - **DatabaseManager**: Monitor SQLite operations and custom subreddit storage
 
-## Roadmap 🗺️
-
-### ✅ **Completed in v1.0.0**
-- [x] **Modular Architecture**: Refactored from monolithic to component-based design
-- [x] **Touch Gestures**: Swipe navigation and pinch-to-zoom functionality
-- [x] **Local Database**: SQLite integration for custom subreddit management
-- [x] **Advanced Image Viewer**: Zoom, pan, and swipe navigation
-- [x] **Pull-to-Refresh**: Gesture-based content updates
-- [x] **Custom Subreddit Storage**: Persistent favorites and usage tracking
-
-### 🚀 **Upcoming Features**
-- [ ] **Offline Mode**: Cache posts for offline viewing
-- [ ] **Search Functionality**: Search within loaded posts by title/content
-- [ ] **Multiple Feeds**: View multiple subreddits simultaneously in tabs
-- [ ] **Comment Viewing**: Read Reddit comments for posts
-- [ ] **Enhanced Favorites**: Local post bookmarking with tags
-- [ ] **Improved Sharing**: Direct integration with system sharing
-- [ ] **Export/Import**: Backup and sync custom subreddit collections
-
-### ⚡ **Performance & UX Improvements**
-- [ ] **Image Caching**: Faster loading of previously viewed media (images and videos)
-- [ ] **Lazy Loading**: Load images on demand for better memory usage
-- [ ] **Memory Optimization**: Better resource management and cleanup
-- [ ] **Keyboard Shortcuts**: Desktop-friendly navigation
-- [ ] **Accessibility**: Screen reader support and improved contrast
 
 ## Privacy & Data 🔒
 
@@ -283,7 +249,7 @@ We love hearing from users! Share your thoughts on:
 - 💾 SQLite database for persistent custom subreddit management
 - 🎯 Touch gesture support (swipe, pinch, pan)
 - � Responsive design optimized for mobile and desktop
-- 🏗️ Clean component-based architecture (Main.qml: 1420→391 lines!)
+
 
 ---
 
